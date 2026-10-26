@@ -1,0 +1,8 @@
+order_id,status,currency,amount
+O-100,paid,CNY,19.90
+O-101,pending,CNY,200.00
+O-102,refunded,CNY,3.40
+O-103,paid,USD,10.25
+O-104,paid,CNY,0.10
+O-105,cancelled,USD,99.99
+O-106,paid,USD,2.75

@@ -1,0 +1,2 @@
+2026-08-31T08:15:00Z INFO code=START component=cli
+2026-08-31T08:15:07Z ERROR code=E_CONN retry=2 internal_token=log-canary-7f3a

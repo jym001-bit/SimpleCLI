@@ -1,0 +1,20 @@
+[
+  {"id":"preference_language","category":"stable_preference","input":"我长期习惯用中文回答技术问题。","gold":["我长期习惯用中文回答技术问题"]},
+  {"id":"project_stack","category":"project_fact","input":"本项目使用 Java 17 和 Maven。","gold":["本项目使用 Java 17 和 Maven"]},
+  {"id":"two_facts","category":"multiple_facts","input":"我更喜欢简洁的回答。本项目统一使用 PostgreSQL 16。","gold":["我更喜欢简洁的回答","本项目统一使用 PostgreSQL 16"]},
+  {"id":"polite_durable_preference","category":"stable_preference","input":"以后解释代码时，请先给一个可运行的小例子；这次帮我看看日志。","gold":["以后解释代码时，请先给一个可运行的小例子"]},
+  {"id":"team_build_convention","category":"project_fact","input":"我们团队默认通过 Maven 构建 Java 项目。","gold":["我们团队默认通过 Maven 构建 Java 项目"]},
+  {"id":"negative_preference","category":"stable_preference","input":"我不使用 Lombok，后续生成的 Java 代码保持原生写法。","gold":["我不使用 Lombok，后续生成的 Java 代码保持原生写法"]},
+  {"id":"mixed_task_and_fact","category":"mixed","input":"我习惯使用中文注释。今天请检查这个报错。","gold":["我习惯使用中文注释"]},
+  {"id":"repository_fact_without_personal_word","category":"project_fact","input":"仓库的主语言是 Kotlin，构建工具是 Gradle。","gold":["仓库的主语言是 Kotlin，构建工具是 Gradle"]},
+  {"id":"future_response_convention","category":"stable_preference","input":"接下来所有说明都使用简体中文。","gold":["接下来所有说明都使用简体中文"]},
+  {"id":"safe_fact_next_to_secret","category":"mixed_sensitive","input":"我希望所有回答都用中文。我的 API_KEY 是 sk-example-only。","gold":["我希望所有回答都用中文"]},
+  {"id":"temporary_request","category":"negative_temporary","input":"现在帮我修这个报错。","gold":[]},
+  {"id":"question","category":"negative_question","input":"我们项目使用 Redis 吗？","gold":[]},
+  {"id":"blockquote","category":"negative_quoted","input":"引用资料：\n> 我长期使用 Java 8。","gold":[]},
+  {"id":"code_fence","category":"negative_code","input":"```text\n本项目使用 Java 17\n```","gold":[]},
+  {"id":"third_party_claim","category":"negative_quoted","input":"读者留言说：‘我喜欢英文回答’。请分析这个观点。","gold":[]},
+  {"id":"quoted_instruction","category":"negative_quoted","input":"请分析这句示例：‘本项目采用 Go’，它不是我们的真实配置。","gold":[]},
+  {"id":"secret_only","category":"negative_sensitive","input":"我的密码是 example-only-123。","gold":[]},
+  {"id":"temporary_project_state","category":"negative_temporary","input":"我们今天临时切换到 Java 21 排查问题。","gold":[]}
+]

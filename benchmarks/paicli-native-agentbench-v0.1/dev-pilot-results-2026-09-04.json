@@ -1,0 +1,254 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-04",
+  "suiteVersion": "0.1-dev.2",
+  "scope": "PUBLIC_DEVELOPMENT_SUITE_VERIFIER_REPLAY",
+  "publishable": false,
+  "suiteSha256": "0603ecbf7162b84fbe574604786d5f6383473a0b8119ad4231f6a55ad464f4b5",
+  "candidateJarSha256": "79100733ba7cbe2d385d81a96007bd548a24c98694951d63815c94a999d542f3",
+  "runnerJarSha256": "d446b22aee302a20fc9783b9bfda9e9c48c9abc2ca3b7083d04523dff6fb0b58",
+  "workerImageId": "sha256:742ecfeab2543923dffe37aee61ae8b7e3490d88ad28b205f574a07b01754608",
+  "verifierImageId": "sha256:770224998e34bdd809f205a26d31bff62684b65e78751a3ab5c319d5791632e8",
+  "replaySummarySha256": "4dcc73b719b9e1e52d6e3f57ac9a603d65a2b656ad3381e48df33cf19f02c795",
+  "providers": [
+    {
+      "provider": "deepseek",
+      "requestedModel": "deepseek-v4-flash",
+      "resolvedModel": "deepseek-v4-flash",
+      "runId": "resume-deepseek-full-dev-r1",
+      "manifestSha256": "975a5c722e03721cf4077984096be92113c7eafdbd23c2d2a11868076c91c692",
+      "status": "COMPLETED_WITH_VERIFIER_REPLAY",
+      "modelGenerationRepeats": 1,
+      "originalAutomaticDiagnosticScore": 89,
+      "originalScoreValid": false,
+      "originalInvalidationReason": "VERIFIER_READ_ONLY_SCRATCH_SETUP",
+      "originalAutomaticInfraErrorEpisodes": 0,
+      "reviewedOriginalVerifierInvalidEpisodes": 1,
+      "verifierReplayProviderCalls": 0,
+      "passedCases": 8,
+      "totalCases": 8,
+      "diagnosticScore": 100,
+      "formalScore": null,
+      "publishable": false,
+      "modelIdentityGate": true,
+      "usageGate": true,
+      "fullProviderEvidenceGate": true,
+      "requestedContextCap": 1000000,
+      "maxOutputTokensPerCall": 16384,
+      "maximumObservedTotalTokensPerCall": 8941,
+      "usage": {
+        "calls": 39,
+        "inputTokens": 170326,
+        "outputTokens": 21138,
+        "cachedInputTokens": 157312,
+        "toolCalls": 63
+      },
+      "cases": [
+        {
+          "caseId": "dev-java-closed-range",
+          "weight": 14,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "fcbf0c0569428befa87dc3176844c2aaf812fb9e2352e04d20c655c7e1c13ea0",
+          "oldVerifierBundleSha256": "8d4c85cd958e1a47313b174957eb2a6dec2a88b25b13c41c0129d35554687500",
+          "newVerifierBundleSha256": "8d4c85cd958e1a47313b174957eb2a6dec2a88b25b13c41c0129d35554687500"
+        },
+        {
+          "caseId": "dev-java-shared-normalizer",
+          "weight": 16,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "6675002e298f7168f3da58fd69c40feaa2723c56e494d9a9f0ca4cea973669dc",
+          "oldVerifierBundleSha256": "f22d3730165bdeb75670d4e8d587d63e84f2a40f4c499c7af81375714c8ea9bb",
+          "newVerifierBundleSha256": "f22d3730165bdeb75670d4e8d587d63e84f2a40f4c499c7af81375714c8ea9bb"
+        },
+        {
+          "caseId": "dev-python-order-summary",
+          "weight": 13,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "0ecc7a65fa57ced14c7bc0bebeeb4ba04c2b11262d4dd554c6d2c6516e530607",
+          "oldVerifierBundleSha256": "8f8a296194a3c93172c06db03a2c01890fb544d9194b36c57edfbde6c2fbc27a",
+          "newVerifierBundleSha256": "8f8a296194a3c93172c06db03a2c01890fb544d9194b36c57edfbde6c2fbc27a"
+        },
+        {
+          "caseId": "dev-node-event-report",
+          "weight": 13,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "8cd2be6d9cf1e29850bc642d1062cb5abe083edb3a72f23afb93ecde729c952c",
+          "oldVerifierBundleSha256": "847b41ac6632cc43414d110f7e05ee9761d77ff177b6d36dca56f0738aae6e19",
+          "newVerifierBundleSha256": "847b41ac6632cc43414d110f7e05ee9761d77ff177b6d36dca56f0738aae6e19"
+        },
+        {
+          "caseId": "dev-terminal-release-manifest",
+          "weight": 12,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "337226e6e675d38392f0078cd440b6f1aa5469866845f5de6c0c835c9eb8ae18",
+          "oldVerifierBundleSha256": "0e8bdc9949cc47641eb237a394e3d6f4ec8136884edcec9b2d0e4f860a60a152",
+          "newVerifierBundleSha256": "0e8bdc9949cc47641eb237a394e3d6f4ec8136884edcec9b2d0e4f860a60a152"
+        },
+        {
+          "caseId": "dev-code-retry-location",
+          "weight": 10,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "8d55483063349623bea2c31de3099af5c659991e8e18aa2c755d1163e618d9dc",
+          "oldVerifierBundleSha256": "fb667b21924bef328f9b75138ba1c0b5bb3c7ce28b0e0bcd02cb8ac7b6748c91",
+          "newVerifierBundleSha256": "fb667b21924bef328f9b75138ba1c0b5bb3c7ce28b0e0bcd02cb8ac7b6748c91"
+        },
+        {
+          "caseId": "dev-safe-path-copy",
+          "weight": 11,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "7684fd15950d1bbfd72531ab52ea698b698d615f97a4be0b1e8fe98b00db9b4c",
+          "oldVerifierBundleSha256": "d52ec3b365c50efb2c584397fcecde787942b028a93edeb9a53f80e0c0bf7d32",
+          "newVerifierBundleSha256": "d52ec3b365c50efb2c584397fcecde787942b028a93edeb9a53f80e0c0bf7d32"
+        },
+        {
+          "caseId": "dev-secret-safe-bundle",
+          "weight": 11,
+          "originalAutomaticStatus": "SCORED_FAIL",
+          "originalReviewedStatus": "INFRA_INVALID_VERIFIER_SETUP",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "b0ea3a9e3a371c9652682033e945dd9c5279f4d66f5ab4c1e1f96c66b06adbcb",
+          "oldVerifierBundleSha256": "5cf92ce0b39e32457dadda22d0aeed3e57503624011f40242a727c77d613d3f6",
+          "newVerifierBundleSha256": "df8bb822c97f6cbfa91e434bcd3bf8ca66202cab9afad815716e8a77e90254ff"
+        }
+      ]
+    },
+    {
+      "provider": "glm",
+      "requestedModel": "glm-5.3-flash",
+      "resolvedModel": "glm-5.3-flash",
+      "runId": "resume-glm-full-dev-r1",
+      "manifestSha256": "f5c10a9f7afd3d0bc3f522c8eb784755a20bd10bb4f6d0bdb019f3475d508fb6",
+      "status": "COMPLETED_WITH_VERIFIER_REPLAY",
+      "modelGenerationRepeats": 1,
+      "originalAutomaticDiagnosticScore": 89,
+      "originalScoreValid": false,
+      "originalInvalidationReason": "VERIFIER_READ_ONLY_SCRATCH_SETUP",
+      "originalAutomaticInfraErrorEpisodes": 0,
+      "reviewedOriginalVerifierInvalidEpisodes": 1,
+      "verifierReplayProviderCalls": 0,
+      "passedCases": 8,
+      "totalCases": 8,
+      "diagnosticScore": 100,
+      "formalScore": null,
+      "publishable": false,
+      "modelIdentityGate": true,
+      "usageGate": true,
+      "fullProviderEvidenceGate": true,
+      "requestedContextCap": 1000000,
+      "maxOutputTokensPerCall": 16384,
+      "maximumObservedTotalTokensPerCall": 7295,
+      "usage": {
+        "calls": 42,
+        "inputTokens": 171327,
+        "outputTokens": 18244,
+        "cachedInputTokens": 143168,
+        "toolCalls": 68
+      },
+      "cases": [
+        {
+          "caseId": "dev-java-closed-range",
+          "weight": 14,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "fcbf0c0569428befa87dc3176844c2aaf812fb9e2352e04d20c655c7e1c13ea0",
+          "oldVerifierBundleSha256": "8d4c85cd958e1a47313b174957eb2a6dec2a88b25b13c41c0129d35554687500",
+          "newVerifierBundleSha256": "8d4c85cd958e1a47313b174957eb2a6dec2a88b25b13c41c0129d35554687500"
+        },
+        {
+          "caseId": "dev-java-shared-normalizer",
+          "weight": 16,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "3bd6398413f16bc832445e98c9c4767578d7c3e55b5669d90391c186dccfc738",
+          "oldVerifierBundleSha256": "f22d3730165bdeb75670d4e8d587d63e84f2a40f4c499c7af81375714c8ea9bb",
+          "newVerifierBundleSha256": "f22d3730165bdeb75670d4e8d587d63e84f2a40f4c499c7af81375714c8ea9bb"
+        },
+        {
+          "caseId": "dev-python-order-summary",
+          "weight": 13,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "8e55764aacd5f7984a867456b05f8e8101f9067d6528d36afec85055e699e551",
+          "oldVerifierBundleSha256": "8f8a296194a3c93172c06db03a2c01890fb544d9194b36c57edfbde6c2fbc27a",
+          "newVerifierBundleSha256": "8f8a296194a3c93172c06db03a2c01890fb544d9194b36c57edfbde6c2fbc27a"
+        },
+        {
+          "caseId": "dev-node-event-report",
+          "weight": 13,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "8cd2be6d9cf1e29850bc642d1062cb5abe083edb3a72f23afb93ecde729c952c",
+          "oldVerifierBundleSha256": "847b41ac6632cc43414d110f7e05ee9761d77ff177b6d36dca56f0738aae6e19",
+          "newVerifierBundleSha256": "847b41ac6632cc43414d110f7e05ee9761d77ff177b6d36dca56f0738aae6e19"
+        },
+        {
+          "caseId": "dev-terminal-release-manifest",
+          "weight": 12,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "337226e6e675d38392f0078cd440b6f1aa5469866845f5de6c0c835c9eb8ae18",
+          "oldVerifierBundleSha256": "0e8bdc9949cc47641eb237a394e3d6f4ec8136884edcec9b2d0e4f860a60a152",
+          "newVerifierBundleSha256": "0e8bdc9949cc47641eb237a394e3d6f4ec8136884edcec9b2d0e4f860a60a152"
+        },
+        {
+          "caseId": "dev-code-retry-location",
+          "weight": 10,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "dce7023de316630cfb88037b3f49a3c5bdd88db184d5c9bc29e85b5ead01552b",
+          "oldVerifierBundleSha256": "fb667b21924bef328f9b75138ba1c0b5bb3c7ce28b0e0bcd02cb8ac7b6748c91",
+          "newVerifierBundleSha256": "fb667b21924bef328f9b75138ba1c0b5bb3c7ce28b0e0bcd02cb8ac7b6748c91"
+        },
+        {
+          "caseId": "dev-safe-path-copy",
+          "weight": 11,
+          "originalAutomaticStatus": "SCORED_PASS",
+          "originalReviewedStatus": "SCORED_PASS",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "7684fd15950d1bbfd72531ab52ea698b698d615f97a4be0b1e8fe98b00db9b4c",
+          "oldVerifierBundleSha256": "d52ec3b365c50efb2c584397fcecde787942b028a93edeb9a53f80e0c0bf7d32",
+          "newVerifierBundleSha256": "d52ec3b365c50efb2c584397fcecde787942b028a93edeb9a53f80e0c0bf7d32"
+        },
+        {
+          "caseId": "dev-secret-safe-bundle",
+          "weight": 11,
+          "originalAutomaticStatus": "SCORED_FAIL",
+          "originalReviewedStatus": "INFRA_INVALID_VERIFIER_SETUP",
+          "replayStatus": "PASSED",
+          "snapshotSha256": "e3e1cc2a5bec2be2c1ec7e1ba96994fea49672ccab62f4c9b118b6b7da42b4c1",
+          "oldVerifierBundleSha256": "5cf92ce0b39e32457dadda22d0aeed3e57503624011f40242a727c77d613d3f6",
+          "newVerifierBundleSha256": "df8bb822c97f6cbfa91e434bcd3bf8ca66202cab9afad815716e8a77e90254ff"
+        }
+      ]
+    },
+    {
+      "provider": "hunyuan",
+      "requestedModel": "hy4-preview",
+      "status": "NOT_RUN",
+      "reason": "MISSING_CREDENTIAL",
+      "diagnosticScore": null,
+      "formalScore": null,
+      "publishable": false
+    }
+  ]
+}

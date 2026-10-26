@@ -1,0 +1,484 @@
+{
+  "schema": "drawio-skill/diagram-ir/v1",
+  "metadata": {
+    "title": "Simple CLI (paicli) 整体架构",
+    "description": "Java 17 Agent CLI：三条执行路径 + 工具治理 + 记忆检索 + 多模型接入。节点 provenance 指向真实源码文件。",
+    "source_repository": "D:/pailcli/paicli-main",
+    "source_commit_note": "取自 2026-09 工作副本，AGENTS.md 快照 23 期已交付",
+    "generated_by": "drawio-skill Diagram IR"
+  },
+  "nodes": [
+    {
+      "id": "main",
+      "label": "Main\n启动装配",
+      "kind": "service",
+      "properties": {
+        "layer": "入口与交互层",
+        "owner": "cli",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "runtime": "JVM 17",
+        "importance": 9,
+        "note": "LlmClientFactory → HitlToolRegistry → RendererFactory → Agent 的装配顺序"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/cli/Main.java", "line": 231 },
+      "labels": { "en": "Main bootstrap" }
+    },
+    {
+      "id": "cli-parser",
+      "label": "CliCommandParser\n斜杠命令",
+      "kind": "service",
+      "properties": {
+        "layer": "入口与交互层",
+        "owner": "cli",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "未识别的 /xxx 直接报错，不回退给 Agent"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/cli/CliCommandParser.java" },
+      "labels": { "en": "Slash command parser" }
+    },
+    {
+      "id": "inline-renderer",
+      "label": "InlineRenderer + JLine\ninline 交互",
+      "kind": "service",
+      "properties": {
+        "layer": "入口与交互层",
+        "owner": "render",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "BottomStatusBar 底部 dock；PaiCliCompleter/Highlighter/History"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/render/inline/InlineRenderer.java" },
+      "labels": { "en": "Inline renderer" }
+    },
+    {
+      "id": "lanterna-tui",
+      "label": "Lanterna TUI\n多窗格界面",
+      "kind": "service",
+      "properties": {
+        "layer": "入口与交互层",
+        "owner": "tui",
+        "trust_boundary": "private",
+        "environment": "local-process"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/tui/TuiBootstrap.java" },
+      "labels": { "en": "Lanterna TUI" }
+    },
+    {
+      "id": "wechat-channel",
+      "label": "微信 iLink 通道",
+      "kind": "external",
+      "properties": {
+        "layer": "入口与交互层",
+        "owner": "wechat",
+        "trust_boundary": "third-party",
+        "environment": "external-service",
+        "note": "无人工审批面板：只读放行、execute_command 命中文案白名单、写入受 PathGuard 限定"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/wechat/WechatMessageLoop.java" },
+      "labels": { "en": "WeChat iLink channel" }
+    },
+    {
+      "id": "runtime-api",
+      "label": "Runtime API + 持久任务",
+      "kind": "service",
+      "properties": {
+        "layer": "入口与交互层",
+        "owner": "runtime",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "RuntimeApiServer + DurableTaskManager/TaskRunner"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/runtime/api/RuntimeApiServer.java", "line": 885 },
+      "labels": { "en": "Runtime API" }
+    },
+
+    {
+      "id": "react-agent",
+      "label": "Agent\nReAct 主循环",
+      "kind": "service",
+      "properties": {
+        "layer": "执行层",
+        "owner": "agent",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "importance": 9,
+        "note": "默认模式；executeTools() 并行工具，最多 4 并发且结果保序"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/agent/Agent.java", "line": 329 },
+      "labels": { "en": "ReAct agent" }
+    },
+    {
+      "id": "plan-agent",
+      "label": "PlanExecuteAgent\n/plan",
+      "kind": "service",
+      "properties": {
+        "layer": "执行层",
+        "owner": "agent",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "审阅交互：Enter 执行 / Ctrl+O 展开 / ESC 取消 / I 补充重规划"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/agent/PlanExecuteAgent.java" },
+      "labels": { "en": "Plan and execute" }
+    },
+    {
+      "id": "planner",
+      "label": "Planner\nExecutionPlan / Task",
+      "kind": "service",
+      "properties": {
+        "layer": "执行层",
+        "owner": "plan",
+        "trust_boundary": "private",
+        "environment": "local-process"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/plan/Planner.java" },
+      "labels": { "en": "Planner" }
+    },
+    {
+      "id": "orchestrator",
+      "label": "AgentOrchestrator\n/team",
+      "kind": "service",
+      "properties": {
+        "layer": "执行层",
+        "owner": "agent",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "复用 ReAct 的 ToolRegistry 与 MemoryManager"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/agent/AgentOrchestrator.java", "line": 1116 },
+      "labels": { "en": "Multi-agent orchestrator" }
+    },
+    {
+      "id": "subagent",
+      "label": "SubAgent\nAgentRole / AgentMessage",
+      "kind": "service",
+      "properties": {
+        "layer": "执行层",
+        "owner": "agent",
+        "trust_boundary": "private",
+        "environment": "local-process"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/agent/SubAgent.java" },
+      "labels": { "en": "Sub agent" }
+    },
+    {
+      "id": "agent-budget",
+      "label": "AgentBudget\n步数 / token 预算",
+      "kind": "service",
+      "properties": {
+        "layer": "执行层",
+        "owner": "agent",
+        "trust_boundary": "private",
+        "environment": "local-process"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/agent/AgentBudget.java" },
+      "labels": { "en": "Agent budget" }
+    },
+
+    {
+      "id": "hitl-gate",
+      "label": "HITL 审批网关",
+      "kind": "gateway",
+      "properties": {
+        "layer": "工具与治理层",
+        "owner": "hitl",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "importance": 9,
+        "note": "拦截顺序：HitlToolRegistry → ToolRegistry → PathGuard/CommandGuard；用户无法批准策略拒绝"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/hitl/HitlToolRegistry.java", "line": 243 },
+      "labels": { "en": "HITL approval gate" }
+    },
+    {
+      "id": "tool-registry",
+      "label": "ToolRegistry\n内置工具集",
+      "kind": "service",
+      "properties": {
+        "layer": "工具与治理层",
+        "owner": "tool",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "importance": 9,
+        "note": "read/write_file · list_dir · glob_files · grep_code · execute_command · create_project · search_code · web_search · web_fetch · revert_turn · load_skill"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/tool/ToolRegistry.java" },
+      "labels": { "en": "Tool registry" }
+    },
+    {
+      "id": "code-search-engine",
+      "label": "CodeSearchEngine\nripgrep 优先 / Java 回退",
+      "kind": "service",
+      "properties": {
+        "layer": "工具与治理层",
+        "owner": "tool",
+        "trust_boundary": "private",
+        "environment": "local-process"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/tool/RipgrepCodeSearchEngine.java" },
+      "labels": { "en": "Code search engine" }
+    },
+    {
+      "id": "guards",
+      "label": "PathGuard / CommandGuard",
+      "kind": "gateway",
+      "properties": {
+        "layer": "工具与治理层",
+        "owner": "policy",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "PathGuard 强制路径限定项目根；CommandGuard 是辅助黑名单，不是主防线"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/policy/PathGuard.java" },
+      "labels": { "en": "Path and command guards" }
+    },
+    {
+      "id": "audit-log",
+      "label": "AuditLog\n审计",
+      "kind": "database",
+      "properties": {
+        "layer": "工具与治理层",
+        "owner": "policy",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "默认目录 ~/.paicli/audit"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/policy/AuditLog.java" },
+      "labels": { "en": "Audit log" }
+    },
+
+    {
+      "id": "prompt-assembler",
+      "label": "PromptAssembler\n分层提示 + PAI.md",
+      "kind": "service",
+      "properties": {
+        "layer": "上下文与记忆",
+        "owner": "prompt",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "按 ~/.paicli/PAI.md → 项目 PAI.md → .paicli/PAI.md → PAI.local.md 顺序注入，受字符预算约束"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/prompt/PromptAssembler.java" },
+      "labels": { "en": "Prompt assembler" }
+    },
+    {
+      "id": "memory-manager",
+      "label": "MemoryManager\n短期 / 长期 + 压缩",
+      "kind": "database",
+      "properties": {
+        "layer": "上下文与记忆",
+        "owner": "memory",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "importance": 9,
+        "note": "两道压缩：shortTermMemory 与 conversationHistory（后者防 window 超限）；阈值 window - 20k - 13k"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/memory/MemoryManager.java" },
+      "labels": { "en": "Memory manager" }
+    },
+
+    {
+      "id": "rag-index",
+      "label": "CodeIndex + VectorStore\nRAG 语义检索",
+      "kind": "database",
+      "properties": {
+        "layer": "检索与快照",
+        "owner": "rag",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "SQLite 存向量 JSON 数组，检索时内存算余弦相似度"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/rag/VectorStore.java" },
+      "labels": { "en": "RAG index" }
+    },
+    {
+      "id": "lsp-manager",
+      "label": "LspManager\n语言诊断",
+      "kind": "service",
+      "properties": {
+        "layer": "检索与快照",
+        "owner": "lsp",
+        "trust_boundary": "private",
+        "environment": "local-process"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/lsp/LspManager.java" },
+      "labels": { "en": "LSP manager" }
+    },
+    {
+      "id": "snapshot-service",
+      "label": "SideGitManager\n回合快照 (JGit)",
+      "kind": "database",
+      "properties": {
+        "layer": "检索与快照",
+        "owner": "snapshot",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "纯 Java 侧仓库，不依赖系统 git；支撑 revert_turn 回滚"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/snapshot/SideGitManager.java" },
+      "labels": { "en": "Side-git snapshot" }
+    },
+
+    {
+      "id": "llm-factory",
+      "label": "LlmClientFactory",
+      "kind": "service",
+      "properties": {
+        "layer": "模型接入层",
+        "owner": "llm",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "importance": 9,
+        "note": "provider 别名归一（stepfun/moonshot/iflytek 等）后分发到具体 Client"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/llm/LlmClientFactory.java" },
+      "labels": { "en": "LLM client factory" }
+    },
+    {
+      "id": "llm-providers",
+      "label": "7 家模型 Provider\nGLM · DeepSeek · Step · Kimi\nFreeLlmApi · Xfyun MaaS · Agnes",
+      "kind": "external",
+      "properties": {
+        "layer": "模型接入层",
+        "owner": "llm",
+        "trust_boundary": "third-party",
+        "environment": "external-service",
+        "note": "DeepSeek 默认 HTTP/1.1 且按纯文本 provider 处理，图片 block 会降级为文本；thinking 模式需回灌 reasoning_content"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/llm/DeepSeekClient.java" },
+      "labels": { "en": "LLM providers" }
+    },
+
+    {
+      "id": "mcp-client",
+      "label": "McpServerManager\nMCP 动态工具",
+      "kind": "external",
+      "properties": {
+        "layer": "外部集成",
+        "owner": "mcp",
+        "trust_boundary": "third-party",
+        "environment": "external-service",
+        "note": "动态工具名 mcp__{server}__{tool}；配置合并 ~/.paicli/mcp.json 与 .paicli/mcp.json；启动最多等 8s 不阻塞首屏"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/mcp/McpServerManager.java", "line": 247 },
+      "labels": { "en": "MCP client" }
+    },
+    {
+      "id": "mcp-transport",
+      "label": "stdio / Streamable HTTP",
+      "kind": "external",
+      "properties": {
+        "layer": "外部集成",
+        "owner": "mcp",
+        "trust_boundary": "third-party",
+        "environment": "external-service"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/mcp/transport/StreamableHttpTransport.java" },
+      "labels": { "en": "MCP transports" }
+    },
+    {
+      "id": "web-tools",
+      "label": "WebFetcher / SearchProvider",
+      "kind": "external",
+      "properties": {
+        "layer": "外部集成",
+        "owner": "web",
+        "trust_boundary": "public",
+        "environment": "external-service",
+        "note": "SearchProviderFactory: Searxng / SerpApi / Zhipu；HTML 正文用 jsoup 提取"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/web/WebFetcher.java" },
+      "labels": { "en": "Web tools" }
+    },
+    {
+      "id": "browser-session",
+      "label": "BrowserSession\nChrome CDP",
+      "kind": "external",
+      "properties": {
+        "layer": "外部集成",
+        "owner": "browser",
+        "trust_boundary": "public",
+        "environment": "external-service",
+        "note": "BrowserGuard + SensitivePagePolicy 管控敏感页与会话切换"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/browser/BrowserSession.java" },
+      "labels": { "en": "Browser session" }
+    },
+    {
+      "id": "skill-registry",
+      "label": "SkillRegistry\n内建 / 用户 / 项目",
+      "kind": "service",
+      "properties": {
+        "layer": "外部集成",
+        "owner": "skill",
+        "trust_boundary": "private",
+        "environment": "local-process",
+        "note": "扫描内建缓存 + ~/.paicli/skills + <project>/.paicli/skills；索引段上限 20 个 / 4KB；load_skill 注入下一轮 user message"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/skill/SkillRegistry.java" },
+      "labels": { "en": "Skill registry" }
+    },
+
+    {
+      "id": "local-store",
+      "label": "本地状态与持久化",
+      "kind": "database",
+      "properties": {
+        "layer": "本地持久化",
+        "owner": "shared",
+        "trust_boundary": "private",
+        "environment": "local-disk",
+        "note": "~/.paicli（记忆/审计/技能/历史/导出）、.paicli（PAI.md/mcp.json/skills）、SQLite 向量库、side-git 快照仓库、.env 密钥"
+      },
+      "provenance": { "path": "src/main/java/com/paicli/config/PaiCliConfig.java" },
+      "labels": { "en": "Local state" }
+    }
+  ],
+  "edges": [
+    { "id": "e-main-parser", "source": "main", "target": "cli-parser", "label": "解析输入", "kind": "sync", "properties": { "protocol": "in-process" } },
+    { "id": "e-main-inline", "source": "main", "target": "inline-renderer", "label": "RendererFactory 装配", "kind": "sync", "properties": {} },
+    { "id": "e-main-tui", "source": "main", "target": "lanterna-tui", "label": "TUI 模式", "kind": "sync", "properties": {} },
+    { "id": "e-main-api", "source": "main", "target": "runtime-api", "label": "启动 API", "kind": "sync", "properties": {} },
+    { "id": "e-parser-react", "source": "cli-parser", "target": "react-agent", "label": "普通任务", "kind": "sync", "properties": {} },
+    { "id": "e-parser-plan", "source": "cli-parser", "target": "plan-agent", "label": "/plan", "kind": "sync", "properties": {} },
+    { "id": "e-parser-team", "source": "cli-parser", "target": "orchestrator", "label": "/team", "kind": "sync", "properties": {} },
+    { "id": "e-parser-wechat", "source": "cli-parser", "target": "wechat-channel", "label": "/wechat · wechat setup", "kind": "sync", "properties": {} },
+    { "id": "e-wechat-react", "source": "wechat-channel", "target": "react-agent", "label": "文本消息", "kind": "sync", "properties": {} },
+    { "id": "e-api-react", "source": "runtime-api", "target": "react-agent", "label": "HTTP / 持久任务", "kind": "sync", "properties": {} },
+
+    { "id": "e-plan-planner", "source": "plan-agent", "target": "planner", "label": "拆解任务", "kind": "sync", "properties": {} },
+    { "id": "e-planner-plan", "source": "planner", "target": "plan-agent", "label": "ExecutionPlan / Task DAG", "kind": "data", "properties": {} },
+    { "id": "e-plan-react", "source": "plan-agent", "target": "react-agent", "label": "逐任务执行", "kind": "sync", "properties": {} },
+    { "id": "e-team-sub", "source": "orchestrator", "target": "subagent", "label": "角色派发", "kind": "sync", "properties": {} },
+    { "id": "e-sub-react", "source": "subagent", "target": "react-agent", "label": "复用 ReAct", "kind": "sync", "properties": {} },
+    { "id": "e-react-budget", "source": "react-agent", "target": "agent-budget", "label": "预算约束", "kind": "sync", "properties": {} },
+
+    { "id": "e-react-hitl", "source": "react-agent", "target": "hitl-gate", "label": "工具调用", "kind": "sync", "properties": {} },
+    { "id": "e-hitl-tools", "source": "hitl-gate", "target": "tool-registry", "label": "批准后放行", "kind": "sync", "properties": {} },
+    { "id": "e-tools-guards", "source": "tool-registry", "target": "guards", "label": "策略校验", "kind": "sync", "properties": {} },
+    { "id": "e-guards-audit", "source": "guards", "target": "audit-log", "label": "审计记录", "kind": "write", "properties": {} },
+    { "id": "e-tools-codesearch", "source": "tool-registry", "target": "code-search-engine", "label": "grep_code / glob_files", "kind": "sync", "properties": {} },
+    { "id": "e-tools-mcp", "source": "tool-registry", "target": "mcp-client", "label": "mcp__* 动态工具", "kind": "sync", "properties": {} },
+    { "id": "e-mcp-transport", "source": "mcp-client", "target": "mcp-transport", "label": "JSON-RPC", "kind": "sync", "properties": { "protocol": "stdio / HTTP" } },
+    { "id": "e-tools-web", "source": "tool-registry", "target": "web-tools", "label": "web_search / web_fetch", "kind": "sync", "properties": {} },
+    { "id": "e-tools-browser", "source": "tool-registry", "target": "browser-session", "label": "SPA / 防爬 fallback", "kind": "sync", "properties": {} },
+    { "id": "e-tools-skill", "source": "tool-registry", "target": "skill-registry", "label": "load_skill", "kind": "read", "properties": {} },
+    { "id": "e-tools-snapshot", "source": "tool-registry", "target": "snapshot-service", "label": "revert_turn", "kind": "write", "properties": {} },
+    { "id": "e-tools-lsp", "source": "tool-registry", "target": "lsp-manager", "label": "编辑后诊断", "kind": "sync", "properties": {} },
+
+    { "id": "e-react-llm", "source": "react-agent", "target": "llm-factory", "label": "推理请求（三路径共用）", "kind": "sync", "properties": { "protocol": "HTTPS" } },
+    { "id": "e-llm-provider", "source": "llm-factory", "target": "llm-providers", "label": "provider 分发", "kind": "sync", "properties": { "protocol": "HTTPS / SSE" } },
+
+    { "id": "e-react-prompt", "source": "react-agent", "target": "prompt-assembler", "label": "每轮组装 system prompt", "kind": "sync", "properties": {} },
+    { "id": "e-prompt-store", "source": "prompt-assembler", "target": "local-store", "label": "注入 PAI.md 分层", "kind": "read", "properties": {} },
+    { "id": "e-react-memory", "source": "react-agent", "target": "memory-manager", "label": "读写记忆", "kind": "data", "properties": {} },
+    { "id": "e-memory-store", "source": "memory-manager", "target": "local-store", "label": "长期记忆落盘", "kind": "write", "properties": {} },
+    { "id": "e-react-rag", "source": "react-agent", "target": "rag-index", "label": "search_code 语义检索", "kind": "read", "properties": {} },
+    { "id": "e-rag-store", "source": "rag-index", "target": "local-store", "label": "向量 + 关系图", "kind": "write", "properties": {} },
+    { "id": "e-snapshot-store", "source": "snapshot-service", "target": "local-store", "label": "回合快照提交", "kind": "write", "properties": {} },
+    { "id": "e-skill-store", "source": "skill-registry", "target": "local-store", "label": "扫描 skills 目录", "kind": "read", "properties": {} }
+  ],
+  "views": []
+}

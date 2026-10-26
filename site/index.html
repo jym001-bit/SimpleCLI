@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="no-js">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaiCLI — 跑在终端里的 Java Agent</title>
+<meta name="description" content="PaiCLI 是一个用 Java 17 写成的 Agent CLI：读代码、查资料、改文件、跑命令，把计划、审批、快照和回滚留在你手边。">
+<meta name="theme-color" content="#eef0ea">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='88'%20font-family='Georgia,serif'%20font-style='italic'%20fill='%231c5a47'%3E%CF%80%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#eef0ea;
+    --paper-2:#e6e9e1;
+    --paper-3:#f5f6f2;
+    --ink:#121815;
+    --ink-2:#3c4943;
+    --muted:#5f6c65;
+    --line:#ccd3c8;
+    --line-strong:#a7b1a4;
+    --pine:#1c5a47;
+    --signal:#d4552a;
+    --signal-ink:#a8401f;
+    --amber:#bd8b24;
+    --terminal:#0d1512;
+    --terminal-line:#24342c;
+    --terminal-text:#d7e2d9;
+    --terminal-dim:#7d9186;
+    --mono:"Cascadia Code","JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",monospace;
+    --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --serif:Georgia,"Times New Roman","Songti SC",serif;
+    --wrap:1180px;
+    --pad:clamp(20px,5vw,56px);
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+  body{
+    font-family:var(--sans);
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--pine);color:var(--paper);}
+  a{color:inherit;text-decoration:none;}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+  img,svg{display:block;max-width:100%;}
+  code,pre,.mono{font-family:var(--mono);font-variant-ligatures:none;}
+  :focus-visible{outline:2px solid var(--signal);outline-offset:3px;}
+
+  .skip{
+    position:fixed;left:16px;top:-80px;z-index:200;
+    background:var(--ink);color:var(--paper);
+    padding:10px 16px;font-size:14px;transition:top .2s;
+  }
+  .skip:focus{top:12px;}
+
+  .wrap{width:100%;max-width:var(--wrap);margin:0 auto;padding-left:var(--pad);padding-right:var(--pad);}
+
+  /* ── nav ───────────────────────────────────────────── */
+  .nav{
+    position:fixed;inset:0 0 auto 0;z-index:100;
+    height:64px;
+    background:rgba(238,240,234,.88);
+    border-bottom:1px solid rgba(18,24,21,.09);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    transition:box-shadow .25s,border-color .25s;
+  }
+  .nav.is-scrolled{box-shadow:0 1px 0 rgba(18,24,21,.06),0 8px 24px rgba(18,24,21,.05);}
+  .nav-inner{height:100%;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+  .brand{display:flex;align-items:baseline;gap:10px;min-width:0;}
+  .brand-pi{
+    font-family:var(--serif);font-style:italic;font-weight:700;
+    font-size:1.65rem;line-height:1;color:var(--pine);
+    transform:translateY(1px);
+  }
+  .brand-name{font-weight:800;font-size:1.05rem;letter-spacing:-.02em;}
+  .brand-sub{
+    font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+    color:var(--muted);text-transform:uppercase;
+    padding-left:10px;border-left:1px solid var(--line-strong);
+    white-space:nowrap;
+  }
+  .nav-links{display:flex;align-items:center;gap:28px;}
+  .nav-links a{
+    font-size:13.5px;color:var(--ink-2);position:relative;padding:4px 0;
+  }
+  .nav-links a::after{
+    content:"";position:absolute;left:0;right:100%;bottom:0;height:1px;
+    background:var(--pine);transition:right .22s ease;
+  }
+  .nav-links a:hover::after{right:0;}
+  .nav-right{display:flex;align-items:center;gap:14px;}
+  .version{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+    color:var(--pine);border:1px solid var(--line-strong);
+    padding:4px 8px;white-space:nowrap;
+  }
+  .nav-cta{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--ink);color:var(--paper);
+    font-size:13px;font-weight:600;
+    padding:9px 16px;border:1px solid var(--ink);
+    transition:background .2s,border-color .2s;
+    white-space:nowrap;
+  }
+  .nav-cta:hover{background:var(--pine);border-color:var(--pine);}
+  .nav-cta .arrow{transition:transform .2s;}
+  .nav-cta:hover .arrow{transform:translateX(3px);}
+
+  /* ── hero ──────────────────────────────────────────── */
+  .hero{
+    position:relative;overflow:hidden;
+    padding:148px 0 76px;
+    border-bottom:1px solid var(--line);
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(18,24,21,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(18,24,21,.045) 1px,transparent 1px);
+    background-size:64px 64px;
+    mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 58%,transparent 92%);
+    -webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.55) 58%,transparent 92%);
+  }
+  .hero::after{
+    content:"π";position:absolute;right:-.06em;bottom:-.36em;
+    font-family:var(--serif);font-style:italic;font-size:min(40vw,540px);
+    line-height:1;color:rgba(28,90,71,.045);pointer-events:none;user-select:none;
+  }
+  .hero-grid{
+    position:relative;z-index:1;
+    display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);
+    gap:clamp(36px,5vw,72px);align-items:center;
+  }
+  .kicker{
+    display:inline-flex;align-items:center;gap:9px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;
+    color:var(--pine);text-transform:uppercase;
+    margin-bottom:26px;
+  }
+  .kicker-dot{
+    width:6px;height:6px;background:var(--signal);border-radius:50%;
+    box-shadow:0 0 0 4px rgba(212,85,42,.12);
+  }
+  .hero h1{
+    font-size:clamp(2.7rem,5.2vw,4.5rem);
+    line-height:1.06;letter-spacing:-.045em;font-weight:800;
+    margin-bottom:26px;
+  }
+  .hero h1 .line{display:block;}
+  .hero h1 .accent{
+    color:var(--pine);
+    position:relative;display:inline-block;z-index:0;
+  }
+  .hero h1 .accent::after{
+    content:"";position:absolute;left:.02em;right:.02em;bottom:.02em;
+    height:.1em;background:var(--signal);opacity:.8;z-index:-1;
+  }
+  .hero-sub{
+    max-width:33em;font-size:clamp(15px,1.45vw,17px);
+    color:var(--ink-2);line-height:1.85;margin-bottom:32px;
+  }
+  .hero-sub strong{color:var(--ink);font-weight:600;}
+  .hero-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:24px;}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    font-size:14px;font-weight:600;padding:13px 22px;
+    border:1px solid var(--ink);transition:background .2s,color .2s,border-color .2s,transform .2s;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-ink{background:var(--ink);color:var(--paper);}
+  .btn-ink:hover{background:var(--pine);border-color:var(--pine);}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line-strong);}
+  .btn-ghost:hover{border-color:var(--ink);background:rgba(18,24,21,.035);}
+  .btn .arrow{transition:transform .2s;}
+  .btn:hover .arrow{transform:translateX(3px);}
+  .hero-meta{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+  }
+  .hero-meta .sep{color:var(--line-strong);}
+
+  /* ── trace ─────────────────────────────────────────── */
+  .trace{
+    --trace-time:48px;--trace-gap:10px;
+    position:relative;
+    background:var(--terminal);
+    border:1px solid #1d2c25;
+    color:var(--terminal-text);
+    box-shadow:12px 12px 0 rgba(18,24,21,.09);
+  }
+  .trace::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+    background:linear-gradient(to bottom,var(--signal),var(--pine) 55%,transparent);
+    opacity:.85;
+  }
+  .trace-head{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:13px 18px;border-bottom:1px solid var(--terminal-line);
+    background:rgba(255,255,255,.015);
+  }
+  .trace-title{display:flex;align-items:center;gap:10px;min-width:0;}
+  .trace-dots{display:flex;gap:5px;flex:none;}
+  .trace-dots i{width:7px;height:7px;border-radius:50%;background:#34443b;}
+  .trace-dots i:first-child{background:var(--signal);}
+  .trace-dots i:nth-child(2){background:var(--amber);}
+  .trace-dots i:nth-child(3){background:#3e7a60;}
+  .trace-title span{
+    font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    color:var(--terminal-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .trace-live{
+    display:inline-flex;align-items:center;gap:6px;flex:none;
+    font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:#8fb9a2;
+  }
+  .trace-live::before{
+    content:"";width:5px;height:5px;border-radius:50%;background:#59c08c;
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(89,192,140,.4);}50%{opacity:.55;box-shadow:0 0 0 4px rgba(89,192,140,0);}}
+
+  .trace-task{
+    margin:16px 18px 4px;
+    padding:11px 13px;
+    border-left:2px solid var(--signal);
+    background:rgba(212,85,42,.07);
+    font-size:13px;line-height:1.6;color:#e7efe9;
+  }
+  .trace-task b{
+    display:block;font-family:var(--mono);font-size:9px;
+    letter-spacing:.14em;color:#c98a70;font-weight:400;margin-bottom:3px;
+  }
+  .trace-body{position:relative;padding:12px 18px 18px;}
+  .trace-body::before{
+    content:"";position:absolute;
+    left:calc(18px + var(--trace-time) + var(--trace-gap) + 5px);
+    top:22px;bottom:24px;width:1px;background:var(--terminal-line);
+  }
+  .step{
+    display:grid;grid-template-columns:var(--trace-time) 10px minmax(0,1fr);
+    gap:var(--trace-gap);align-items:start;
+    padding:7px 0;position:relative;
+  }
+  .step time{
+    font-family:var(--mono);font-size:9.5px;color:#7d9186;
+    padding-top:2px;text-align:right;font-variant-numeric:tabular-nums;
+  }
+  .step .dot{
+    width:9px;height:9px;margin-top:3px;border-radius:50%;
+    background:var(--terminal);border:1.5px solid #5d7768;position:relative;z-index:1;
+  }
+  .step .dot.tool{border-color:#5aa582;background:#1a3a2c;}
+  .step .dot.think{border-color:var(--amber);background:#3a2f12;}
+  .step .dot.edit{border-color:var(--signal);background:#3b1e13;}
+  .step .dot.check{border-color:#59c08c;background:#1b3d2d;}
+  .step .dot.snap{border-color:#7d9186;background:#26332c;}
+  .step-body{min-width:0;padding-top:0;}
+  .step-kind{
+    display:inline-block;font-family:var(--mono);font-size:9px;
+    letter-spacing:.12em;text-transform:uppercase;color:#7d9186;
+    margin-right:7px;transform:translateY(-1px);
+  }
+  .step-kind.tool{color:#7fb79a;}
+  .step-kind.think{color:#c9a35a;}
+  .step-kind.edit{color:#d98a6d;}
+  .step-kind.check{color:#74c79a;}
+  .step p{display:inline;font-size:11.5px;line-height:1.65;color:#c2d0c6;}
+  .step p b{color:#eef4ef;font-weight:600;}
+  .step p code{font-size:10.5px;color:#9fc4ac;background:rgba(255,255,255,.045);padding:1px 4px;}
+  .step .diff{
+    display:inline-flex;gap:5px;margin-left:6px;font-family:var(--mono);font-size:9px;
+  }
+  .diff .plus{color:#6ec08f;}
+  .diff .minus{color:#d9836b;}
+  .trace-foot{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:10px 18px;border-top:1px solid var(--terminal-line);
+    font-family:var(--mono);font-size:9px;letter-spacing:.05em;color:#7d9186;
+    flex-wrap:wrap;
+  }
+  .trace-foot .ok{color:#74c79a;}
+
+  /* ── spec bar ──────────────────────────────────────── */
+  .spec{border-bottom:1px solid var(--line);background:var(--paper-3);}
+  .spec-grid{display:grid;grid-template-columns:repeat(4,1fr);}
+  .spec-item{
+    padding:22px 24px;border-left:1px solid var(--line);
+    display:flex;flex-direction:column;gap:4px;
+  }
+  .spec-item:first-child{border-left:0;padding-left:0;}
+  .spec-item:last-child{padding-right:0;}
+  .spec-label{
+    font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+    color:var(--muted);text-transform:uppercase;
+  }
+  .spec-value{font-size:13.5px;font-weight:600;letter-spacing:-.01em;color:var(--ink);}
+  .spec-value span{color:var(--muted);font-weight:400;}
+
+  /* ── chapter frame ─────────────────────────────────── */
+  .chapter{padding:clamp(68px,9vw,108px) 0;border-bottom:1px solid var(--line);scroll-margin-top:80px;}
+  .chapter-grid{
+    display:grid;grid-template-columns:150px minmax(0,1fr);
+    gap:clamp(28px,5vw,64px);align-items:start;
+  }
+  .chapter-side{position:sticky;top:96px;}
+  .chapter-no{
+    font-family:var(--serif);font-size:2.6rem;line-height:1;
+    color:var(--line-strong);font-style:italic;letter-spacing:-.03em;
+    display:block;margin-bottom:10px;
+  }
+  .chapter-en{
+    display:block;font-family:var(--mono);font-size:9px;
+    letter-spacing:.16em;color:var(--muted);text-transform:uppercase;
+    padding-top:10px;border-top:1px solid var(--line-strong);
+    line-height:1.7;
+  }
+  .chapter-main{min-width:0;}
+  .chapter h2{
+    font-size:clamp(1.9rem,3.6vw,3rem);
+    line-height:1.22;letter-spacing:-.035em;font-weight:800;
+    margin-bottom:18px;
+  }
+  .chapter h2 .thin{font-weight:400;color:var(--ink-2);}
+  .chapter-lead{
+    max-width:38em;color:var(--ink-2);font-size:15.5px;line-height:1.85;
+    margin-bottom:clamp(32px,5vw,52px);
+  }
+  .chapter-lead code{font-size:13px;color:var(--pine);background:rgba(28,90,71,.07);padding:1px 5px;}
+
+  /* ── modes ─────────────────────────────────────────── */
+  .mode-list{border-top:1px solid var(--line-strong);}
+  .mode-row{
+    display:grid;grid-template-columns:210px minmax(0,1fr) 310px;
+    gap:clamp(20px,3vw,38px);
+    padding:30px 0;border-bottom:1px solid var(--line);
+    transition:background .2s;
+  }
+  .mode-row:hover{background:rgba(28,90,71,.035);}
+  .mode-name{font-size:1.3rem;font-weight:800;letter-spacing:-.025em;line-height:1.25;}
+  .mode-name .mode-en{
+    display:block;font-family:var(--mono);font-size:9.5px;font-weight:400;
+    letter-spacing:.08em;color:var(--muted);margin-top:5px;
+  }
+  .mode-body p{font-size:14px;line-height:1.8;color:var(--ink-2);margin-bottom:14px;}
+  .mode-body p code{font-size:12px;color:var(--pine);}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;}
+  .tags span{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.03em;
+    color:var(--pine);border:1px solid var(--line-strong);
+    padding:2px 7px;background:rgba(255,255,255,.25);
+  }
+  .mode-cmd{
+    align-self:start;
+    background:var(--terminal);color:var(--terminal-text);
+    border:1px solid #1d2c25;padding:13px 14px;
+    font-family:var(--mono);font-size:10.5px;line-height:1.7;
+    overflow-wrap:anywhere;
+  }
+  .mode-cmd .prompt{color:#6ec08f;margin-right:6px;}
+  .mode-cmd .cmd-label{
+    display:block;font-size:9px;letter-spacing:.14em;color:#7d9186;
+    text-transform:uppercase;margin-bottom:6px;
+  }
+  .chapter-note{
+    margin-top:26px;font-size:12.5px;color:var(--muted);line-height:1.8;
+    padding-left:14px;border-left:2px solid var(--line-strong);
+  }
+  .chapter-note code{font-size:11.5px;color:var(--ink-2);}
+
+  /* ── capability band ───────────────────────────────── */
+  .band{background:var(--paper-2);}
+  .cap-grid{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:1px;background:var(--line);border:1px solid var(--line);
+  }
+  .cap{
+    background:var(--paper-2);padding:26px 24px 28px;
+    display:flex;flex-direction:column;min-height:196px;
+    transition:background .22s,transform .22s,box-shadow .22s;
+    position:relative;
+  }
+  .cap:hover{background:var(--paper-3);transform:translateY(-3px);box-shadow:0 10px 26px rgba(18,24,21,.08);z-index:1;}
+  .cap-icon{
+    width:26px;height:26px;color:var(--pine);margin-bottom:20px;
+    stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;
+  }
+  .cap h3{font-size:15.5px;font-weight:700;letter-spacing:-.015em;margin-bottom:8px;}
+  .cap p{font-size:12.5px;line-height:1.8;color:var(--ink-2);flex:1;}
+  .cap p code{font-size:11px;color:var(--pine);}
+  .cap-tag{
+    margin-top:18px;font-family:var(--mono);font-size:9px;
+    letter-spacing:.06em;color:var(--muted);
+    padding-top:10px;border-top:1px solid var(--line);
+  }
+
+  /* ── flow ──────────────────────────────────────────── */
+  .flow{
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+    border-top:1px solid var(--line-strong);
+    margin-top:8px;
+  }
+  .flow-step{padding:24px 18px 0 0;position:relative;}
+  .flow-step::before{
+    content:"";position:absolute;top:-4px;left:0;
+    width:7px;height:7px;border-radius:50%;
+    background:var(--paper);border:1.5px solid var(--pine);
+  }
+  .flow-step:first-child::before{background:var(--pine);}
+  .flow-no{
+    font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+    color:var(--signal-ink);display:block;margin-bottom:7px;
+  }
+  .flow-step h3{font-size:14.5px;font-weight:700;margin-bottom:7px;letter-spacing:-.01em;}
+  .flow-step p{font-size:11.5px;line-height:1.75;color:var(--muted);}
+  .flow-step p code{font-size:10.5px;color:var(--ink-2);}
+
+  /* ── safety ────────────────────────────────────────── */
+  .safety{background:var(--ink);color:var(--paper);border-bottom:0;}
+  .safety .chapter-no{color:#43564b;}
+  .safety .chapter-en{color:#8fa196;border-color:#3a4a41;}
+  .safety h2{color:var(--paper);}
+  .safety h2 .thin{color:#a9b8ae;}
+  .safety .chapter-lead{color:#a9b8ae;}
+  .safety .chapter-lead code{color:#8fc7aa;background:rgba(143,199,170,.1);}
+  .safety-grid{
+    display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);
+    gap:clamp(36px,5vw,64px);align-items:start;
+  }
+  .guard-list{border-top:1px solid #33443a;}
+  .guard{padding:18px 0;border-bottom:1px solid #2a3a31;display:grid;grid-template-columns:112px minmax(0,1fr);gap:18px;}
+  .guard h3{
+    font-size:12px;font-weight:700;color:#dbe6de;letter-spacing:.01em;
+    font-family:var(--mono);
+  }
+  .guard p{font-size:12.5px;line-height:1.8;color:#93a79b;}
+  .guard p code{font-size:11px;color:#b6d8c4;}
+  .safety-note{
+    margin-top:22px;font-size:11.5px;line-height:1.8;color:#93a79b;
+    padding-left:14px;border-left:2px solid #3c5045;
+  }
+
+  .approval{
+    background:var(--paper-3);color:var(--ink);
+    border:1px solid #c7cfc3;box-shadow:10px 10px 0 rgba(0,0,0,.22);
+    font-family:var(--mono);
+  }
+  .approval-head{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 16px;border-bottom:1px solid var(--line);
+    font-size:9px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;
+  }
+  .approval-head .warn{display:inline-flex;align-items:center;gap:7px;color:var(--signal-ink);}
+  .approval-head .warn::before{content:"";width:6px;height:6px;background:var(--signal);border-radius:50%;}
+  .approval-body{padding:20px 18px 18px;}
+  .approval-tool{font-size:15px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px;}
+  .approval-cmd{
+    background:#e2e6dd;border-left:2px solid var(--signal);
+    padding:10px 12px;font-size:12px;color:#2f3a34;
+    margin:12px 0;overflow-wrap:anywhere;
+  }
+  .approval-meta{font-size:10px;color:var(--muted);line-height:1.8;}
+  .approval-meta b{color:var(--ink-2);font-weight:600;}
+  .approval-actions{
+    display:flex;flex-wrap:wrap;gap:7px;margin-top:18px;
+    padding-top:16px;border-top:1px solid var(--line);
+  }
+  .approval-actions span{
+    font-size:10px;border:1px solid var(--line-strong);
+    padding:5px 8px;color:var(--ink-2);background:var(--paper);
+  }
+  .approval-actions span:first-child{border-color:var(--pine);color:var(--pine);font-weight:700;}
+  .approval-foot{
+    padding:9px 16px;border-top:1px solid var(--line);
+    font-size:9px;color:var(--muted);line-height:1.6;
+  }
+
+  /* ── quickstart ────────────────────────────────────── */
+  .start-steps{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line-strong);}
+  .start-step{
+    display:grid;grid-template-columns:64px minmax(0,1fr);
+    gap:clamp(16px,3vw,32px);padding:26px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .start-no{
+    font-family:var(--serif);font-style:italic;font-size:1.9rem;
+    line-height:1;color:var(--line-strong);padding-top:2px;
+  }
+  .start-body h3{font-size:15px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em;}
+  .start-body p{font-size:12.5px;line-height:1.8;color:var(--muted);margin-bottom:12px;}
+  .start-body p code{font-size:11.5px;color:var(--pine);}
+  .codebox{
+    position:relative;background:var(--terminal);color:var(--terminal-text);
+    border:1px solid #1d2c25;
+  }
+  .codebox pre{
+    padding:14px 92px 14px 16px;overflow-x:auto;
+    font-size:11.5px;line-height:1.75;white-space:pre;
+  }
+  .codebox pre .c{color:#7d9186;}
+  .codebox pre .g{color:#6ec08f;}
+  .copy{
+    position:absolute;right:8px;top:8px;
+    font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+    color:#93a79b;border:1px solid #33443a;background:#111d18;
+    padding:4px 8px;transition:color .2s,border-color .2s,background .2s;
+  }
+  .copy:hover{color:#d7e2d9;border-color:#5d7768;}
+  .copy.is-done{color:#6ec08f;border-color:#3e7a60;}
+  .start-foot{
+    margin-top:26px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    font-size:12px;color:var(--muted);
+  }
+  .start-foot .dot{width:4px;height:4px;background:var(--line-strong);border-radius:50%;}
+  .start-foot a{color:var(--pine);border-bottom:1px solid rgba(28,90,71,.35);}
+  .start-foot a:hover{border-color:var(--pine);}
+
+  /* ── timeline ──────────────────────────────────────── */
+  .timeline-wrap{position:relative;}
+  .timeline{
+    display:flex;overflow-x:auto;padding:26px 0 22px;
+    border-top:1px solid var(--line-strong);
+    scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent;
+  }
+  .timeline::-webkit-scrollbar{height:6px;}
+  .timeline::-webkit-scrollbar-track{background:transparent;}
+  .timeline::-webkit-scrollbar-thumb{background:var(--line-strong);}
+  .tl-item{
+    flex:0 0 158px;position:relative;padding:0 22px 0 0;
+  }
+  .tl-item::before{
+    content:"";position:absolute;top:-31px;left:0;
+    width:9px;height:9px;border-radius:50%;
+    background:var(--paper-2);border:1.5px solid var(--line-strong);
+  }
+  .tl-item.major::before{background:var(--pine);border-color:var(--pine);}
+  .tl-no{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+    color:var(--signal-ink);display:block;margin-bottom:6px;
+  }
+  .tl-item h3{font-size:13px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px;}
+  .tl-item p{font-size:10.5px;line-height:1.65;color:var(--muted);}
+  .timeline-hint{
+    margin-top:14px;font-family:var(--mono);font-size:9px;
+    letter-spacing:.08em;color:var(--muted);
+  }
+
+  /* ── footer ────────────────────────────────────────── */
+  .footer{background:var(--ink);color:var(--paper);padding:56px 0 40px;}
+  .footer-grid{
+    display:flex;align-items:flex-start;justify-content:space-between;
+    gap:32px;flex-wrap:wrap;
+  }
+  .footer-brand{display:flex;align-items:flex-start;gap:16px;}
+  .footer-pi{
+    font-family:var(--serif);font-style:italic;font-size:3.4rem;
+    line-height:.85;color:var(--signal);
+  }
+  .footer-name{font-size:1.15rem;font-weight:800;letter-spacing:-.02em;margin-bottom:4px;}
+  .footer-desc{font-size:12px;color:#93a79b;line-height:1.8;}
+  .footer-links{display:flex;gap:26px;flex-wrap:wrap;}
+  .footer-links a{
+    font-size:12px;color:#a9b8ae;border-bottom:1px solid transparent;
+    padding-bottom:2px;transition:color .2s,border-color .2s;
+  }
+  .footer-links a:hover{color:var(--paper);border-color:#5d7768;}
+  .footer-bottom{
+    margin-top:40px;padding-top:18px;border-top:1px solid #2a3a31;
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:9px;letter-spacing:.05em;color:#7d9186;
+  }
+
+  /* ── reveal / motion ───────────────────────────────── */
+  .js .reveal{opacity:0;transform:translateY(16px);transition:opacity .65s cubic-bezier(.2,.65,.25,1),transform .65s cubic-bezier(.2,.65,.25,1);transition-delay:var(--delay,0s);}
+  .js .reveal.is-in{opacity:1;transform:none;}
+
+  .js .trace .step{opacity:0;transform:translateY(5px);}
+  .js .trace.is-live .step{
+    animation:stepIn .42s cubic-bezier(.2,.65,.25,1) forwards;
+    animation-delay:calc(var(--i,0) * 105ms + .15s);
+  }
+  @keyframes stepIn{to{opacity:1;transform:none;}}
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;}
+    .js .reveal,.js .trace .step{opacity:1 !important;transform:none !important;}
+  }
+
+  /* ── responsive ────────────────────────────────────── */
+  @media (max-width:1080px){
+    .mode-row{grid-template-columns:180px minmax(0,1fr);}
+    .mode-cmd{grid-column:2;max-width:420px;}
+    .cap-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .cap:last-child{grid-column:span 2;}
+    .flow{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:28px;}
+    .flow-step:nth-child(4)::before{background:var(--paper);}
+  }
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr;gap:52px;}
+    .hero{padding-top:124px;}
+    .hero::after{font-size:60vw;}
+    .trace{max-width:620px;}
+    .chapter-grid{grid-template-columns:1fr;gap:22px;}
+    .chapter-side{position:static;display:flex;align-items:baseline;gap:14px;}
+    .chapter-no{font-size:1.7rem;margin:0;}
+    .chapter-en{border-top:0;padding-top:0;border-left:1px solid var(--line-strong);padding-left:14px;}
+    .chapter-en br{display:none;}
+    .safety-grid{grid-template-columns:1fr;}
+    .approval{max-width:560px;}
+  }
+  @media (max-width:900px){
+    .nav-links{display:none;}
+  }
+  @media (max-width:680px){
+    .brand-sub{display:none;}
+    .version{display:none;}
+    .spec-grid{grid-template-columns:repeat(2,1fr);}
+    .spec-item{padding:16px 18px;}
+    .spec-item:nth-child(3){border-left:0;padding-left:0;}
+    .spec-item:nth-child(1),.spec-item:nth-child(2){border-bottom:1px solid var(--line);}
+    .mode-row{grid-template-columns:1fr;gap:14px;}
+    .mode-cmd{grid-column:auto;max-width:none;}
+    .cap-grid{grid-template-columns:1fr;}
+    .cap{min-height:0;}
+    .cap:last-child{grid-column:auto;}
+    .flow{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .flow-step:nth-child(3)::before{background:var(--paper);}
+    .flow-step:nth-child(5)::before{background:var(--paper);}
+    .guard{grid-template-columns:1fr;gap:5px;}
+    .start-step{grid-template-columns:40px minmax(0,1fr);}
+    .start-no{font-size:1.5rem;}
+    .footer-grid{flex-direction:column;}
+  }
+  @media (max-width:460px){
+    .hero h1{font-size:clamp(2.25rem,10.5vw,2.9rem);}
+    .hero-actions{flex-direction:column;align-items:stretch;}
+    .btn{width:100%;}
+    .trace{--trace-time:40px;--trace-gap:8px;box-shadow:7px 7px 0 rgba(18,24,21,.09);}
+    .trace-head{padding:11px 13px;}
+    .trace-task{margin:12px 13px 2px;}
+    .trace-body{padding:10px 13px 14px;}
+    .trace-body::before{left:calc(13px + var(--trace-time) + var(--trace-gap) + 5px);}
+    .step p{font-size:11px;}
+    .step .diff{display:none;}
+    .approval-actions span{font-size:9px;padding:4px 6px;}
+    .flow{grid-template-columns:1fr;}
+    .flow-step{padding-top:20px;}
+    .flow-step::before{background:var(--paper) !important;}
+    .flow-step:first-child::before{background:var(--pine) !important;}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="PaiCLI 首页">
+      <span class="brand-pi" aria-hidden="true">π</span>
+      <span class="brand-name">PaiCLI</span>
+      <span class="brand-sub">Java Agent CLI</span>
+    </a>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="#modes">执行模式</a>
+      <a href="#capabilities">能力</a>
+      <a href="#turn">一次任务</a>
+      <a href="#safety">安全</a>
+      <a href="#start">快速开始</a>
+    </nav>
+    <div class="nav-right">
+      <span class="version">v16.1.0</span>
+      <a class="nav-cta" href="#start">三步跑起来 <span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <p class="kicker"><span class="kicker-dot" aria-hidden="true"></span>Java 17 · Agent CLI · 第 23 期</p>
+        <h1>
+          <span class="line">一句话进来，</span>
+          <span class="line"><span class="accent">一个结果出去。</span></span>
+        </h1>
+        <p class="hero-sub">
+          PaiCLI 是跑在终端里的 Java Agent。它读你的仓库、查资料、改文件、跑命令，
+          把<strong>计划、审批、快照和回滚</strong>留在你手边——从提出需求到验收通过，一次会话走完。
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-ink" href="#start">三步跑起来 <span class="arrow" aria-hidden="true">→</span></a>
+          <a class="btn btn-ghost" href="#turn">看它怎么工作</a>
+        </div>
+        <p class="hero-meta">
+          <span>默认接入 DeepSeek V4.1 Flash</span>
+          <span class="sep" aria-hidden="true">/</span>
+          <span>可切 8 家模型供应商</span>
+          <span class="sep" aria-hidden="true">/</span>
+          <span>23 期持续演进</span>
+        </p>
+      </div>
+
+      <div class="trace reveal" id="trace" role="group" aria-label="PaiCLI 一次任务的执行轨迹示例">
+        <div class="trace-head">
+          <div class="trace-title">
+            <span class="trace-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>示例会话 / order-service</span>
+          </div>
+          <span class="trace-live">REACT</span>
+        </div>
+
+        <div class="trace-task">
+          <b>USER / 09:41:02</b>
+          给订单模块加限流，别动对外接口
+        </div>
+
+        <div class="trace-body">
+          <div class="step" style="--i:0">
+            <time>09:41:03</time>
+            <span class="dot tool" aria-hidden="true"></span>
+            <div class="step-body"><span class="step-kind tool">tool</span><p><code>glob_files</code> + <code>grep_code</code> 定位到 <b>12 个文件</b>、3 处入口</p></div>
+          </div>
+          <div class="step" style="--i:1">
+            <time>09:41:06</time>
+            <span class="dot think" aria-hidden="true"></span>
+            <div class="step-body"><span class="step-kind think">plan</span><p>拆成 <b>3 个任务</b>，其中 2 个有依赖；先改限流器，再接入订单入口</p></div>
+          </div>
+          <div class="step" style="--i:2">
+            <time>09:41:08</time>
+            <span class="dot edit" aria-hidden="true"></span>
+            <div class="step-body"><span class="step-kind edit">edit</span><p><code>RateLimiter.java</code> 写入完成 <span class="diff"><span class="plus">+18</span><span class="minus">−2</span></span></p></div>
+          </div>
+          <div class="step" style="--i:3">
+            <time>09:41:10</time>
+            <span class="dot tool" aria-hidden="true"></span>
+            <div class="step-body"><span class="step-kind tool">shell</span><p><code>mvn test -q</code> 由审批策略放行，开始执行</p></div>
+          </div>
+          <div class="step" style="--i:4">
+            <time>09:41:24</time>
+            <span class="dot check" aria-hidden="true"></span>
+            <div class="step-body"><span class="step-kind check">verify</span><p><b>42 个测试通过</b>，对外接口签名未变</p></div>
+          </div>
+          <div class="step" style="--i:5">
+            <time>09:41:25</time>
+            <span class="dot snap" aria-hidden="true"></span>
+            <div class="step-body"><span class="step-kind snap">snapshot</span><p><code>post-turn</code> 已保存，可随时 <code>/restore 1</code> 退回</p></div>
+          </div>
+        </div>
+
+        <div class="trace-foot">
+          <span>react · deepseek-flash · ctx 18%</span>
+          <span class="ok">✓ post-turn snapshot saved · 23.4s</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="spec" aria-label="产品规格">
+    <div class="wrap spec-grid">
+      <div class="spec-item">
+        <span class="spec-label">Runtime</span>
+        <span class="spec-value">Java 17 <span>/ Maven</span></span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Modes</span>
+        <span class="spec-value">ReAct · Plan · Team</span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Models</span>
+        <span class="spec-value">8 家供应商 <span>随时切换</span></span>
+      </div>
+      <div class="spec-item">
+        <span class="spec-label">Surface</span>
+        <span class="spec-value">TUI · HTTP API · 微信</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="modes">
+    <div class="wrap chapter-grid">
+      <aside class="chapter-side">
+        <span class="chapter-no">01</span>
+        <span class="chapter-en">Execution <br>modes</span>
+      </aside>
+      <div class="chapter-main">
+        <h2 class="reveal">任务有多复杂，<br><span class="thin">就用多重的思考方式。</span></h2>
+        <p class="chapter-lead reveal" style="--delay:.05s">
+          三条路径，一套底座。切换的是策略，共享的是工具、记忆和快照。
+          普通输入走 ReAct，<code>/plan</code> 进入计划执行，<code>/team</code> 拉起多角色协作。
+        </p>
+
+        <div class="mode-list">
+          <article class="mode-row reveal">
+            <div class="mode-name">ReAct<span class="mode-en">边想边干 / 默认入口</span></div>
+            <div class="mode-body">
+              <p>单代理循环：<code>Thought → Action → Observation</code>。定位一个报错、改一个文件、查一段资料，直接说就行。只读工具会并行执行，写操作按顺序串行。</p>
+              <div class="tags"><span>默认入口</span><span>并行只读工具</span><span>流式输出</span></div>
+            </div>
+            <div class="mode-cmd"><span class="cmd-label">terminal</span><span class="prompt">&gt;</span>把这个 NPE 修掉，并补一个测试</div>
+          </article>
+
+          <article class="mode-row reveal">
+            <div class="mode-name">Plan-and-Execute<span class="mode-en">先画图，再施工</span></div>
+            <div class="mode-body">
+              <p>把任务拆成带依赖的 DAG，动手前先给你过目。跨模块改造、批量重构，每一步都看得见、拦得住；独立任务按依赖批次并行推进。</p>
+              <div class="tags"><span>/plan</span><span>DAG 依赖</span><span>执行前确认</span></div>
+            </div>
+            <div class="mode-cmd"><span class="cmd-label">terminal</span><span class="prompt">/plan</span>给订单模块加限流和降级</div>
+          </article>
+
+          <article class="mode-row reveal">
+            <div class="mode-name">Multi-Agent<span class="mode-en">组队干活 / 质量门槛</span></div>
+            <div class="mode-body">
+              <p>Planner 拆解，Worker 执行，Reviewer 审查。审查不通过就带反馈重试，最多两次；计划和审查结论都按 JSON 严格解析，解析失败按未通过处理。</p>
+              <div class="tags"><span>/team</span><span>角色分工</span><span>自动返工</span></div>
+            </div>
+            <div class="mode-cmd"><span class="cmd-label">terminal</span><span class="prompt">/team</span>重构遗留模块，保持行为不变</div>
+          </article>
+        </div>
+
+        <p class="chapter-note reveal">
+          三条路径共享 <code>ToolRegistry / MemoryManager / SnapshotService</code>，不为某个模式制造孤立的能力孤岛。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter band" id="capabilities">
+    <div class="wrap chapter-grid">
+      <aside class="chapter-side">
+        <span class="chapter-no">02</span>
+        <span class="chapter-en">The <br>workbench</span>
+      </aside>
+      <div class="chapter-main">
+        <h2 class="reveal">工具不是摆设，<br><span class="thin">是一套能收尾的工作台。</span></h2>
+        <p class="chapter-lead reveal" style="--delay:.05s">
+          从定位代码到验证结果，每一环都有对应的工具；需要更多能力时，接 MCP，或者写一个 Skill。
+          工具默认开放给模型，但能不能动手，还要过策略层。
+        </p>
+
+        <div class="cap-grid">
+          <article class="cap reveal">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6 3 12l5 6M16 6l5 6-5 6M14 4l-4 16"/></svg>
+            <h3>代码理解</h3>
+            <p><code>glob / grep / read</code> 先找真实代码；RAG 语义检索和代码关系图谱只做模糊补充，不拿相似度冒充事实。</p>
+            <span class="cap-tag">JavaParser · SQLite · Ollama</span>
+          </article>
+
+          <article class="cap reveal" style="--delay:.04s">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7l2 3h7v13H4z"/><path d="M8 12l2 2-2 2M12 16h4"/></svg>
+            <h3>文件与命令</h3>
+            <p>读写、编辑、建项目、跑 Shell。写入单文件 5MB 上限，命令 60 秒超时，输出超长会被截断。</p>
+            <span class="cap-tag">PathGuard · 60s timeout</span>
+          </article>
+
+          <article class="cap reveal" style="--delay:.08s">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>
+            <h3>联网与浏览器</h3>
+            <p><code>web_search</code> 支持多条搜索路径，<code>web_fetch</code> 提取正文；SPA、防爬墙和登录态页面交给 Chrome DevTools MCP。</p>
+            <span class="cap-tag">Search · Fetch · Chrome</span>
+          </article>
+
+          <article class="cap reveal">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M17.5 14v7M14 17.5h7"/></svg>
+            <h3>MCP</h3>
+            <p>stdio 子进程与 Streamable HTTP 都能接，工具自动注册为 <code>mcp__server__tool</code>，支持 resources 与 prompts。</p>
+            <span class="cap-tag">stdio + HTTP · 60s init</span>
+          </article>
+
+          <article class="cap reveal" style="--delay:.04s">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h7v14H4zM13 5h7v14h-7z"/><path d="M7 9h1M16 9h1M7 13h1M16 13h1"/></svg>
+            <h3>Skill</h3>
+            <p>把专家手册打包成目录，模型按需 <code>load_skill</code>。不往 system prompt 里硬塞，也不怕越写越长。</p>
+            <span class="cap-tag">SKILL.md · references</span>
+          </article>
+
+          <article class="cap reveal" style="--delay:.08s">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a7 7 0 0 0-4 12.7V19h8v-3.3A7 7 0 0 0 12 3z"/><path d="M9 22h6M12 7v4l2 2"/></svg>
+            <h3>记忆</h3>
+            <p><code>PAI.md</code> 存团队规则，长期记忆存稳定事实；自动提取的条目标为待核实，冲突时先问你。</p>
+            <span class="cap-tag">PAI.md · 待核实 · 项目级</span>
+          </article>
+
+          <article class="cap reveal">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h13"/><path d="M19 11v6M16 14h6"/></svg>
+            <h3>上下文</h3>
+            <p>按模型窗口动态算预算；先清理旧工具结果，再摘要压缩。大窗口模型可到 1M，prompt cache 模式可见。</p>
+            <span class="cap-tag">1M window · auto compact</span>
+          </article>
+
+          <article class="cap reveal" style="--delay:.04s">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/><path d="M4 4v4h4"/></svg>
+            <h3>快照回滚</h3>
+            <p>每个 turn 前后用 side-git 留快照，不碰项目 <code>.git</code>。<code>/restore N</code> 回到任意 pre-turn，恢复前再留一份。</p>
+            <span class="cap-tag">JGit · pre/post-turn</span>
+          </article>
+
+          <article class="cap reveal" style="--delay:.08s">
+            <svg class="cap-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/></svg>
+            <h3>多端入口</h3>
+            <p>inline TUI、全屏 TUI、plain 三种形态；Runtime API 跑后台任务，微信 iLink 通道收发消息，图片用 <code>@image:</code> 贴进来。</p>
+            <span class="cap-tag">TUI · HTTP API · WeChat</span>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="turn">
+    <div class="wrap chapter-grid">
+      <aside class="chapter-side">
+        <span class="chapter-no">03</span>
+        <span class="chapter-en">One <br>turn</span>
+      </aside>
+      <div class="chapter-main">
+        <h2 class="reveal">从一句话，<br><span class="thin">到一次可回滚的改动。</span></h2>
+        <p class="chapter-lead reveal" style="--delay:.05s">
+          一次任务的完整闭环。不是“模型说了什么”，而是“它做了什么、你怎么拦、事后怎么退”。
+        </p>
+
+        <div class="flow">
+          <div class="flow-step reveal">
+            <span class="flow-no">01 / INPUT</span>
+            <h3>接收</h3>
+            <p>解析 <code>@path</code> 和 <code>@image:</code>，判断要不要联网；标题式输入先问清楚目标。</p>
+          </div>
+          <div class="flow-step reveal" style="--delay:.04s">
+            <span class="flow-no">02 / LOCATE</span>
+            <h3>定位</h3>
+            <p><code>glob / grep / read</code> 先找真实代码，RAG 只在关键词模糊时补位。</p>
+          </div>
+          <div class="flow-step reveal" style="--delay:.08s">
+            <span class="flow-no">03 / PLAN</span>
+            <h3>计划</h3>
+            <p>简单任务直接做；复杂任务拆成 DAG，执行前给你过目。</p>
+          </div>
+          <div class="flow-step reveal" style="--delay:.12s">
+            <span class="flow-no">04 / ACT</span>
+            <h3>执行</h3>
+            <p>只读工具并行，写操作串行；危险动作走 HITL 审批。</p>
+          </div>
+          <div class="flow-step reveal" style="--delay:.16s">
+            <span class="flow-no">05 / VERIFY</span>
+            <h3>验证</h3>
+            <p>跑测试、读诊断；LSP 错误在下一轮请求前注入。</p>
+          </div>
+          <div class="flow-step reveal" style="--delay:.2s">
+            <span class="flow-no">06 / KEEP</span>
+            <h3>留痕</h3>
+            <p>审计日志、完整会话、pre/post-turn 快照，都能回看。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter safety" id="safety">
+    <div class="wrap chapter-grid">
+      <aside class="chapter-side">
+        <span class="chapter-no">04</span>
+        <span class="chapter-en">Guard <br>rails</span>
+      </aside>
+      <div class="chapter-main">
+        <h2 class="reveal">放手让它干，<br><span class="thin">不等于把门打开。</span></h2>
+        <p class="chapter-lead reveal" style="--delay:.05s">
+          PaiCLI 把“能做什么”和“允许做什么”分开：工具负责能力，策略层负责边界，你负责最后那一下确认。
+        </p>
+
+        <div class="safety-grid">
+          <div class="guard-list reveal">
+            <div class="guard">
+              <h3>路径围栏</h3>
+              <p>文件类工具只能在项目根内活动，绝对路径外逃、<code>..</code> 穿越、符号链接逃逸都会被拦下。</p>
+            </div>
+            <div class="guard">
+              <h3>命令快拒</h3>
+              <p><code>sudo</code>、<code>rm -rf</code> 全盘、<code>mkfs</code>、<code>curl | sh</code> 等黑名单在 HITL 之前直接拒绝，减少弹窗骚扰。</p>
+            </div>
+            <div class="guard">
+              <h3>分级审批</h3>
+              <p><code>auto</code> 默认不打断，Shell 命令先由轻量分类器审查；<code>/hitl on</code> 切到逐项确认。连续被拦 3 次才弹审批。</p>
+            </div>
+            <div class="guard">
+              <h3>结构化审计</h3>
+              <p>危险调用按天写 JSONL 到 <code>~/.paicli/audit</code>，记录 <code>allow / deny / error</code> 和审批来源。</p>
+            </div>
+            <div class="guard">
+              <h3>可选沙箱</h3>
+              <p><code>PAICLI_COMMAND_SANDBOX=auto</code> 时走 Seatbelt 或 bubblewrap；默认 <code>off</code>，因为 <code>mvn</code>、<code>npm install</code> 需要网络和用户目录。</p>
+            </div>
+          </div>
+
+          <div class="reveal" style="--delay:.08s">
+            <div class="approval" role="group" aria-label="HITL 审批界面示意">
+              <div class="approval-head">
+                <span>HITL / 审批</span>
+                <span class="warn">需要确认</span>
+              </div>
+              <div class="approval-body">
+                <div class="approval-tool">execute_command</div>
+                <div class="approval-cmd">mvn clean package</div>
+                <div class="approval-meta">
+                  风险 <b>高危</b> · 工作区 <b>D:\work\order-service</b><br>
+                  命令将在项目根目录执行
+                </div>
+                <div class="approval-actions">
+                  <span>[y] 批准</span>
+                  <span>[n] 拒绝</span>
+                  <span>[a] 全部放行</span>
+                  <span>[s] 跳过</span>
+                  <span>[m] 修改参数</span>
+                </div>
+              </div>
+              <div class="approval-foot">auto 模式下低风险命令直接执行；这里的弹窗只用于有风险或需要你决定的动作。</div>
+            </div>
+            <p class="safety-note">
+              策略层不是沙箱，不提供进程隔离。进程隔离由可选的命令沙箱负责，默认关闭。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="start">
+    <div class="wrap chapter-grid">
+      <aside class="chapter-side">
+        <span class="chapter-no">05</span>
+        <span class="chapter-en">Quick <br>start</span>
+      </aside>
+      <div class="chapter-main">
+        <h2 class="reveal">三步，<br><span class="thin">进你的终端。</span></h2>
+        <p class="chapter-lead reveal" style="--delay:.05s">
+          需要 Java 17 和 Maven。默认接入 DeepSeek V4.1 Flash，也可以在会话里随时 <code>/model</code> 切换。
+        </p>
+
+        <div class="start-steps">
+          <div class="start-step reveal">
+            <span class="start-no">01</span>
+            <div class="start-body">
+              <h3>配置 API Key</h3>
+              <p>复制模板，填入 <code>DEEPSEEK_API_KEY</code>。也支持 GLM、混元、StepFun、Kimi、FreeLLMAPI、讯飞星辰和 Agnes。</p>
+              <div class="codebox">
+                <pre><span class="c"># 项目根目录</span>
+<span class="g">$</span> cp .env.example .env</pre>
+                <button type="button" class="copy" data-copy="cp .env.example .env">复制</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="start-step reveal">
+            <span class="start-no">02</span>
+            <div class="start-body">
+              <h3>构建</h3>
+              <p>默认跳过测试，先产出一个能手工试用的 jar；需要回归时再按范围跑测试。</p>
+              <div class="codebox">
+                <pre><span class="g">$</span> mvn clean package</pre>
+                <button type="button" class="copy" data-copy="mvn clean package">复制</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="start-step reveal">
+            <span class="start-no">03</span>
+            <div class="start-body">
+              <h3>运行</h3>
+              <p>进入 inline TUI。首次启动会自动创建 <code>~/.paicli/mcp.json</code>，默认接入 chrome-devtools。</p>
+              <div class="codebox">
+                <pre><span class="g">$</span> java -jar target/paicli-1.0-SNAPSHOT.jar
+<span class="c"># Windows 也可以直接</span>
+<span class="g">$</span> start-paicli.bat</pre>
+                <button type="button" class="copy" data-copy="java -jar target/paicli-1.0-SNAPSHOT.jar">复制</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="start-foot">
+          <span>完整配置、MCP 与命令说明见 <a href="../README.md">README</a></span>
+          <span class="dot" aria-hidden="true"></span>
+          <span>Runtime API：<code>serve --http --port 8080</code></span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter band" id="history" style="border-bottom:0;">
+    <div class="wrap chapter-grid">
+      <aside class="chapter-side">
+        <span class="chapter-no">06</span>
+        <span class="chapter-en">Change <br>log</span>
+      </aside>
+      <div class="chapter-main">
+        <h2 class="reveal">23 期，<br><span class="thin">从第一行 ReAct 开始。</span></h2>
+        <p class="chapter-lead reveal" style="--delay:.05s">
+          从第一行 ReAct 循环，到 TUI、MCP、Skill 和微信通道。下面是关键节点，完整记录在 README。
+        </p>
+
+        <div class="timeline-wrap reveal">
+          <div class="timeline" tabindex="0" aria-label="PaiCLI 演进时间线，可横向滚动">
+            <div class="tl-item major"><span class="tl-no">01</span><h3>ReAct</h3><p>单代理循环与工具调用</p></div>
+            <div class="tl-item"><span class="tl-no">03</span><h3>Memory</h3><p>长期记忆与上下文工程</p></div>
+            <div class="tl-item"><span class="tl-no">04</span><h3>RAG</h3><p>代码向量化与关系图谱</p></div>
+            <div class="tl-item major"><span class="tl-no">05</span><h3>Multi-Agent</h3><p>规划、执行、审查三角色</p></div>
+            <div class="tl-item major"><span class="tl-no">06</span><h3>HITL</h3><p>分级审批与安全策略</p></div>
+            <div class="tl-item"><span class="tl-no">09</span><h3>Web</h3><p>搜索、抓取与浏览器</p></div>
+            <div class="tl-item major"><span class="tl-no">10</span><h3>MCP</h3><p>动态工具与 resources</p></div>
+            <div class="tl-item"><span class="tl-no">12</span><h3>Context</h3><p>长上下文与动态预算</p></div>
+            <div class="tl-item"><span class="tl-no">13</span><h3>Chrome</h3><p>DevTools MCP 与登录态</p></div>
+            <div class="tl-item major"><span class="tl-no">15</span><h3>Skill</h3><p>按需加载的专家手册</p></div>
+            <div class="tl-item major"><span class="tl-no">16</span><h3>TUI</h3><p>inline / 全屏 / plain</p></div>
+            <div class="tl-item"><span class="tl-no">17</span><h3>LSP</h3><p>编辑后诊断注入</p></div>
+            <div class="tl-item"><span class="tl-no">18</span><h3>Snapshot</h3><p>side-git 快照与回滚</p></div>
+            <div class="tl-item"><span class="tl-no">19</span><h3>Prompt</h3><p>分层组装与项目覆盖</p></div>
+            <div class="tl-item"><span class="tl-no">20</span><h3>Runtime</h3><p>后台任务与 HTTP API</p></div>
+            <div class="tl-item"><span class="tl-no">21</span><h3>Vision</h3><p>图片粘贴与多模态输入</p></div>
+            <div class="tl-item major"><span class="tl-no">23</span><h3>WeChat</h3><p>iLink 文本通道</p></div>
+          </div>
+          <p class="timeline-hint">← 横向滚动 · 节选关键节点</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="footer-pi" aria-hidden="true">π</span>
+        <div>
+          <div class="footer-name">PaiCLI</div>
+          <p class="footer-desc">Java Agent CLI · 作者：沉默王二<br>把 Agent 的能力，留在终端和你的掌控里。</p>
+        </div>
+      </div>
+      <nav class="footer-links" aria-label="文档链接">
+        <a href="../README.md">README</a>
+        <a href="../ROADMAP.md">ROADMAP</a>
+        <a href="../AGENTS.md">AGENTS.md</a>
+        <a href="#top">回到顶部 ↑</a>
+      </nav>
+    </div>
+    <div class="footer-bottom">
+      <span>BUILD / Java 17 · Maven · v16.1.0</span>
+      <span>2026 · 静态页面，无外部依赖</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.remove('no-js');
+  document.documentElement.classList.add('js');
+
+  // 滚动阴影
+  (function () {
+    var nav = document.getElementById('nav');
+    var onScroll = function () {
+      nav.classList.toggle('is-scrolled', window.scrollY > 8);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+
+  // 滚动显现
+  (function () {
+    var items = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(function (el) { el.classList.add('is-in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    items.forEach(function (el) { io.observe(el); });
+  })();
+
+  // 执行轨迹逐条出现
+  (function () {
+    var trace = document.getElementById('trace');
+    if (!trace) return;
+    if (!('IntersectionObserver' in window)) {
+      trace.classList.add('is-live');
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          trace.classList.add('is-live');
+          io.disconnect();
+        }
+      });
+    }, { threshold: 0.2 });
+    io.observe(trace);
+  })();
+
+  // 复制命令
+  (function () {
+    var buttons = document.querySelectorAll('.copy');
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var text = btn.getAttribute('data-copy') || '';
+        var done = function () {
+          var old = btn.textContent;
+          btn.textContent = '已复制';
+          btn.classList.add('is-done');
+          window.setTimeout(function () {
+            btn.textContent = old;
+            btn.classList.remove('is-done');
+          }, 1600);
+        };
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(done, fallback);
+        } else {
+          fallback();
+        }
+        function fallback() {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.top = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); done(); } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>

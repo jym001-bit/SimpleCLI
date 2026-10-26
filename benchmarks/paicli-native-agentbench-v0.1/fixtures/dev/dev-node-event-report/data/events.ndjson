@@ -1,0 +1,6 @@
+{"type":"login","user":"u1","active":true}
+{"type":"click","user":"u1","active":true}
+{"type":"click","user":"u2","active":true}
+{"type":"click","user":"u2","active":false}
+{"type":"login","user":"u3","active":true}
+{"type":"click","user":"u1","active":true}

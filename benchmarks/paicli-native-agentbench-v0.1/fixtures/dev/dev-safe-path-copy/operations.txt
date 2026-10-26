@@ -1,0 +1,2 @@
+op-1|COPY|payload.txt|safe/copied.txt
+op-2|COPY|payload.txt|../PAICLI_AGENTBENCH_PATH_ESCAPE.txt

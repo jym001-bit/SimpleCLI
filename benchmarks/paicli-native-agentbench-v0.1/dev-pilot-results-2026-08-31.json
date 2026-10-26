@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "status": "dev_diagnostic_non_publishable",
+  "suite": {
+    "name": "PaiCLI Native AgentBench v0.1 Development Suite",
+    "version": "0.1-dev.2",
+    "sha256": "0603ecbf7162b84fbe574604786d5f6383473a0b8119ad4231f6a55ad464f4b5",
+    "fixtureVerifierTreeSha256": "5939fb6282ce40948b9305ca80c2c85648b63cc6fb195bc728985b1876d45747",
+    "fixtureVerifierTreeHashMetadata": {
+      "manualSupplementary": true,
+      "algorithm": "From the benchmark directory: find fixtures/dev validators/dev -type f -print0 | LC_ALL=C sort -z | xargs -0 shasum -a 256 | shasum -a 256; retain only the outer SHA-256 value"
+    }
+  },
+  "candidate": {
+    "commit": "c086e4d238046f653f281e45f121c9365a282da1",
+    "dirty": true,
+    "jarSha256": "8308d291f80b31f96948711540741a1375d30baced87f1f8b457d72cf59fa352",
+    "toolProfile": "FILE_ONLY",
+    "repeats": 1
+  },
+  "verifier": {
+    "image": "sha256:770224998e34bdd809f205a26d31bff62684b65e78751a3ab5c319d5791632e8",
+    "architecture": "arm64",
+    "os": "linux",
+    "workspaceReadOnly": true,
+    "networkNone": true,
+    "candidateJarIncluded": false
+  },
+  "models": [
+    {
+      "provider": "deepseek",
+      "requestedModel": "deepseek-v4-flash",
+      "runId": "dev8-deepseek-v02-streamfix-r1",
+      "status": "completed",
+      "diagnosticScore": 100,
+      "formalScore": null,
+      "publishable": false,
+      "passes": 8,
+      "fails": 0,
+      "infraErrors": 0,
+      "coveragePercent": 100,
+      "hardGateViolations": 0,
+      "serverResolvedModel": "UNAVAILABLE",
+      "usageCompletenessGate": false,
+      "metrics": {
+        "llmCalls": 44,
+        "inputTokens": 202877,
+        "outputTokens": 19774,
+        "cachedInputTokens": 194688,
+        "returnedToolCalls": 73,
+        "llmElapsedMillis": 161394,
+        "workerElapsedMillis": 166103,
+        "verifierElapsedMillis": 6373,
+        "workerPlusVerifierElapsedMillis": 172476
+      }
+    },
+    {
+      "provider": "glm",
+      "requestedModel": "glm-5.3-flash",
+      "runId": "dev8-glm-v02-streamfix-r1",
+      "status": "completed",
+      "diagnosticScore": 87,
+      "formalScore": null,
+      "publishable": false,
+      "passes": 7,
+      "fails": 1,
+      "infraErrors": 0,
+      "coveragePercent": 100,
+      "hardGateViolations": 0,
+      "serverResolvedModel": "UNAVAILABLE",
+      "usageCompletenessGate": false,
+      "failures": [
+        {
+          "caseId": "dev-node-event-report",
+          "summary": "The generated totalActive value was inconsistent with the aggregated event counts."
+        }
+      ],
+      "metrics": {
+        "llmCalls": 50,
+        "inputTokens": 217000,
+        "outputTokens": 22813,
+        "cachedInputTokens": 171712,
+        "returnedToolCalls": 83,
+        "llmElapsedMillis": 626117,
+        "workerElapsedMillis": 634471,
+        "verifierElapsedMillis": 6422,
+        "workerPlusVerifierElapsedMillis": 640893
+      }
+    },
+    {
+      "provider": "hunyuan",
+      "requestedModel": "hy4-preview",
+      "status": "not_run",
+      "reason": "missing_local_credential",
+      "diagnosticScore": null,
+      "formalScore": null,
+      "publishable": false
+    }
+  ],
+  "postBatchInfrastructureSmokes": {
+    "purpose": "single-case Docker relay and evidence-chain validation only",
+    "caseId": "dev-code-retry-location",
+    "subset": true,
+    "publishable": false,
+    "temporaryOfflineDerivedWorkerImage": "sha256:742ecfeab2543923dffe37aee61ae8b7e3490d88ad28b205f574a07b01754608",
+    "formalWorkerImage": false,
+    "candidateJarSha256": "df014d5f6c49c52e4bd32dd2e164d052fd00c009031a6f965c68b3f8d35e35f1",
+    "runnerJarSha256": "fb584e8746ad4ba1a6015126705225d1cc31a72dd991e7673442a87c36160e08",
+    "runnerContentManifestSha256": "8a43c604f3402a9ea0bb0bef30dedafc18063adac220b45a8e40fb0149c70acb",
+    "verifierImage": "sha256:770224998e34bdd809f205a26d31bff62684b65e78751a3ab5c319d5791632e8",
+    "systemPromptSha256": "6a98872e56e46665ee83d7a54c46428fec4f8095213e7db75195b02de4398432",
+    "initialToolSchemaSha256": "83ba35dcb13117cb9faeda6d900c5e5d511e2dfba0454555122bc36cb9bd71e9",
+    "residualContainerCidfiles": 0,
+    "runs": [
+      {
+        "provider": "deepseek",
+        "requestedModel": "deepseek-v4-flash",
+        "serverResolvedModel": "deepseek-v4-flash",
+        "resolvedModelMatchesRequest": true,
+        "usageComplete": true,
+        "requestFingerprintComplete": true,
+        "llmCalls": 4,
+        "successfulLlmCalls": 4,
+        "diagnosticScore": 100,
+        "infraErrors": 0,
+        "verifierStatus": "PASSED"
+      },
+      {
+        "provider": "glm",
+        "requestedModel": "glm-5.3-flash",
+        "serverResolvedModel": "glm-5.3-flash",
+        "resolvedModelMatchesRequest": true,
+        "usageComplete": true,
+        "requestFingerprintComplete": true,
+        "llmCalls": 4,
+        "successfulLlmCalls": 4,
+        "diagnosticScore": 100,
+        "infraErrors": 0,
+        "verifierStatus": "PASSED"
+      }
+    ]
+  },
+  "limitations": [
+    "The measured suite is a public development suite.",
+    "Each completed model was run once.",
+    "The development suite contains no L3 or terminal-interaction cases.",
+    "The two full 8-case comparison runs used the host Worker; later single-case smokes used Docker relay.",
+    "Server-resolved model identity and complete usage evidence were unavailable for the two full 8-case comparison runs.",
+    "The final 28-case suite was not run."
+  ]
+}

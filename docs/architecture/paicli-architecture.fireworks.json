@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "mode": "architecture",
+  "template_type": "architecture",
+  "style": 1,
+  "quality_profile": "standard",
+  "composition": {
+    "profile": "standard",
+    "max_bridged_crossings": 24,
+    "min_node_gap": 40.0,
+    "min_container_gutter": 20.0,
+    "min_label_clearance": 4.0,
+    "min_segment_length": 2.0
+  },
+  "width": 1560,
+  "height": 1450,
+  "title": "Simple CLI（paicli）整体架构",
+  "subtitle": "Java 17 Agent CLI · 三条执行路径 · HITL 治理 · 记忆与检索 · 多模型接入",
+  "containers": [
+    { "id": "layer-entry", "x": 40, "y": 100, "width": 1480, "height": 120, "label": "入口与交互层" },
+    { "id": "layer-exec", "x": 40, "y": 310, "width": 920, "height": 120, "label": "执行层 · 三条主路径" },
+    { "id": "layer-context", "x": 1000, "y": 310, "width": 520, "height": 120, "label": "上下文与记忆" },
+    { "id": "layer-model", "x": 1000, "y": 520, "width": 520, "height": 120, "label": "模型接入层" },
+    { "id": "layer-gov", "x": 40, "y": 730, "width": 920, "height": 120, "label": "工具与治理层" },
+    { "id": "layer-int", "x": 40, "y": 940, "width": 920, "height": 120, "label": "外部集成" },
+    { "id": "layer-search", "x": 1000, "y": 940, "width": 520, "height": 120, "label": "检索与诊断" },
+    { "id": "layer-store", "x": 1000, "y": 1150, "width": 520, "height": 120, "label": "数据与快照存储" }
+  ],
+  "nodes": [
+    { "id": "terminal-cli", "kind": "rect", "x": 110, "y": 131, "width": 320, "height": 58, "label": "终端 CLI", "sublabel": "JLine 4 inline · * 提示符", "fill": "#eff6ff", "stroke": "#3b82f6", "flat": true },
+    { "id": "lanterna-tui", "kind": "rect", "x": 470, "y": 131, "width": 280, "height": 58, "label": "Lanterna TUI", "sublabel": "多窗格界面", "fill": "#ffffff", "stroke": "#cbd5e1", "flat": true },
+    { "id": "wechat-channel", "kind": "rect", "x": 790, "y": 131, "width": 280, "height": 58, "label": "微信 iLink 通道", "sublabel": "WechatAgentSession 自有 registry", "fill": "#f0fdf4", "stroke": "#10b981", "flat": true },
+    { "id": "runtime-api", "kind": "double_rect", "x": 1110, "y": 131, "width": 370, "height": 58, "label": "Runtime API + 持久任务", "sublabel": "RuntimeApiServer · DurableTaskManager", "fill": "#ffffff", "stroke": "#cbd5e1", "flat": true },
+
+    { "id": "react-agent", "kind": "double_rect", "x": 110, "y": 341, "width": 190, "height": 58, "label": "ReAct Agent", "sublabel": "主循环 · 并行 ≤4", "fill": "#eff6ff", "stroke": "#3b82f6", "flat": true },
+    { "id": "plan-agent", "kind": "double_rect", "x": 340, "y": 341, "width": 190, "height": 58, "label": "Plan + DAG", "sublabel": "/plan · 计划审阅", "fill": "#eff6ff", "stroke": "#3b82f6", "flat": true },
+    { "id": "planner", "kind": "rect", "x": 570, "y": 341, "width": 180, "height": 58, "label": "Planner", "sublabel": "ExecutionPlan · Task", "fill": "#ffffff", "stroke": "#cbd5e1", "flat": true },
+    { "id": "orchestrator", "kind": "rect", "x": 790, "y": 341, "width": 150, "height": 58, "label": "Multi-Agent", "sublabel": "/team 编排", "fill": "#ffffff", "stroke": "#cbd5e1", "flat": true },
+
+    { "id": "prompt-assembler", "kind": "rect", "x": 1030, "y": 341, "width": 220, "height": 58, "label": "PromptAssembler", "sublabel": "prompt 分层 · PAI.md", "fill": "#faf5ff", "stroke": "#8b5cf6", "flat": true },
+    { "id": "memory-manager", "kind": "cylinder", "x": 1290, "y": 341, "width": 210, "height": 58, "label": "MemoryManager", "sublabel": "短期/长期 · 压缩阈值", "fill": "#ecfdf5", "stroke": "#10b981" },
+
+    { "id": "llm-factory", "kind": "double_rect", "x": 1030, "y": 551, "width": 220, "height": 58, "label": "LlmClientFactory", "sublabel": "provider 别名归一", "fill": "#fff7ed", "stroke": "#f97316", "flat": true },
+    { "id": "llm-providers", "kind": "rect", "x": 1290, "y": 551, "width": 210, "height": 58, "label": "7 家 Provider", "sublabel": "GLM·DeepSeek·Step·Kimi 等", "fill": "#fff7ed", "stroke": "#f97316", "flat": true },
+
+    { "id": "hitl-gate", "kind": "rect", "x": 110, "y": 761, "width": 170, "height": 58, "label": "HITL 审批网关", "sublabel": "工具调用前拦截", "fill": "#fef2f2", "stroke": "#dc2626", "flat": true },
+    { "id": "tool-registry", "kind": "double_rect", "x": 320, "y": 761, "width": 230, "height": 58, "label": "ToolRegistry · 12 工具", "sublabel": "文件·检索·命令·web·skill", "fill": "#eff6ff", "stroke": "#3b82f6", "flat": true },
+    { "id": "guards", "kind": "rect", "x": 590, "y": 761, "width": 160, "height": 58, "label": "策略守卫层", "sublabel": "拒绝不可批 · 路径限定", "fill": "#fef2f2", "stroke": "#dc2626", "flat": true },
+    { "id": "audit-log", "kind": "cylinder", "x": 790, "y": 761, "width": 130, "height": 58, "label": "AuditLog", "sublabel": "~/.paicli/audit", "fill": "#ecfdf5", "stroke": "#10b981" },
+
+    { "id": "mcp-client", "kind": "rect", "x": 110, "y": 971, "width": 240, "height": 58, "label": "MCP 客户端", "sublabel": "stdio / Streamable HTTP", "fill": "#f5f5f5", "stroke": "#666666", "flat": true },
+    { "id": "web-tools", "kind": "rect", "x": 390, "y": 971, "width": 240, "height": 58, "label": "Web 抓取 + CDP 浏览器", "sublabel": "Searxng/SerpApi · Chrome", "fill": "#f5f5f5", "stroke": "#666666", "flat": true },
+    { "id": "skill-registry", "kind": "rect", "x": 670, "y": 971, "width": 270, "height": 58, "label": "SkillRegistry", "sublabel": "内建 · 用户 · 项目 skills", "fill": "#faf5ff", "stroke": "#8b5cf6", "flat": true },
+
+    { "id": "rag-index", "kind": "cylinder", "x": 1030, "y": 971, "width": 150, "height": 58, "label": "RAG 检索", "sublabel": "CodeIndex · 向量", "fill": "#ecfdf5", "stroke": "#10b981" },
+    { "id": "lsp-manager", "kind": "rect", "x": 1250, "y": 971, "width": 110, "height": 58, "label": "LSP 诊断", "sublabel": "编辑后回灌", "fill": "#ffffff", "stroke": "#cbd5e1", "flat": true },
+    { "id": "snapshot-service", "kind": "cylinder", "x": 1400, "y": 971, "width": 100, "height": 58, "label": "快照服务", "sublabel": "JGit 侧历史", "fill": "#ecfdf5", "stroke": "#10b981" },
+
+    { "id": "sqlite-store", "kind": "cylinder", "x": 1030, "y": 1181, "width": 220, "height": 58, "label": "SQLite 向量库", "sublabel": "code_chunks · relations", "fill": "#ecfdf5", "stroke": "#10b981" },
+    { "id": "sidegit-store", "kind": "cylinder", "x": 1290, "y": 1181, "width": 210, "height": 58, "label": "快照仓库", "sublabel": "revert_turn 可回滚", "fill": "#ecfdf5", "stroke": "#10b981" }
+  ],
+  "arrows": [
+    { "id": "a-in-react", "source": "terminal-cli", "target": "react-agent", "source_port": "bottom", "target_port": "top", "flow": "control", "label": "普通输入", "corridor_y": [252] },
+    { "id": "a-wechat-hitl", "source": "wechat-channel", "target": "hitl-gate", "source_port": "bottom", "target_port": "top", "flow": "control", "label": "非交互策略", "corridor_y": [466] },
+    { "id": "a-api-react", "source": "runtime-api", "target": "react-agent", "source_port": "bottom", "target_port": "bottom", "flow": "control", "label": "HTTP / 持久任务", "corridor_y": [474] },
+    { "id": "a-plan-planner", "source": "plan-agent", "target": "planner", "source_port": "right", "target_port": "left", "flow": "control" },
+    { "id": "a-react-llm", "source": "react-agent", "target": "llm-factory", "source_port": "left", "target_port": "left", "flow": "control", "label": "推理请求（三路径共用）" },
+    { "id": "a-hitl-tools", "source": "hitl-gate", "target": "tool-registry", "source_port": "right", "target_port": "left", "flow": "control" },
+    { "id": "a-tools-guards", "source": "tool-registry", "target": "guards", "source_port": "right", "target_port": "left", "flow": "control" },
+    { "id": "a-guards-audit", "source": "guards", "target": "audit-log", "source_port": "right", "target_port": "left", "flow": "write" },
+    { "id": "a-tools-mcp", "source": "tool-registry", "target": "mcp-client", "source_port": "bottom", "target_port": "top", "flow": "control", "label": "mcp__* 工具", "corridor_y": [876] },
+    { "id": "a-tools-web", "source": "tool-registry", "target": "web-tools", "source_port": "bottom", "target_port": "top", "flow": "control", "label": "web_search / fetch", "corridor_y": [883] },
+    { "id": "a-tools-skill", "source": "tool-registry", "target": "skill-registry", "source_port": "bottom", "target_port": "top", "flow": "read", "label": "load_skill", "corridor_y": [890] },
+    { "id": "a-tools-rag", "source": "tool-registry", "target": "rag-index", "source_port": "bottom", "target_port": "top", "flow": "read", "label": "search_code", "corridor_y": [897] },
+    { "id": "a-tools-lsp", "source": "tool-registry", "target": "lsp-manager", "source_port": "bottom", "target_port": "top", "flow": "feedback", "label": "LSP 诊断", "corridor_y": [904] },
+    { "id": "a-tools-snapshot", "source": "tool-registry", "target": "snapshot-service", "source_port": "bottom", "target_port": "top", "flow": "write", "label": "revert_turn", "corridor_y": [911] },
+    { "id": "a-rag-store", "source": "rag-index", "target": "sqlite-store", "source_port": "bottom", "target_port": "top", "flow": "write", "label": "向量 + 关系图" },
+    { "id": "a-snapshot-store", "source": "snapshot-service", "target": "sidegit-store", "source_port": "bottom", "target_port": "top", "flow": "write", "label": "快照提交" },
+    { "id": "a-memory-prompt", "source": "memory-manager", "target": "prompt-assembler", "source_port": "left", "target_port": "right", "flow": "data", "label": "记忆 / 压缩" },
+    { "id": "a-prompt-llm", "source": "prompt-assembler", "target": "llm-factory", "source_port": "bottom", "target_port": "top", "flow": "data", "label": "prompt + 历史" },
+    { "id": "a-llm-provider", "source": "llm-factory", "target": "llm-providers", "source_port": "right", "target_port": "left", "flow": "control", "label": "provider 分发" }
+  ],
+  "legend_orientation": "horizontal",
+  "legend_x": 70,
+  "legend_y": 1290,
+  "legend_locked": false,
+  "legend": [
+    { "flow": "control", "label": "调用 / 控制" },
+    { "flow": "data", "label": "上下文数据" },
+    { "flow": "read", "label": "读取" },
+    { "flow": "write", "label": "写入 / 落盘" },
+    { "flow": "feedback", "label": "反馈回灌" }
+  ],
+  "footer": "Style 1 · Flat Icon · 依据 paicli-main 源码与 AGENTS.md 生成",
+  "footer_x": 70,
+  "footer_y": 1400
+}

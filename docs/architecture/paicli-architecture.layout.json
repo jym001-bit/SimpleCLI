@@ -1,0 +1,986 @@
+{
+  "canvas": {
+    "height": 1450.0,
+    "width": 1560.0
+  },
+  "composition": {
+    "limits": {
+      "max_bends_per_edge": 12,
+      "max_bridged_crossings": 24,
+      "max_route_stretch": 5.0,
+      "max_total_bends": 100,
+      "min_container_gutter": 20.0,
+      "min_label_clearance": 4.0,
+      "min_node_gap": 40.0,
+      "min_segment_length": 2.0,
+      "profile": "standard"
+    },
+    "metrics": {
+      "bridged_crossings": 11,
+      "max_route_stretch": 1.948,
+      "minimum_container_gutter": 20.0,
+      "minimum_node_gap": 40.0,
+      "shortest_segment": 2.0,
+      "total_bends": 39
+    },
+    "ok": true,
+    "profile": "standard",
+    "score": 0,
+    "violations": []
+  },
+  "edges": [
+    {
+      "bends": 2,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-in-react",
+      "length": 217.0,
+      "route": [
+        [
+          270.0,
+          189.0
+        ],
+        [
+          270.0,
+          252.0
+        ],
+        [
+          205.0,
+          252.0
+        ],
+        [
+          205.0,
+          341.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "terminal-cli",
+      "source_port": [
+        270.0,
+        189.0
+      ],
+      "target": "react-agent",
+      "target_port": [
+        205.0,
+        341.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 4,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-wechat-hitl",
+      "length": 1375.0,
+      "route": [
+        [
+          930.0,
+          189.0
+        ],
+        [
+          930.0,
+          209.4
+        ],
+        [
+          964.0,
+          209.4
+        ],
+        [
+          964.0,
+          466.0
+        ],
+        [
+          195.0,
+          466.0
+        ],
+        [
+          195.0,
+          761.0
+        ]
+      ],
+      "route_stretch": 1.052,
+      "source": "wechat-channel",
+      "source_port": [
+        930.0,
+        189.0
+      ],
+      "target": "hitl-gate",
+      "target_port": [
+        195.0,
+        761.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 6,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-api-react",
+      "length": 1957.6,
+      "route": [
+        [
+          1295.0,
+          189.0
+        ],
+        [
+          1295.0,
+          209.4
+        ],
+        [
+          1094.0,
+          209.4
+        ],
+        [
+          1094.0,
+          82.0
+        ],
+        [
+          24.0,
+          82.0
+        ],
+        [
+          24.0,
+          419.4
+        ],
+        [
+          205.0,
+          419.4
+        ],
+        [
+          205.0,
+          399.0
+        ]
+      ],
+      "route_stretch": 1.506,
+      "source": "runtime-api",
+      "source_port": [
+        1295.0,
+        189.0
+      ],
+      "target": "react-agent",
+      "target_port": [
+        205.0,
+        399.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 0,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-plan-planner",
+      "length": 40.0,
+      "route": [
+        [
+          530.0,
+          370.0
+        ],
+        [
+          570.0,
+          370.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "plan-agent",
+      "source_port": [
+        530.0,
+        370.0
+      ],
+      "target": "planner",
+      "target_port": [
+        570.0,
+        370.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 2,
+      "bridges": [
+        [
+          195.0,
+          580.0
+        ],
+        [
+          89.6,
+          419.4
+        ]
+      ],
+      "crossings": [
+        [
+          195.0,
+          580.0
+        ],
+        [
+          89.6,
+          419.4
+        ]
+      ],
+      "id": "a-react-llm",
+      "length": 1170.8,
+      "route": [
+        [
+          110.0,
+          370.0
+        ],
+        [
+          89.6,
+          370.0
+        ],
+        [
+          89.6,
+          580.0
+        ],
+        [
+          1030.0,
+          580.0
+        ]
+      ],
+      "route_stretch": 1.036,
+      "source": "react-agent",
+      "source_port": [
+        110.0,
+        370.0
+      ],
+      "target": "llm-factory",
+      "target_port": [
+        1030.0,
+        580.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 0,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-hitl-tools",
+      "length": 40.0,
+      "route": [
+        [
+          280.0,
+          790.0
+        ],
+        [
+          320.0,
+          790.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "hitl-gate",
+      "source_port": [
+        280.0,
+        790.0
+      ],
+      "target": "tool-registry",
+      "target_port": [
+        320.0,
+        790.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 0,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-tools-guards",
+      "length": 40.0,
+      "route": [
+        [
+          550.0,
+          790.0
+        ],
+        [
+          590.0,
+          790.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "tool-registry",
+      "source_port": [
+        550.0,
+        790.0
+      ],
+      "target": "guards",
+      "target_port": [
+        590.0,
+        790.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 0,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-guards-audit",
+      "length": 40.0,
+      "route": [
+        [
+          750.0,
+          790.0
+        ],
+        [
+          790.0,
+          790.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "guards",
+      "source_port": [
+        750.0,
+        790.0
+      ],
+      "target": "audit-log",
+      "target_port": [
+        790.0,
+        790.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 2,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-tools-mcp",
+      "length": 330.0,
+      "route": [
+        [
+          408.0,
+          819.0
+        ],
+        [
+          408.0,
+          876.0
+        ],
+        [
+          230.0,
+          876.0
+        ],
+        [
+          230.0,
+          971.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "tool-registry",
+      "source_port": [
+        408.0,
+        819.0
+      ],
+      "target": "mcp-client",
+      "target_port": [
+        230.0,
+        971.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 2,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-tools-web",
+      "length": 182.0,
+      "route": [
+        [
+          480.0,
+          819.0
+        ],
+        [
+          480.0,
+          883.0
+        ],
+        [
+          510.0,
+          883.0
+        ],
+        [
+          510.0,
+          971.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "tool-registry",
+      "source_port": [
+        480.0,
+        819.0
+      ],
+      "target": "web-tools",
+      "target_port": [
+        510.0,
+        971.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 2,
+      "bridges": [
+        [
+          510.0,
+          889.0
+        ]
+      ],
+      "crossings": [
+        [
+          510.0,
+          889.0
+        ]
+      ],
+      "id": "a-tools-skill",
+      "length": 513.0,
+      "route": [
+        [
+          444.0,
+          819.0
+        ],
+        [
+          444.0,
+          889.0
+        ],
+        [
+          805.0,
+          889.0
+        ],
+        [
+          805.0,
+          971.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "tool-registry",
+      "source_port": [
+        444.0,
+        819.0
+      ],
+      "target": "skill-registry",
+      "target_port": [
+        805.0,
+        971.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 3,
+      "bridges": [
+        [
+          550.0,
+          790.0
+        ],
+        [
+          480.0,
+          819.0
+        ],
+        [
+          444.0,
+          819.0
+        ]
+      ],
+      "crossings": [
+        [
+          550.0,
+          790.0
+        ],
+        [
+          480.0,
+          819.0
+        ],
+        [
+          444.0,
+          819.0
+        ]
+      ],
+      "id": "a-tools-rag",
+      "length": 995.0,
+      "route": [
+        [
+          426.0,
+          819.0
+        ],
+        [
+          550.0,
+          819.0
+        ],
+        [
+          550.0,
+          737.0
+        ],
+        [
+          1105.0,
+          737.0
+        ],
+        [
+          1105.0,
+          971.0
+        ]
+      ],
+      "route_stretch": 1.197,
+      "source": "tool-registry",
+      "source_port": [
+        426.0,
+        819.0
+      ],
+      "target": "rag-index",
+      "target_port": [
+        1105.0,
+        971.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 4,
+      "bridges": [
+        [
+          320.0,
+          790.0
+        ]
+      ],
+      "crossings": [
+        [
+          320.0,
+          790.0
+        ]
+      ],
+      "id": "a-tools-lsp",
+      "length": 1485.0,
+      "route": [
+        [
+          390.0,
+          819.0
+        ],
+        [
+          390.0,
+          821.0
+        ],
+        [
+          320.0,
+          821.0
+        ],
+        [
+          320.0,
+          682.0
+        ],
+        [
+          1305.0,
+          682.0
+        ],
+        [
+          1305.0,
+          971.0
+        ]
+      ],
+      "route_stretch": 1.392,
+      "source": "tool-registry",
+      "source_port": [
+        390.0,
+        819.0
+      ],
+      "target": "lsp-manager",
+      "target_port": [
+        1305.0,
+        971.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 8,
+      "bridges": [
+        [
+          230.0,
+          889.0
+        ],
+        [
+          444.0,
+          839.4
+        ],
+        [
+          462.0,
+          819.0
+        ]
+      ],
+      "crossings": [
+        [
+          230.0,
+          889.0
+        ],
+        [
+          444.0,
+          839.4
+        ],
+        [
+          462.0,
+          819.0
+        ]
+      ],
+      "id": "a-tools-snapshot",
+      "length": 2220.8,
+      "route": [
+        [
+          462.0,
+          819.0
+        ],
+        [
+          462.0,
+          839.4
+        ],
+        [
+          416.0,
+          839.4
+        ],
+        [
+          416.0,
+          889.0
+        ],
+        [
+          24.0,
+          889.0
+        ],
+        [
+          24.0,
+          1053.0
+        ],
+        [
+          1384.0,
+          1053.0
+        ],
+        [
+          1384.0,
+          950.6
+        ],
+        [
+          1450.0,
+          950.6
+        ],
+        [
+          1450.0,
+          971.0
+        ]
+      ],
+      "route_stretch": 1.948,
+      "source": "tool-registry",
+      "source_port": [
+        462.0,
+        819.0
+      ],
+      "target": "snapshot-service",
+      "target_port": [
+        1450.0,
+        971.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 2,
+      "bridges": [
+        [
+          1140.0,
+          1053.0
+        ]
+      ],
+      "crossings": [
+        [
+          1140.0,
+          1053.0
+        ]
+      ],
+      "id": "a-rag-store",
+      "length": 187.0,
+      "route": [
+        [
+          1105.0,
+          1029.0
+        ],
+        [
+          1105.0,
+          1049.4
+        ],
+        [
+          1140.0,
+          1049.4
+        ],
+        [
+          1140.0,
+          1181.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "rag-index",
+      "source_port": [
+        1105.0,
+        1029.0
+      ],
+      "target": "sqlite-store",
+      "target_port": [
+        1140.0,
+        1181.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 2,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-snapshot-store",
+      "length": 207.0,
+      "route": [
+        [
+          1450.0,
+          1029.0
+        ],
+        [
+          1450.0,
+          1049.4
+        ],
+        [
+          1395.0,
+          1049.4
+        ],
+        [
+          1395.0,
+          1181.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "snapshot-service",
+      "source_port": [
+        1450.0,
+        1029.0
+      ],
+      "target": "sidegit-store",
+      "target_port": [
+        1395.0,
+        1181.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 0,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-memory-prompt",
+      "length": 40.0,
+      "route": [
+        [
+          1290.0,
+          370.0
+        ],
+        [
+          1250.0,
+          370.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "memory-manager",
+      "source_port": [
+        1290.0,
+        370.0
+      ],
+      "target": "prompt-assembler",
+      "target_port": [
+        1250.0,
+        370.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 0,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-prompt-llm",
+      "length": 152.0,
+      "route": [
+        [
+          1140.0,
+          399.0
+        ],
+        [
+          1140.0,
+          551.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "prompt-assembler",
+      "source_port": [
+        1140.0,
+        399.0
+      ],
+      "target": "llm-factory",
+      "target_port": [
+        1140.0,
+        551.0
+      ],
+      "waypoints": []
+    },
+    {
+      "bends": 0,
+      "bridges": [],
+      "crossings": [],
+      "id": "a-llm-provider",
+      "length": 40.0,
+      "route": [
+        [
+          1250.0,
+          580.0
+        ],
+        [
+          1290.0,
+          580.0
+        ]
+      ],
+      "route_stretch": 1.0,
+      "source": "llm-factory",
+      "source_port": [
+        1250.0,
+        580.0
+      ],
+      "target": "llm-providers",
+      "target_port": [
+        1290.0,
+        580.0
+      ],
+      "waypoints": []
+    }
+  ],
+  "input_schema": "v1",
+  "issues": [
+    {
+      "code": "EDGE_CROSSING_BRIDGED",
+      "coordinates": [
+        [
+          195.0,
+          580.0
+        ],
+        [
+          89.6,
+          419.4
+        ]
+      ],
+      "element": "a-react-llm",
+      "severity": "info"
+    },
+    {
+      "code": "EDGE_CROSSING_BRIDGED",
+      "coordinates": [
+        [
+          510.0,
+          889.0
+        ]
+      ],
+      "element": "a-tools-skill",
+      "severity": "info"
+    },
+    {
+      "code": "EDGE_CROSSING_BRIDGED",
+      "coordinates": [
+        [
+          550.0,
+          790.0
+        ],
+        [
+          480.0,
+          819.0
+        ],
+        [
+          444.0,
+          819.0
+        ]
+      ],
+      "element": "a-tools-rag",
+      "severity": "info"
+    },
+    {
+      "code": "EDGE_CROSSING_BRIDGED",
+      "coordinates": [
+        [
+          320.0,
+          790.0
+        ]
+      ],
+      "element": "a-tools-lsp",
+      "severity": "info"
+    },
+    {
+      "code": "EDGE_CROSSING_BRIDGED",
+      "coordinates": [
+        [
+          230.0,
+          889.0
+        ],
+        [
+          444.0,
+          839.4
+        ],
+        [
+          462.0,
+          819.0
+        ]
+      ],
+      "element": "a-tools-snapshot",
+      "severity": "info"
+    },
+    {
+      "code": "EDGE_CROSSING_BRIDGED",
+      "coordinates": [
+        [
+          1140.0,
+          1053.0
+        ]
+      ],
+      "element": "a-rag-store",
+      "severity": "info"
+    }
+  ],
+  "mode": "architecture",
+  "ok": true,
+  "palette": {
+    "below_target": [],
+    "minimum_target": 4.5,
+    "ratios": {
+      "section_sub_fill": 4.76,
+      "text_muted": 4.76,
+      "text_primary": 17.74,
+      "text_secondary": 4.83
+    },
+    "scope": "default opaque canvas text tokens; not a full rendered accessibility audit",
+    "unsupported_tokens": []
+  },
+  "placements": {
+    "legend": {
+      "actual": [
+        70.0,
+        1290.0
+      ],
+      "bounds": [
+        60.0,
+        1276.0,
+        661.2,
+        1322.0
+      ],
+      "moved": false,
+      "requested": [
+        70.0,
+        1290.0
+      ]
+    }
+  },
+  "schema_version": 1,
+  "semantics": {
+    "details": {},
+    "ok": true,
+    "profile": "generic",
+    "style": 1,
+    "visual_theme": "Flat Icon"
+  },
+  "style": {
+    "id": 1,
+    "name": "Flat Icon"
+  },
+  "summary": {
+    "bridged_crossings": 11,
+    "edges": 19,
+    "nodes": 24
+  },
+  "text_metrics": "heuristic-v1",
+  "typography": {
+    "complete_text": true,
+    "hint": null,
+    "metrics": "heuristic widths; inspect the actual rendered font",
+    "truncated": []
+  }
+}

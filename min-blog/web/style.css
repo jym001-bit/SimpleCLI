@@ -1,0 +1,255 @@
+/* MinBlog 样式：简洁现代的博客风格，桌面 / 移动端自适应 */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: #f5f6f8;
+    color: #1f2328;
+    line-height: 1.7;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+}
+
+/* 顶部工具栏 */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+}
+
+.toolbar h1 {
+    font-size: 28px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* 按钮 */
+.btn {
+    display: inline-block;
+    padding: 9px 18px;
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.btn:hover {
+    background: #1d4ed8;
+}
+
+.btn.danger {
+    background: #dc2626;
+}
+
+.btn.danger:hover {
+    background: #b91c1c;
+}
+
+/* 卡片 */
+.card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 22px 26px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.card h2 {
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+.card h2 a {
+    color: #1f2328;
+    text-decoration: none;
+}
+
+.card h2 a:hover {
+    color: #2563eb;
+}
+
+.meta {
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+
+.summary {
+    color: #4b5563;
+    font-size: 14px;
+}
+
+.empty {
+    text-align: center;
+    color: #9ca3af;
+    padding: 60px 0;
+    font-size: 16px;
+}
+
+/* 文章详情 */
+.back {
+    display: inline-block;
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+    margin-bottom: 14px;
+}
+
+.back:hover {
+    text-decoration: underline;
+}
+
+.post h1 {
+    font-size: 26px;
+    margin-bottom: 6px;
+}
+
+.content {
+    margin-top: 16px;
+    font-size: 15px;
+}
+
+.content h2 {
+    font-size: 21px;
+    margin: 24px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #eee;
+}
+
+.content h3 {
+    font-size: 18px;
+    margin: 20px 0 8px;
+}
+
+.content p {
+    margin-bottom: 14px;
+}
+
+.content ul {
+    margin: 0 0 14px 22px;
+}
+
+.content li {
+    margin-bottom: 4px;
+}
+
+.content pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.6;
+}
+
+.content code {
+    background: #eef1f6;
+    color: #c7254e;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.content pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+}
+
+.content blockquote {
+    border-left: 4px solid #2563eb;
+    background: #f0f4ff;
+    padding: 10px 16px;
+    margin-bottom: 14px;
+    border-radius: 0 8px 8px 0;
+    color: #374151;
+}
+
+.content a {
+    color: #2563eb;
+}
+
+/* 表单 */
+form label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 16px 0 6px;
+}
+
+form input[type="text"],
+form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+form input[type="text"]:focus,
+form textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+form .btn {
+    margin-top: 18px;
+}
+
+.inline-form {
+    display: inline;
+}
+
+.inline-form .btn {
+    margin-top: 0;
+}
+
+/* 页脚 */
+footer {
+    text-align: center;
+    color: #9ca3af;
+    font-size: 12px;
+    margin-top: 48px;
+}
+
+/* 移动端 */
+@media (max-width: 560px) {
+    .container {
+        padding: 20px 14px 40px;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .card {
+        padding: 18px 18px;
+    }
+}

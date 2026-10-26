@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaiCLI — Java Agent CLI · 在终端里完成整个任务</title>
+<meta name="description" content="PaiCLI 是一个可商业落地的 Java Agent CLI：ReAct / Plan-and-Execute / Multi-Agent 三模式，内置 9 工具 + 60+ MCP 工具，HITL 审批护栏，23 期持续演进。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23161615'/%3E%3Ctext x='32' y='42' font-family='monospace' font-size='30' font-weight='bold' fill='%232FE0A4' text-anchor='middle'%3E$%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════ Tokens ═══════════════ */
+:root{
+  --paper:#F1F1EF;
+  --panel:#FBFAF9;
+  --ink:#161615;
+  --ink-2:#3E3E3B;
+  --dim:#75756F;
+  --faint:#9A9A93;
+  --hairline:#DBDBD5;
+  --hair-strong:#C4C4BC;
+  --dark:#141413;
+  --dark-2:#1C1C1A;
+  --dark-3:#222220;
+  --dark-line:#2C2C29;
+  --dark-text:#E7E7E1;
+  --dark-dim:#87877F;
+  --accent:#0E8F62;          /* terminal green — the only hue on the page */
+  --accent-bright:#2FE0A4;
+  --r-lg:14px; --r-md:10px; --r-sm:8px;
+  --fd:"Inter Tight","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --fb:"Inter","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  --fm:"JetBrains Mono",ui-monospace,"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  --wrap:1180px;
+  --pad:clamp(20px,4vw,40px);
+  --shadow-lg:0 24px 70px -30px rgba(22,22,21,.28);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--fb);
+  background:var(--paper);
+  color:var(--ink);
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  font-feature-settings:"tnum" 1,"ss01" 1;
+}
+::selection{background:var(--ink);color:var(--panel)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;border:0;background:none;color:inherit;cursor:pointer}
+img{display:block;max-width:100%}
+
+/* ═══════════════ Shared ═══════════════ */
+.wrap{max-width:var(--wrap);margin:0 auto;padding-left:var(--pad);padding-right:var(--pad)}
+.mono{font-family:var(--fm);font-feature-settings:"tnum" 1}
+.eyebrow{
+  font-family:var(--fm);
+  font-size:11.5px;font-weight:500;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dim);
+  display:inline-flex;align-items:center;gap:10px;
+}
+.eyebrow::before{content:"";width:18px;height:1px;background:var(--hair-strong)}
+.section{padding:clamp(72px,9vw,128px) 0}
+.section-head{margin-bottom:clamp(40px,5vw,64px);max-width:760px}
+.section-head h2{
+  font-family:var(--fd);
+  font-weight:900;
+  font-size:clamp(1.9rem,3.6vw,2.9rem);
+  line-height:1.22;letter-spacing:-.015em;
+  margin-top:14px;
+}
+.section-head p{margin-top:14px;color:var(--dim);font-size:15.5px;max-width:58ch}
+
+/* reveal on scroll */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:calc(var(--i,0)*70ms)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rv{opacity:1;transform:none;transition:none}
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+}
+
+/* buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--fd);font-weight:600;font-size:14.5px;letter-spacing:.01em;
+  padding:13px 22px;border-radius:var(--r-md);
+  transition:transform .25s var(--ease),background .2s,box-shadow .25s,border-color .2s;
+  white-space:nowrap;
+}
+.btn-ink{background:var(--ink);color:var(--panel)}
+.btn-ink:hover{background:#000;transform:translateY(-1px);box-shadow:0 10px 26px -12px rgba(22,22,21,.5)}
+.btn-ink .arrow{transition:transform .25s var(--ease)}
+.btn-ink:hover .arrow{transform:translateX(3px)}
+.btn-ghost{border:1px solid var(--hair-strong);color:var(--ink-2);background:transparent}
+.btn-ghost:hover{border-color:var(--ink);color:var(--ink);background:#fff}
+
+/* ═══════════════ Top bar ═══════════════ */
+.nav{
+  position:sticky;top:0;z-index:60;
+  background:rgba(241,241,239,.82);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color .3s;
+}
+.nav.scrolled{border-color:var(--hairline)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:62px}
+.brand{display:flex;align-items:center;gap:9px;font-family:var(--fm);font-weight:700;font-size:15.5px;letter-spacing:-.02em}
+.brand .pi{width:26px;height:26px;border-radius:7px;background:var(--ink);color:var(--accent-bright);display:grid;place-items:center;font-size:15px;line-height:1}
+.brand small{color:var(--dim);font-weight:500;font-size:11px;letter-spacing:.04em;margin-top:2px}
+.nav-links{display:flex;gap:30px;align-items:center}
+.nav-links a{font-size:13.5px;color:var(--dim);transition:color .2s;position:relative;padding:4px 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:-1px;width:0;height:1px;background:var(--ink);transition:width .25s var(--ease)}
+.nav-links a:hover{color:var(--ink)}
+.nav-links a:hover::after{width:100%}
+.nav-cta{
+  font-family:var(--fd);font-weight:600;font-size:13px;
+  background:var(--ink);color:var(--panel);
+  padding:9px 17px;border-radius:var(--r-sm);
+  transition:background .2s,transform .2s;
+}
+.nav-cta:hover{background:#000;transform:translateY(-1px)}
+
+/* ═══════════════ Hero ═══════════════ */
+.hero{padding:clamp(64px,9vw,120px) 0 clamp(48px,6vw,84px);overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.98fr);gap:clamp(36px,5vw,72px);align-items:center}
+.hero-eyebrow{color:var(--dim);font-family:var(--fm);font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.hero-eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(14,143,98,.14);animation:pulse 2.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(14,143,98,.12)}50%{box-shadow:0 0 0 7px rgba(14,143,98,.05)}}
+.hero h1{
+  font-family:var(--fd);
+  font-weight:900;
+  font-size:clamp(2.7rem,6.2vw,4.8rem);
+  line-height:1.1;
+  letter-spacing:-.02em;
+  margin-top:26px;
+  text-wrap:balance;
+}
+.hero h1 .l2{display:block}
+.hero-sub{
+  margin-top:24px;color:var(--ink-2);
+  font-size:16.5px;max-width:46ch;
+}
+.hero-sub b{color:var(--ink);font-weight:600}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px;align-items:center}
+.hero-hint{
+  margin-top:26px;display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--fm);font-size:12px;color:var(--dim);
+  background:var(--panel);border:1px solid var(--hairline);
+  padding:8px 14px;border-radius:var(--r-sm);
+}
+.hero-hint .g{color:var(--accent);font-weight:600}
+.hero-hint code{font-family:var(--fm);background:transparent;color:var(--ink-2);font-weight:500}
+
+/* terminal */
+.term{
+  background:var(--dark);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-lg);
+  border:1px solid #2A2A27;
+  overflow:hidden;
+  font-family:var(--fm);
+  transform:translateZ(0);
+}
+.term-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--dark-2);border-bottom:1px solid var(--dark-line)}
+.term-bar .td{width:11px;height:11px;border-radius:50%;background:#3A3A37}
+.term-bar .td:nth-child(2){background:#333330}
+.term-bar .td:nth-child(3){background:#2C2C29}
+.term-tab{
+  margin-left:10px;font-size:11px;color:var(--dark-dim);
+  background:var(--dark-3);border:1px solid var(--dark-line);
+  padding:4px 12px;border-radius:6px;letter-spacing:.03em;
+}
+.term-tab .g{color:var(--accent-bright)}
+.term-body{
+  padding:18px 18px 20px;
+  font-size:12.4px;line-height:1.95;
+  color:var(--dark-text);
+  min-height:368px;
+}
+.term-body .row{opacity:0;animation:fadeRow .35s var(--ease) forwards}
+@keyframes fadeRow{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.term-body .c{color:var(--accent-bright);font-weight:600}
+.term-body .t{color:var(--dark-dim)}
+.term-body .ok{color:var(--accent-bright)}
+.term-body .dim{color:var(--dark-dim)}
+.term-body .fin{color:var(--dark-text);font-weight:600;border-top:1px dashed var(--dark-line);margin-top:8px;padding-top:8px}
+.term-body .fin .ok{font-weight:600}
+.term-cursor{display:inline-block;width:7px;height:14px;background:var(--dark-text);vertical-align:-2px;animation:blink 1.05s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* ═══════════════ Stats ═══════════════ */
+.stats{border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);background:var(--panel)}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.stat{padding:clamp(22px,3vw,34px) clamp(12px,2vw,24px);border-left:1px solid var(--hairline)}
+.stat:first-child{border-left:0}
+.stat .num{font-family:var(--fm);font-weight:700;font-size:clamp(1.5rem,2.6vw,2.1rem);letter-spacing:-.03em;color:var(--ink);display:flex;align-items:baseline;gap:4px}
+.stat .num .unit{font-size:.55em;color:var(--dim);font-weight:500;letter-spacing:0}
+.stat .lbl{font-size:12px;color:var(--dim);margin-top:6px;letter-spacing:.06em;text-transform:uppercase;font-family:var(--fm);display:block}
+.stat .desc{font-size:12.5px;color:var(--faint);margin-top:2px}
+
+/* ═══════════════ Modes rows ═══════════════ */
+.mode-row{
+  display:grid;grid-template-columns:240px minmax(0,1fr) auto;
+  gap:clamp(16px,3vw,40px);align-items:start;
+  padding:clamp(26px,3.4vw,40px) 0;
+  border-top:1px solid var(--hairline);
+  transition:background .25s;
+}
+.mode-row:last-of-type{border-bottom:1px solid var(--hairline)}
+.mode-row:hover{background:#fff}
+.mode-name{font-family:var(--fd);font-weight:800;font-size:clamp(1.15rem,1.8vw,1.5rem);letter-spacing:-.01em;display:flex;align-items:baseline;gap:10px}
+.mode-name .en{font-family:var(--fm);font-size:12px;color:var(--faint);font-weight:500;letter-spacing:0;white-space:nowrap}
+.mode-body p{color:var(--ink-2);font-size:15px;max-width:64ch}
+.mode-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
+.mode-tags span{
+  font-family:var(--fm);font-size:11px;color:var(--dim);
+  border:1px solid var(--hairline);border-radius:999px;
+  padding:3px 11px;background:var(--panel);
+}
+.mode-cmd{
+  font-family:var(--fm);font-size:12px;color:var(--faint);
+  border:1px dashed var(--hair-strong);border-radius:var(--r-sm);
+  padding:10px 14px;white-space:nowrap;
+  transition:all .25s var(--ease);background:var(--panel);
+}
+.mode-cmd .g{color:var(--accent)}
+.mode-row:hover .mode-cmd{border-style:solid;border-color:var(--hair-strong);color:var(--ink-2)}
+.mode-note{margin-top:34px;font-size:13px;color:var(--dim)}
+.mode-note a{color:var(--ink);border-bottom:1px solid var(--hair-strong);transition:border-color .2s}
+.mode-note a:hover{border-color:var(--ink)}
+
+/* ═══════════════ Capability grid ═══════════════ */
+.grid-9{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--hairline);border:1px solid var(--hairline);border-radius:var(--r-lg);overflow:hidden}
+.cell{
+  background:var(--panel);
+  padding:clamp(22px,2.6vw,30px);
+  transition:background .25s,transform .25s var(--ease),box-shadow .3s;
+  position:relative;min-height:200px;
+  display:flex;flex-direction:column;
+}
+.cell:hover{background:#fff;z-index:1;box-shadow:0 16px 40px -24px rgba(22,22,21,.3)}
+.cell .tag{font-family:var(--fm);font-size:11px;font-weight:500;color:var(--accent);letter-spacing:.04em}
+.cell h3{font-family:var(--fd);font-weight:700;font-size:17.5px;letter-spacing:-.01em;margin-top:16px}
+.cell p{font-size:13.5px;color:var(--dim);margin-top:8px;line-height:1.65}
+.cell .k{font-family:var(--fm);font-size:11px;color:var(--faint);margin-top:auto;padding-top:18px;display:flex;gap:6px;align-items:center}
+.cell .k::before{content:"→";color:var(--hair-strong);transition:transform .25s var(--ease)}
+.cell:hover .k::before{transform:translateX(3px);color:var(--accent)}
+
+/* ═══════════════ Dark section: history + install ═══════════════ */
+.dark{background:var(--dark);color:var(--dark-text)}
+.dark .eyebrow{color:var(--dark-dim)}
+.dark .eyebrow::before{background:var(--dark-line)}
+.dark .section-head p{color:var(--dark-dim)}
+.dark .section-head h2 .g{color:var(--accent-bright)}
+
+.timeline{margin:clamp(36px,5vw,56px) 0 clamp(48px,6vw,72px)}
+.tl-dots{display:flex;justify-content:space-between;position:relative}
+.tl-dots::before{content:"";position:absolute;left:0;right:0;top:8.5px;height:1px;background:var(--dark-line)}
+.tl-node{display:flex;flex-direction:column;align-items:center;gap:12px;position:relative}
+.tl-node::before{
+  content:"";width:9px;height:9px;border-radius:50%;
+  background:var(--dark);border:1px solid #4A4A44;
+  transition:all .25s var(--ease);
+  position:relative;z-index:1;flex:none;
+}
+.tl-node .no{font-family:var(--fm);font-size:11px;color:var(--dark-dim);transition:color .2s;white-space:nowrap}
+.tl-node .nm{font-family:var(--fm);font-size:10.5px;color:#56564F;transition:color .2s;letter-spacing:.04em;margin-top:2px;text-align:center;white-space:nowrap}
+.tl-node:first-child::before,.tl-node:last-child::before{background:var(--accent);border-color:var(--accent)}
+.tl-node:first-child .no,.tl-node:first-child .nm{color:var(--accent-bright)}
+.tl-node:hover::before{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 5px rgba(47,224,164,.12)}
+.tl-node:hover .no{color:var(--dark-text)}
+.tl-node:hover .nm{color:var(--dark-dim)}
+.tl-hint{display:flex;justify-content:space-between;margin-top:16px;font-family:var(--fm);font-size:11.5px;color:#56564F}
+.tl-hint span:last-child{color:var(--accent-bright)}
+
+.install-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(28px,4vw,56px);align-items:center}
+.install-steps{display:flex;flex-direction:column;gap:22px}
+.step{display:grid;grid-template-columns:auto 1fr;gap:16px}
+.step .n{
+  font-family:var(--fm);font-weight:600;font-size:12px;color:var(--dark-dim);
+  width:26px;height:26px;border-radius:50%;border:1px solid var(--dark-line);
+  display:grid;place-items:center;margin-top:2px;flex:none;
+}
+.step h4{font-family:var(--fd);font-weight:700;font-size:15px}
+.step p{font-size:13.5px;color:var(--dark-dim);margin-top:4px;max-width:46ch}
+.codeblock{
+  background:#0E0E0D;border:1px solid var(--dark-line);border-radius:var(--r-md);
+  overflow:hidden;position:relative;
+}
+.codeblock pre{padding:20px 22px;font-family:var(--fm);font-size:13px;line-height:1.85;overflow-x:auto;color:var(--dark-text);white-space:pre}
+.codeblock pre .cm{color:#5A5A52}
+.codeblock pre .g{color:var(--accent-bright)}
+.codeblock pre .caret{color:var(--dark-text);font-weight:600}
+.codeblock .copy{
+  position:absolute;top:10px;right:10px;
+  font-family:var(--fm);font-size:11px;color:var(--dark-dim);
+  border:1px solid var(--dark-line);border-radius:6px;
+  padding:5px 11px;background:var(--dark-2);transition:all .2s;
+}
+.codeblock .copy:hover{color:var(--dark-text);border-color:#4A4A44}
+.codeblock .copy.done{color:var(--accent-bright);border-color:rgba(47,224,164,.4)}
+.install-foot{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 20px;font-family:var(--fm);font-size:11.5px;color:#56564F}
+.install-foot b{color:var(--dark-dim);font-weight:600}
+
+/* ═══════════════ Final CTA ═══════════════ */
+.final{text-align:center;border-top:1px solid var(--hairline)}
+.final h2{font-family:var(--fd);font-weight:900;font-size:clamp(2rem,4.4vw,3.4rem);letter-spacing:-.02em;line-height:1.18;text-wrap:balance}
+.final p{margin:18px auto 0;color:var(--dim);max-width:52ch;font-size:15.5px}
+.final .hero-cta{justify-content:center}
+
+/* ═══════════════ Footer ═══════════════ */
+footer{border-top:1px solid var(--hairline);background:var(--panel)}
+.foot-grid{display:grid;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(0,1fr));gap:40px;padding:clamp(48px,6vw,72px) 0 clamp(32px,4vw,48px)}
+.foot-brand .brand{margin-bottom:14px}
+.foot-brand p{font-size:13px;color:var(--dim);max-width:34ch}
+.foot-col h5{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:16px}
+.foot-col a{display:block;font-size:13.5px;color:var(--ink-2);padding:5px 0;transition:color .2s}
+.foot-col a:hover{color:var(--ink)}
+.foot-bottom{border-top:1px solid var(--hairline);padding:18px 0;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--faint)}
+.foot-bottom .mono span{color:var(--accent)}
+
+/* ═══════════════ Responsive ═══════════════ */
+@media(max-width:1060px){
+  .hero-grid{grid-template-columns:1fr;gap:44px}
+  .term{max-width:640px}
+  .mode-row{grid-template-columns:1fr;gap:14px}
+  .mode-cmd{width:fit-content;margin-top:6px}
+}
+@media(max-width:900px){
+  .grid-9{grid-template-columns:repeat(2,1fr)}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .stat:nth-child(3){border-left:0}
+  .stat:nth-child(odd){border-left:0}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--hairline)}
+  .install-grid{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:repeat(2,1fr)}
+  .nav-links{display:none}
+  .tl-node .nm{display:none}
+}
+@media(max-width:560px){
+  .grid-9{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:1fr}
+  .stat{border-left:0 !important;border-bottom:1px solid var(--hairline)}
+  .stat:last-child{border-bottom:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ Top bar ═══════════════ -->
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="PaiCLI 首页">
+      <span class="pi mono">$</span>
+      PaiCLI<small>Java Agent CLI</small>
+    </a>
+    <nav class="nav-links" aria-label="主导航">
+      <a href="#modes">执行模式</a>
+      <a href="#capabilities">能力</a>
+      <a href="#history">演进</a>
+      <a href="#start">快速开始</a>
+    </nav>
+    <a class="nav-cta" href="#start">开始使用</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ═══════════════ Hero ═══════════════ -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+
+      <div>
+        <div class="hero-eyebrow rv"><span class="dot"></span>PaiCLI&nbsp;·&nbsp;Java Agent CLI&nbsp;·&nbsp;2026</div>
+        <h1 class="rv" style="--i:1">
+          不补全代码，
+          <span class="l2">完成整个任务。</span>
+        </h1>
+        <p class="hero-sub rv" style="--i:2">
+          在终端里驱动 Agent 读你的代码库、查资料、改文件、跑命令——
+          <b>从提出需求到验收通过</b>，一次会话走完。
+          用 Java 写就、可商业落地，为中文团队与国产模型做好了准备。
+        </p>
+        <div class="hero-cta rv" style="--i:3">
+          <a class="btn btn-ink" href="#start">开始使用 <span class="arrow">→</span></a>
+          <a class="btn btn-ghost" href="#modes">了解执行模式</a>
+        </div>
+        <div class="hero-hint rv mono" style="--i:4">
+          <span class="g">$</span><code>mvn clean package</code><span class="t">然后</span><span class="g">$</span><code>start-paicli.bat</code>
+        </div>
+      </div>
+
+      <!-- Live terminal — the signature -->
+      <div class="rv" style="--i:2" aria-hidden="true">
+        <div class="term">
+          <div class="term-bar">
+            <span class="td"></span><span class="td"></span><span class="td"></span>
+            <span class="term-tab mono"><span class="g">$</span> paicli — order-service</span>
+          </div>
+          <div class="term-body mono" id="termBody"><span class="term-cursor" id="termCursor"></span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ Stats ═══════════════ -->
+  <section class="stats" aria-label="关键数据">
+    <div class="wrap stats-grid">
+      <div class="stat rv" style="--i:0">
+        <div class="num">3<span class="unit">种</span></div>
+        <span class="lbl">Execution modes</span>
+        <div class="desc">ReAct · Plan · Team，一套底座</div>
+      </div>
+      <div class="stat rv" style="--i:1">
+        <div class="num">60<span class="unit">+</span></div>
+        <span class="lbl">MCP tools</span>
+        <div class="desc">浏览器、搜索、设计、数据源</div>
+      </div>
+      <div class="stat rv" style="--i:2">
+        <div class="num">1M<span class="unit">tokens</span></div>
+        <span class="lbl">Context window</span>
+        <div class="desc">长上下文模式，整仓可读</div>
+      </div>
+      <div class="stat rv" style="--i:3">
+        <div class="num">23<span class="unit">期</span></div>
+        <span class="lbl">Iterations</span>
+        <div class="desc">从第一行 ReAct 持续演进</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Modes ═══════════════ -->
+  <section class="section" id="modes">
+    <div class="wrap">
+      <div class="section-head rv">
+        <span class="eyebrow">Execution modes</span>
+        <h2>三种模式，不是三套引擎。<br>共享记忆、工具与快照。</h2>
+        <p>难易不同的任务，用不同的思考方式。切换的是策略，沉淀的是同一份对代码库的理解。</p>
+      </div>
+
+      <article class="mode-row rv" style="--i:0">
+        <div class="mode-name">ReAct<span class="en">/ 边想边干</span></div>
+        <div class="mode-body">
+          <p>单代理循环：<span class="mono">Thought → Action → Observation</span>。一边推理一边调用工具，把一句话需求立刻办成。日常顺手的小事，它最利落。</p>
+          <div class="mode-tags"><span>10+ 内置工具</span><span>web_search</span><span>HITL</span></div>
+        </div>
+        <div class="mode-cmd mono"><span class="g">$</span> paicli "把这个报错查一下并修好"</div>
+      </article>
+
+      <article class="mode-row rv" style="--i:1">
+        <div class="mode-name">Plan-and-Execute<span class="en">/ 先计划，再动手</span></div>
+        <div class="mode-body">
+          <p>复杂任务先拆解成带依赖关系的 DAG，与你在动手前逐项确认。会牵一发动全身的大改，它每一步都让你看得见、拦得住。</p>
+          <div class="mode-tags"><span>/plan</span><span>DAG 依赖</span><span>执行前确认</span></div>
+        </div>
+        <div class="mode-cmd mono"><span class="g">$</span> /plan "给整个模块加缓存与限流"</div>
+      </article>
+
+      <article class="mode-row rv" style="--i:2">
+        <div class="mode-name">Multi-Agent<span class="en">/ 组队干活</span></div>
+        <div class="mode-body">
+          <p>Planner 拆解、Worker 执行、Reviewer 审查——审查不过就带反馈重试，冲突自动收敛。适合需要质量门槛的批量工程活。</p>
+          <div class="mode-tags"><span>/team</span><span>评审循环</span><span>自动返工</span></div>
+        </div>
+        <div class="mode-cmd mono"><span class="g">$</span> /team "重构遗留模块，保持行为不变"</div>
+      </article>
+
+      <p class="mode-note rv" style="--i:3">
+        三条路径共享 <span class="mono">ToolRegistry / MemoryManager / SnapshotService</span>——不会为某个模式制造孤立的能力孤岛。
+        各模式细节见 <a href="../README.md">README</a> 的演进记录。
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Capabilities ═══════════════ -->
+  <section class="section" id="capabilities" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head rv">
+        <span class="eyebrow">Capabilities</span>
+        <h2>不是聊天框，是能<u style="text-decoration:none;border-bottom:3px solid var(--hair-strong)">动手</u>的 Agent</h2>
+        <p>工具从 9 个内置长到 60+ 个 MCP，每个都经过安全审批与审计才轮到它碰你的代码。</p>
+      </div>
+
+      <div class="grid-9 rv" style="--i:1">
+        <div class="cell">
+          <span class="tag mono">/save · memory</span>
+          <h3>长期记忆</h3>
+          <p>一句「记一下」，下次会话它还记得。项目级记忆随仓库分发，团队规则人人共享。</p>
+          <span class="k">跨会话复用</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">/search · RAG</span>
+          <h3>代码库理解</h3>
+          <p>语义检索 + AST 关系图谱。它能"读懂"你的代码再动手，而不是瞎猜文件名。</p>
+          <span class="k">文件 · 类 · 方法粒度</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">/mcp · hub</span>
+          <h3>MCP 动态工具</h3>
+          <p>60+ 外部工具即插即用：浏览器、实时搜索、设计稿、业务数据源，schema 自动清洗。</p>
+          <span class="k">stdio · 远程 HTTP</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">/browser · login</span>
+          <h3>能读真网页</h3>
+          <p>公众号、知乎、小红书这些 JS 站点，它能复用你的登录态去读去填，不再只拿空壳。</p>
+          <span class="k">chrome-devtools MCP</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">/hitl · guard</span>
+          <h3>人机审批护栏</h3>
+          <p>写文件、跑命令按危险分级审批；高危操作默认拒绝、审计留痕，凭证自动脱敏。</p>
+          <span class="k">高危 · 中危 · 拒绝</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">/snapshot · undo</span>
+          <h3>快照回滚</h3>
+          <p>每次改动前自动留底。Agent 改坏了？一条命令回到任务开始前，不慌。</p>
+          <span class="k">side-git 历史</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">/skill · on</span>
+          <h3>Skill 专家手册</h3>
+          <p>把「该怎么想」沉淀成可加载的决策手册，按场景展开，而不是往提示词里堆规则。</p>
+          <span class="k">场景化即插即用</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">/model · switch</span>
+          <h3>五个大脑，随时切换</h3>
+          <p>GLM · DeepSeek · Step · Kimi · Agnes 已深度适配，一个 <span class="mono">/model</span> 无缝切换，Key 不进代码库。</p>
+          <span class="k">同构 LlmClient 抽象</span>
+        </div>
+        <div class="cell">
+          <span class="tag mono">iLink · wechat</span>
+          <h3>微信里下任务</h3>
+          <p>人不在电脑前？把需求发到微信 iLink 通道，任务照样进你的 CLI 开跑。</p>
+          <span class="k">第 23 期 · 通道 MVP</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ Dark: history + install ═══════════════ -->
+  <section class="section dark" id="history">
+    <div class="wrap">
+
+      <div class="section-head rv">
+        <span class="eyebrow">History</span>
+        <h2>23 期迭代，<span class="g">一次</span>都没有离开终端</h2>
+        <p>从第一行 ReAct 循环到 TUI 产品化、MCP 协议、浏览器 Agent、微信通道——每个里程碑都是先能跑，再做好。</p>
+      </div>
+
+      <div class="timeline rv" style="--i:1">
+        <div class="tl-dots">
+          <div class="tl-node"><span class="no mono">01</span><span class="nm">ReAct</span></div>
+          <div class="tl-node"><span class="no mono">02</span><span class="nm">Plan + DAG</span></div>
+          <div class="tl-node"><span class="no mono">05</span><span class="nm">Multi-Agent</span></div>
+          <div class="tl-node"><span class="no mono">10</span><span class="nm">MCP 协议</span></div>
+          <div class="tl-node"><span class="no mono">16</span><span class="nm">TUI 产品化</span></div>
+          <div class="tl-node"><span class="no mono">23</span><span class="nm">微信 iLink</span></div>
+        </div>
+        <div class="tl-hint"><span>2025 · 第一行代码</span><span class="mono">仍在演进 →</span></div>
+      </div>
+
+      <div class="install-grid" id="start">
+        <div class="rv" style="--i:0">
+          <span class="eyebrow">Quick start</span>
+          <h2 style="font-family:var(--fd);font-weight:900;font-size:clamp(1.7rem,3vw,2.5rem);letter-spacing:-.015em;line-height:1.22;margin-top:14px">三个命令，<br>它今晚就进你的终端。</h2>
+          <div class="install-steps" style="margin-top:30px">
+            <div class="step">
+              <span class="n mono">1</span>
+              <div><h4>准备环境</h4><p>Java 17+ 与 Maven，构建默认跳过测试，优先产出可手工验收的 jar。</p></div>
+            </div>
+            <div class="step">
+              <span class="n mono">2</span>
+              <div><h4>写入模型配置</h4><p>首次启动自动生成 <span class="mono" style="font-size:12px">~/.paicli</span>，填入任一已适配国产模型的 Key。</p></div>
+            </div>
+            <div class="step">
+              <span class="n mono">3</span>
+              <div><h4>把第一句话交给它</h4><p>从一个真实的小任务开始——让它在你的仓库里替你完成第一件事。</p></div>
+            </div>
+          </div>
+          <div class="install-foot">
+            <span><b>Java 17+</b> · Maven 3.8+</span>
+            <span><b>macOS / Linux</b> 用 <span style="color:var(--accent-bright)">java -jar</span> 启动</span>
+          </div>
+        </div>
+
+        <div class="rv" style="--i:1">
+          <div class="codeblock">
+            <button class="copy mono" data-copy="mvn clean package&#10;java -jar target/paicli-1.0-SNAPSHOT.jar" type="button">复制</button>
+            <pre><span class="cm"># 1 · 构建（默认跳过测试，直接产出 jar）</span>
+<span class="g">$</span> mvn clean package
+
+<span class="cm"># 2 · 启动（Windows 可双击 start-paicli.bat）</span>
+<span class="g">$</span> java -jar target/paicli-1.0-SNAPSHOT.jar
+
+<span class="cm"># 3 · 进入 TUI 后，把需求直接说给它</span>
+<span class="caret">&gt;</span> "帮我把 UserService 里重复的 try-catch 抽出来"</pre>
+          </div>
+          <p style="margin-top:18px;font-size:13px;color:var(--dark-dim);max-width:56ch">
+            完整命令、TUI 快捷键与模式入口记录在根目录 <span class="mono" style="color:var(--dark-text)">README.md</span>，演进计划见 <span class="mono" style="color:var(--dark-text)">ROADMAP.md</span>。
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ Final CTA ═══════════════ -->
+  <section class="section final">
+    <div class="wrap">
+      <h2 class="rv">最好的搭档，是那种<br>你信任它动手的。</h2>
+      <p class="rv" style="--i:1">PaiCLI 不补全你的代码——它完成你的任务。打开终端，说需求，剩下的交给它。</p>
+      <div class="hero-cta rv" style="--i:2">
+        <a class="btn btn-ink" href="#start">立即开始 <span class="arrow">→</span></a>
+        <a class="btn btn-ghost" href="../README.md">阅读 README</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════ Footer ═══════════════ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top" aria-label="PaiCLI 回到顶部">
+          <span class="pi mono">$</span> PaiCLI<small>Java Agent CLI</small>
+        </a>
+        <p>在终端里完成整个任务的可商业 Agent CLI。从想法到代码到验收，一次会话走完。</p>
+      </div>
+      <div class="foot-col">
+        <h5>产品</h5>
+        <a href="#modes">执行模式</a>
+        <a href="#capabilities">能力清单</a>
+        <a href="#history">演进历程</a>
+        <a href="#start">快速开始</a>
+      </div>
+      <div class="foot-col">
+        <h5>文档</h5>
+        <a href="../README.md">README</a>
+        <a href="../ROADMAP.md">ROADMAP</a>
+        <a href="../AGENTS.md">AGENTS</a>
+        <a href="../PAI.md">PAI.md</a>
+      </div>
+      <div class="foot-col">
+        <h5>通道</h5>
+        <a href="#start">Windows 启动脚本</a>
+        <a href="#history">微信 iLink</a>
+        <a href="../demo">demo 用例</a>
+        <a href="../landing/index.html">旧版落地页</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 PaiCLI — Java Agent CLI</span>
+      <span class="mono"><span>$</span> echo "talk is cheap, show me the task"</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ═══════════ reveal on scroll ═══════════ */
+(function(){
+  var els = document.querySelectorAll('.rv');
+  if(!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in')}); return; }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); }
+    });
+  },{threshold:.12, rootMargin:'0px 0px -6% 0px'});
+  els.forEach(function(e){ io.observe(e); });
+})();
+
+/* ═══════════ nav scrolled ═══════════ */
+(function(){
+  var nav = document.getElementById('nav');
+  addEventListener('scroll', function(){ nav.classList.toggle('scrolled', scrollY > 8); }, {passive:true});
+})();
+
+/* ═══════════ copy button ═══════════ */
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var text = btn.getAttribute('data-copy');
+    function done(){ btn.textContent = '✓ 已复制'; btn.classList.add('done');
+      setTimeout(function(){ btn.textContent = '复制'; btn.classList.remove('done'); }, 2000); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(e){}
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else { fallback(); }
+  });
+});
+
+/* ═══════════ live terminal replay ═══════════ */
+(function(){
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var body = document.getElementById('termBody');
+  if(!body) return;
+  var cursor = document.getElementById('termCursor');
+
+  var script = [
+    {t:'cmd', s:'paicli "OrderService.add 加防重复提交"', d:1100},
+    {t:'note', s:'目标已拆解 → 给 add() 增加幂等保护，不改行为', d:620},
+    {t:'call', s:'read_file  OrderService.java', d:520},
+    {t:'note', s:'· HITL 已批准 · 读到 add(int userId, Cart cart)，无任何保护', d:760},
+    {t:'call', s:'grep_code  "@Idempotent" 项目内已有注解', d:540},
+    {t:'note', s:'· common/idempotent 有现成注解与切面，直接复用', d:700},
+    {t:'call', s:'write_file OrderService.java', d:540},
+    {t:'note', s:'· HITL 已批准 · 方法签名不变，新增注解与 key 策略', d:760},
+    {t:'ok',  s:'@Idempotent(key = "order:add", ttl = 30s) 已加上', d:520},
+    {t:'fin', s:'任务完成 · 4 次工具调用 · 6.4s · 0 冲突', d:3200}
+  ];
+
+  function lineCls(t){
+    if(t==='cmd') return 'c';
+    if(t==='call') return '';
+    if(t==='ok'||t==='fin') return 'ok';
+    return 'dim';
+  }
+  function prefix(t){
+    if(t==='cmd') return '<span class="g">$ </span>';
+    if(t==='call') return '<span class="t">▸ </span>';
+    if(t==='ok'||t==='fin') return '<span class="g">✓ </span>';
+    return '<span class="t">· </span>';
+  }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function addRow(line){
+    var div = document.createElement('div');
+    div.className = 'row ' + (line.t==='fin' ? 'fin' : '');
+    div.innerHTML = prefix(line.t) + '<span class="' + lineCls(line.t) + '">' + line.s + '</span>';
+    body.insertBefore(div, cursor);
+  }
+  async function play(){
+    if(reduced){
+      script.forEach(addRow);
+      cursor.style.display = 'none';
+      return;
+    }
+    body.innerHTML = '';
+    body.appendChild(cursor);
+    for(var i=0;i<script.length;i++){
+      addRow(script[i]);
+      var d = script[i].d;
+      if(script[i].t==='cmd'){ var n=0; while(n<d){ n+=120; await sleep(Math.min(120, d-n)); } }
+      else { await sleep(d); }
+    }
+  }
+  function loop(){ play().then(function(){
+    if(reduced) return;
+    setTimeout(loop, 2200);
+  }); }
+  loop();
+})();
+</script>
+</body>
+</html>
