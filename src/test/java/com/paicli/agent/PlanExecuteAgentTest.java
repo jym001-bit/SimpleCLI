@@ -31,6 +31,53 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlanExecuteAgentTest {
 
+    @Test
+    void failedModelAfterFileWriteCannotReplayThePlanAndKeepsToolOutput() throws Exception {
+        StubGLMClient client = new StubGLMClient(List.of(new LlmClient.ChatResponse("assistant", "",
+                List.of(new LlmClient.ToolCall("write", new LlmClient.ToolCall.Function("write_file",
+                        "{\"path\":\"result.txt\",\"content\":\"written-once\"}"))), 10, 2)));
+        client.missingResponseFailure = new java.net.ConnectException("temporary disconnect");
+        AlwaysFailingChainPlanner planner = new AlwaysFailingChainPlanner(client);
+        ToolRegistry registry = new ToolRegistry();
+        registry.setProjectPath(tempDir.toString());
+        PlanExecuteAgent agent = new PlanExecuteAgent(client, registry, planner, null,
+                (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(),
+                new PrintStream(new ByteArrayOutputStream()));
+
+        String result = agent.run("写入结果后继续分析");
+
+        assertEquals("written-once", Files.readString(tempDir.resolve("result.txt")));
+        assertEquals(1, planner.createCount.get(), "工具执行过后不能重做整份计划");
+        assertEquals(2, client.toolSnapshots.size());
+        assertTrue(result.contains("UNSAFE_TASK_REPLAY"));
+        assertTrue(result.contains("失败任务保留的部分输出"));
+        assertTrue(planner.lastPlan.getTask("x").getResult().contains("result.txt"));
+        assertEquals(Task.TaskStatus.SKIPPED, planner.lastPlan.getTask("y").getStatus());
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = {1, 2})
+    void failedAdmittedTurnCannotResetTheHardIterationBudgetThroughReplan(int limit) {
+        String key = "paicli.react.hard.max.iterations", old = System.getProperty(key);
+        try {
+            System.setProperty(key, Integer.toString(limit));
+            StubGLMClient client = new StubGLMClient(List.of());
+            client.missingResponseFailure = new java.net.ConnectException("temporary disconnect");
+            AlwaysFailingChainPlanner planner = new AlwaysFailingChainPlanner(client);
+            PlanExecuteAgent agent = new PlanExecuteAgent(client, new ToolRegistry(), planner, null,
+                    (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(),
+                    new PrintStream(new ByteArrayOutputStream()));
+
+            String result = agent.run("分析当前项目");
+
+            assertEquals(limit, planner.createCount.get());
+            assertEquals(limit, client.toolSnapshots.size());
+            assertTrue(result.contains("BUDGET_EXHAUSTED"));
+        } finally {
+            if (old == null) System.clearProperty(key); else System.setProperty(key, old);
+        }
+    }
+
     @TempDir
     Path tempDir;
 
@@ -106,6 +153,77 @@ class PlanExecuteAgentTest {
     }
 
     @Test
+    void budgetFinalizationUsesExactlyOneToolFreeRequest() throws Exception {
+        String old = System.getProperty("paicli.react.hard.max.iterations");
+        try {
+            System.setProperty("paicli.react.hard.max.iterations", "1");
+            Path sampleFile = Files.createFile(tempDir.resolve("finalization.txt"));
+            StubGLMClient client = new StubGLMClient(List.of(
+                    new LlmClient.ChatResponse("assistant", "", List.of(new LlmClient.ToolCall(
+                            "call_read", new LlmClient.ToolCall.Function("read_file",
+                            "{\"path\":\"" + sampleFile.toString().replace("\\", "\\\\") + "\"}"))), 10, 2),
+                    new LlmClient.ChatResponse("assistant", "文件已读取；进一步分析尚未完成。", null, 12, 3)));
+            ToolRegistry registry = new ToolRegistry();
+            registry.setProjectPath(tempDir.toString());
+            PlanExecuteAgent agent = new PlanExecuteAgent(client, registry, new StubPlanner(client), null,
+                    (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(),
+                    new PrintStream(new ByteArrayOutputStream()));
+
+            String result = agent.run("读取文件并分析");
+
+            assertEquals(2, client.toolSnapshots.size(), "应有一次工具决策和一次预算收尾模型请求");
+            assertFalse(client.toolSnapshots.get(0).isEmpty());
+            assertTrue(client.toolSnapshots.get(1).isEmpty(), "预算收尾请求必须禁用工具");
+            assertTrue(client.messageSnapshots.get(1).stream()
+                    .filter(message -> "user".equals(message.role()))
+                    .map(LlmClient.Message::content)
+                    .anyMatch(content -> content != null && content.contains("不要再调用任何工具")));
+            assertTrue(result.contains("部分完成"));
+            assertFalse(result.startsWith("✅"), "预算收尾不能被调度层当作整份计划完成");
+            assertTrue(result.contains("文件已读取；进一步分析尚未完成。"));
+            assertEquals(result.indexOf("文件已读取；进一步分析尚未完成。"),
+                    result.lastIndexOf("文件已读取；进一步分析尚未完成。"), "部分结果不能重复追加到汇总");
+        } finally {
+            if (old == null) {
+                System.clearProperty("paicli.react.hard.max.iterations");
+            } else {
+                System.setProperty("paicli.react.hard.max.iterations", old);
+            }
+        }
+    }
+
+    @Test
+    void budgetPartialDoesNotUnblockDependentsOrTriggerReplanning() throws Exception {
+        String key = "paicli.react.hard.max.iterations";
+        String old = System.getProperty(key);
+        try {
+            System.setProperty(key, "1");
+            StubGLMClient client = new StubGLMClient(List.of(
+                    new LlmClient.ChatResponse("assistant", "", List.of(new LlmClient.ToolCall("list",
+                            new LlmClient.ToolCall.Function("list_dir", "{\"path\":\".\"}"))), 10, 2),
+                    new LlmClient.ChatResponse("assistant", "已读取目录，分析尚未完成", null, 12, 3)));
+            ToolRegistry registry = new ToolRegistry();
+            registry.setProjectPath(tempDir.toString());
+            AlwaysFailingChainPlanner planner = new AlwaysFailingChainPlanner(client);
+            PlanExecuteAgent agent = new PlanExecuteAgent(client, registry, planner, null,
+                    (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(),
+                    new PrintStream(new ByteArrayOutputStream()));
+
+            String result = agent.run("分析目录后验证结果");
+
+            assertEquals(1, planner.createCount.get(), "预算停止不能触发异常重规划");
+            assertEquals(2, client.toolSnapshots.size(), "不得启动依赖任务或额外模型请求");
+            assertEquals(Task.TaskStatus.FAILED, planner.lastPlan.getTask("x").getStatus());
+            assertEquals(Task.TaskStatus.SKIPPED, planner.lastPlan.getTask("y").getStatus());
+            assertTrue(planner.lastPlan.getTask("x").getResult().contains("已读取目录"));
+            assertTrue(result.contains("已读取目录"), "汇总必须保留未流式展示的部分结果");
+            assertFalse(result.startsWith("✅"));
+        } finally {
+            if (old == null) System.clearProperty(key); else System.setProperty(key, old);
+        }
+    }
+
+    @Test
     void shouldContinuePlanTaskBeyondLegacyFiveIterationLimit() throws Exception {
         String old = System.getProperty("paicli.react.hard.max.iterations");
         try {
@@ -177,6 +295,7 @@ class PlanExecuteAgentTest {
         try {
             System.setProperty(PlanExecuteAgent.MAX_REPLANS_PROPERTY, "1");
             StubGLMClient llmClient = new StubGLMClient(List.of());
+            llmClient.missingResponseFailure = new java.net.ConnectException("temporary connection failure");
             AlwaysFailingChainPlanner planner = new AlwaysFailingChainPlanner(llmClient);
             PlanExecuteAgent agent = new PlanExecuteAgent(llmClient, new ToolRegistry(), planner, null,
                     (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(),
@@ -477,6 +596,10 @@ class PlanExecuteAgentTest {
 
     private static final class StubGLMClient extends GLMClient {
         private final Queue<StubResponse> responses;
+        private IOException missingResponseFailure = new IOException("缺少预设响应");
+        private boolean ownsRetries;
+
+        @Override public boolean managesRequestRetries() { return ownsRetries; }
         private final List<List<Tool>> toolSnapshots = new ArrayList<>();
         private final List<List<Message>> messageSnapshots = new ArrayList<>();
 
@@ -507,7 +630,7 @@ class PlanExecuteAgentTest {
             messageSnapshots.add(List.copyOf(messages));
             StubResponse stubResponse = responses.poll();
             if (stubResponse == null) {
-                throw new IOException("缺少预设响应");
+                throw missingResponseFailure;
             }
             if (stubResponse.streamScript() != null) {
                 stubResponse.streamScript().accept(listener);

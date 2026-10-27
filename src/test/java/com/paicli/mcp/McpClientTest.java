@@ -158,6 +158,48 @@ class McpClientTest {
     }
 
     @Test
+    void apiErrorTextIsUnsuccessfulEvenWhenServerSetsIsErrorFalse() throws Exception {
+        InMemoryTransport transport = new InMemoryTransport()
+                .handle("initialize", p -> MAPPER.createObjectNode())
+                .handle("tools/call", p -> {
+                    var response = MAPPER.createObjectNode();
+                    response.putArray("content").addObject().put("type", "text")
+                            .put("text", "{\"status\":404,\"object\":\"error\",\"code\":\"object_not_found\",\"message\":\"Could not find page\"}");
+                    response.put("isError", false);
+                    return response;
+                });
+        McpClient client = new McpClient("notion", transport);
+        client.initialize();
+
+        var output = client.callToolOutput("API-retrieve-a-page", "{\"page_id\":\"missing\"}");
+
+        assertFalse(output.successful());
+        assertTrue(output.text().contains("MCP 工具返回错误"));
+        assertTrue(output.text().contains("object_not_found"));
+        client.close();
+    }
+
+    @Test
+    void ordinaryJsonPayloadRemainsSuccessful() throws Exception {
+        InMemoryTransport transport = new InMemoryTransport()
+                .handle("initialize", p -> MAPPER.createObjectNode())
+                .handle("tools/call", p -> {
+                    var response = MAPPER.createObjectNode();
+                    response.putArray("content").addObject().put("type", "text")
+                            .put("text", "{\"status\":200,\"object\":\"page\",\"id\":\"abc\"}");
+                    response.put("isError", false);
+                    return response;
+                });
+        McpClient client = new McpClient("notion", transport);
+        client.initialize();
+
+        var output = client.callToolOutput("API-retrieve-a-page", "{}");
+
+        assertTrue(output.successful());
+        client.close();
+    }
+
+    @Test
     void callToolFallsBackForNonTextContent() throws Exception {
         InMemoryTransport transport = new InMemoryTransport()
                 .handle("initialize", p -> MAPPER.createObjectNode())

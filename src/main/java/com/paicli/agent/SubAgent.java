@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paicli.history.ConversationLedger;
 import com.paicli.llm.LlmClient;
-import com.paicli.llm.LlmTraceLogger;
 import com.paicli.lsp.LspDiagnosticReport;
 import com.paicli.memory.AutoCompactionManager;
 import com.paicli.context.ContextProfile;
@@ -18,7 +17,6 @@ import com.paicli.tool.LoadedSkillMessages;
 import com.paicli.tool.ToolRegistry;
 import com.paicli.tool.ToolResultBoundary;
 import com.paicli.tool.ToolRegistry.ToolExecutionResult;
-import com.paicli.tool.ToolRegistry.ToolInvocation;
 import com.paicli.tool.TurnToolPolicy;
 import com.paicli.util.AnsiStyle;
 import com.paicli.util.TerminalMarkdownRenderer;
@@ -293,37 +291,47 @@ public class SubAgent {
 
         AgentBudget budget = AgentBudget.fromSystemProperties();
         RunawayGuard runawayGuard = new RunawayGuard();
+        StringBuilder partialToolResults = new StringBuilder();
 
         // 与 Agent.java 对称：主退出条件 = LLM 自决，默认不限制轮数；budget 只承担安全阀职责。
         while (true) {
-            AgentBudget.ExitReason exitReason = budget.check();
-            if (exitReason != AgentBudget.ExitReason.WITHIN_BUDGET) {
-                if (observation != null) observation.partial(budget.iteration(), exitReason.name());
-                return finalizePartialResult(exitReason, budget, streamRenderer, out);
+            AgentExecutionKernel.IterationAdmission admission = AgentExecutionKernel.admitIteration(budget);
+            if (admission.state() == AgentExecutionKernel.IterationState.CANCELLED) {
+                if (observation != null) observation.partial(budget.iteration(), "CANCELLED");
+                streamRenderer.finish();
+                return cancelledResult(partialToolResults, streamRenderer);
+            }
+            if (admission.state() == AgentExecutionKernel.IterationState.BUDGET_EXHAUSTED) {
+                if (observation != null) observation.partial(budget.iteration(), admission.exitReason().name());
+                return finalizePartialResult(admission.exitReason(), budget, streamRenderer, out);
             }
 
-            budget.beginIteration();
+            int admittedIteration = admission.iteration();
 
             // 调 LLM 前评估 conversationHistory 是否接近 window 上限；超阈值压缩早期消息为摘要。
             injectPendingLspDiagnostics(out);
-            maybeCompactHistory(out, budget.iteration(), observation);
+            maybeCompactHistory(out, admittedIteration, observation);
 
             try {
                 List<LlmClient.Tool> toolDefinitions = shouldUseTools() && llmClient.supportsTools()
                         ? toolRegistry.getToolDefinitions()
                         : null;
                 TurnToolPolicy.ToolExposure toolExposure = activeToolPolicy.expose(toolDefinitions);
-                LlmClient.ChatResponse response = llmClient.chat(
+                AgentExecutionKernel.ModelTurn modelTurn = AgentExecutionKernel.requestModelTurn(
+                        llmClient,
                         conversationHistory,
                         toolExposure.definitions(),
-                        streamRenderer
+                        streamRenderer,
+                        budget,
+                        log,
+                        "sub-agent name=" + name + " role=" + role + " iteration=" + budget.iteration()
                 );
-                LlmTraceLogger.logReasoning(log,
-                        "sub-agent name=" + name + " role=" + role + " iteration=" + budget.iteration(),
-                        llmClient,
-                        response.reasoningContent());
-
-                budget.recordTokens(response.inputTokens(), response.outputTokens(), response.cachedInputTokens());
+                if (modelTurn.cancelled()) {
+                    if (observation != null) observation.partial(budget.iteration(), "CANCELLED");
+                    streamRenderer.finish();
+                    return cancelledResult(partialToolResults, streamRenderer);
+                }
+                LlmClient.ChatResponse response = modelTurn.response();
 
                 if (response.hasToolCalls()) {
                     budget.recordToolCalls(response.toolCalls());
@@ -346,6 +354,7 @@ public class SubAgent {
                     List<ToolExecutionResult> toolResults = skills.results();
                     if (observation != null) observation.tools(budget.iteration(), toolResults);
                     for (ToolExecutionResult toolResult : toolResults) {
+                        partialToolResults.append(toolResult.result()).append('\n');
                         appendConversationMessage(
                                 LlmClient.Message.tool(toolResult.id(), ToolResultBoundary.wrap(toolResult)),
                                 "tool_execution");
@@ -377,11 +386,23 @@ public class SubAgent {
                 return AgentMessage.result(name, role, response.content());
 
             } catch (IOException e) {
+                if (com.paicli.runtime.CancellationContext.isCancelled()) {
+                    streamRenderer.finish();
+                    return cancelledResult(partialToolResults, streamRenderer);
+                }
                 log.error("[{}] LLM call failed", name, e);
                 streamRenderer.finish();
                 return AgentMessage.error(name, role, "LLM 调用失败: " + e.getMessage());
             }
         }
+    }
+
+    private AgentMessage cancelledResult(StringBuilder partialTools, SubAgentStreamRenderer renderer) {
+        String partial = partialTools.toString() + renderer.currentContent;
+        String content = "⏹️ 子代理任务已取消。" + (partial.isBlank() ? ""
+                : "\n已取得的部分结果（不代表任务完成）：\n" + partial);
+        appendConversationMessage(LlmClient.Message.assistant(content), "cancelled_partial_result");
+        return AgentMessage.execution(name, role, new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED, content));
     }
 
     /** 命中显式预算后禁用工具并执行一次最佳努力收尾，保留已经完成的工作。 */
@@ -401,11 +422,10 @@ public class SubAgent {
         out.println(AnsiStyle.section("⚠️ [" + name + "] 执行预算已触发，正在整理部分结果"));
 
         try {
-            LlmClient.ChatResponse response = llmClient.chat(
+            LlmClient.ChatResponse response = AgentExecutionKernel.requestFinalizationTurn(
+                    llmClient,
                     conversationHistory,
-                    List.of(),
-                    streamRenderer);
-            budget.recordTokens(response.inputTokens(), response.outputTokens(), response.cachedInputTokens());
+                    streamRenderer, budget, log, "Team worker " + name + " budget finalization");
             String content = response.content() == null ? "" : response.content().trim();
             String partialResult = formatPartialResult(description, content);
             conversationHistory.add(LlmClient.Message.assistant(partialResult));
@@ -415,14 +435,12 @@ public class SubAgent {
                     "budget_finalization_response",
                     LlmClient.Message.assistant(response.reasoningContent(), partialResult));
             streamRenderer.finish();
-            return AgentMessage.result(name, role, partialResult);
+            return AgentMessage.execution(name, role, ExecutionOutcome.budgetExhausted(exitReason, partialResult));
         } catch (IOException e) {
             log.error("[{}] LLM finalization call failed after budget exhaustion", name, e);
             streamRenderer.finish();
-            return AgentMessage.result(
-                    name,
-                    role,
-                    formatPartialResult(description, "收尾调用失败：" + e.getMessage()));
+            return AgentMessage.execution(name, role, ExecutionOutcome.budgetExhausted(
+                    exitReason, formatPartialResult(description, "收尾调用失败：" + e.getMessage())));
         }
     }
 
@@ -551,19 +569,16 @@ public class SubAgent {
     private List<ToolExecutionResult> executeToolCalls(List<LlmClient.ToolCall> toolCalls,
                                                        TurnToolPolicy activeToolPolicy,
                                                        TurnToolPolicy.ToolExposure toolExposure) {
-        List<ToolInvocation> invocations = new ArrayList<>();
         for (LlmClient.ToolCall toolCall : toolCalls) {
             String toolName = toolCall.function().name();
-            String toolArgs = toolCall.function().arguments();
             log.info("[{}] scheduling tool: {}", name, toolName);
-            log.debug("[{}] tool args [{}]: {}", name, toolName, toolArgs);
-            invocations.add(new ToolInvocation(toolCall.id(), toolName, toolArgs));
+            log.debug("[{}] tool args [{}]: {}", name, toolName, toolCall.function().arguments());
         }
 
-        if (invocations.size() > 1) {
-            log.info("[{}] executing {} tool calls in parallel", name, invocations.size());
+        if (toolCalls.size() > 1) {
+            log.info("[{}] executing {} tool calls in parallel", name, toolCalls.size());
         }
-        return activeToolPolicy.execute(toolRegistry, invocations, toolExposure);
+        return AgentExecutionKernel.executeToolCalls(activeToolPolicy, toolRegistry, toolCalls, toolExposure);
     }
 
     private void appendImageToolMessages(List<ToolExecutionResult> toolResults) {
@@ -673,6 +688,7 @@ public class SubAgent {
      * 在 finish() 时以"🧠 补充思考"独立展示，避免混入结果区。
      */
     private static final class SubAgentStreamRenderer implements LlmClient.StreamListener {
+        private final StringBuilder currentContent = new StringBuilder();
         private final String agentName;
         private final AgentRole role;
         private final PrintStream out;
@@ -721,6 +737,7 @@ public class SubAgent {
             if (delta == null || delta.isEmpty()) {
                 return;
             }
+            currentContent.append(delta);
             if (!contentStarted) {
                 if (reasoningStarted && reasoningRenderer != null) {
                     reasoningRenderer.finish();
@@ -767,6 +784,7 @@ public class SubAgent {
          * 让下一轮迭代的 reasoning/content 能重新打印各自的标题。
          */
         private void resetBetweenIterations() {
+            currentContent.setLength(0);
             if (reasoningRenderer != null) {
                 reasoningRenderer.finish();
                 reasoningRenderer = null;

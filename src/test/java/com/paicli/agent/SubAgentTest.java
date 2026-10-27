@@ -163,6 +163,8 @@ class SubAgentTest {
 
             assertEquals(AgentMessage.Type.RESULT, result.type());
             assertTrue(result.content().contains("部分完成"));
+            assertFalse(result.outcome().completed());
+            assertEquals(ExecutionOutcome.Reason.HARD_ITERATION_LIMIT, result.outcome().reason());
             assertEquals(2, llm.toolSnapshots.size());
             assertTrue(llm.toolSnapshots.get(1).isEmpty(), "SubAgent 收尾调用不得暴露工具");
         } finally {

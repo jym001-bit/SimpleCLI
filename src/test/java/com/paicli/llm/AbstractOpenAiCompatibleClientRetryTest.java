@@ -17,6 +17,83 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AbstractOpenAiCompatibleClientRetryTest {
 
+    @Test
+    void runCancellationAbortsOnlyItsHttpCallWithoutInterruptingTheWaitingThread() throws Exception {
+        try (MockWebServer server = new MockWebServer()) {
+            server.enqueue(new MockResponse().setSocketPolicy(okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE));
+            server.enqueue(success("unrelated request completed").setBodyDelay(1, java.util.concurrent.TimeUnit.SECONDS));
+            TestClient client = client(server);
+            var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+            var firstToken = new java.util.concurrent.atomic.AtomicReference<com.paicli.runtime.CancellationToken>();
+            try {
+                var first = executor.submit(() -> {
+                    var token = com.paicli.runtime.CancellationContext.startRun();
+                    firstToken.set(token);
+                    try { return client.chat(List.of(LlmClient.Message.user("cancel this request")), null); }
+                    finally { com.paicli.runtime.CancellationContext.clear(token); }
+                });
+                org.junit.jupiter.api.Assertions.assertNotNull(server.takeRequest(3, java.util.concurrent.TimeUnit.SECONDS));
+                var second = executor.submit(() -> {
+                    var token = com.paicli.runtime.CancellationContext.startRun();
+                    try { return client.chat(List.of(LlmClient.Message.user("keep this request")), null); }
+                    finally { com.paicli.runtime.CancellationContext.clear(token); }
+                });
+                org.junit.jupiter.api.Assertions.assertNotNull(server.takeRequest(3, java.util.concurrent.TimeUnit.SECONDS));
+
+                firstToken.get().cancel(); // Deliberately do not future.cancel/interrupt the worker.
+
+                var failure = assertThrows(java.util.concurrent.ExecutionException.class,
+                        () -> first.get(3, java.util.concurrent.TimeUnit.SECONDS));
+                assertTrue(failure.getCause() instanceof IOException);
+                assertEquals("unrelated request completed", second.get(3, java.util.concurrent.TimeUnit.SECONDS).content());
+                assertEquals(2, server.getRequestCount(), "取消不得触发新 HTTP 重试或取消另一任务的请求");
+            } finally {
+                if (firstToken.get() != null) firstToken.get().cancel();
+                executor.shutdownNow();
+                assertTrue(executor.awaitTermination(3, java.util.concurrent.TimeUnit.SECONDS));
+            }
+        }
+    }
+
+    @Test
+    void alreadyCancelledRunDoesNotOpenAnHttpRequest() throws Exception {
+        var token = com.paicli.runtime.CancellationContext.startRun();
+        try (MockWebServer server = new MockWebServer()) {
+            TestClient client = client(server);
+            token.cancel();
+            assertThrows(IOException.class, () -> client.chat(List.of(LlmClient.Message.user("stop")), null));
+            assertEquals(0, server.getRequestCount());
+        } finally { com.paicli.runtime.CancellationContext.clear(token); }
+    }
+
+    @Test
+    void exhaustedHttpRetriesDoNotTriggerPlanReplanning() throws Exception {
+        try (MockWebServer server = new MockWebServer()) {
+            TestClient client = client(server);
+            String planJson = """
+                    {"tasks":[{"id":"x","description":"analyze","type":"ANALYSIS","dependencies":[]},
+                    {"id":"y","description":"summarize","type":"ANALYSIS","dependencies":["x"]}]}
+                    """.replace("\n", " ").trim();
+            server.enqueue(success(planJson.replace("\"", "\\\"")));
+            // Extra failures make an erroneous replan fail promptly rather than hang waiting for a response.
+            for (int i = 0; i < 9; i++) server.enqueue(new MockResponse().setResponseCode(503).setBody("temporary"));
+            var quiet = new java.io.PrintStream(new java.io.ByteArrayOutputStream());
+            var reviewedPlan = new java.util.concurrent.atomic.AtomicReference<com.paicli.plan.ExecutionPlan>();
+            var agent = new com.paicli.agent.PlanExecuteAgent(client, new com.paicli.tool.ToolRegistry(),
+                    null, (goal, plan) -> {
+                        reviewedPlan.set(plan);
+                        return com.paicli.agent.PlanExecuteAgent.PlanReviewDecision.execute();
+                    }, quiet);
+
+            String result = agent.run("分析项目");
+
+            assertEquals(4, server.getRequestCount(), "一次规划 + 三次任务 HTTP 尝试，不能再叠加重规划");
+            assertEquals(com.paicli.plan.Task.TaskStatus.SKIPPED, reviewedPlan.get().getTask("task_2").getStatus());
+            assertTrue(result.contains("CLIENT_OWNS_RETRIES"));
+            assertTrue(result.startsWith("⚠️"));
+        }
+    }
+
     private static final LlmRetryPolicy NO_WAIT_RETRY_POLICY = LlmRetryPolicy.forTest(
             3, 0L, 0L, () -> 0.5d, millis -> {
             }, Clock.systemUTC());

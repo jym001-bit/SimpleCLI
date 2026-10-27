@@ -128,6 +128,11 @@ class AgentConversationLedgerTest {
     void planModeWritesIntoTheSharedLedgerWithTaskActor(@TempDir Path tempDir)
             throws Exception {
         QueueClient llm = new QueueClient(List.of(
+                new LlmClient.ChatResponse("assistant", """
+                        {"summary":"列出当前目录","tasks":[
+                          {"id":"list","description":"列出当前目录","type":"FILE_READ","dependencies":[]}
+                        ]}
+                        """, null, 10, 2),
                 new LlmClient.ChatResponse(
                         "assistant", "目录读取完成", "plan task reasoning", null, 10, 2)
         ));
@@ -145,6 +150,7 @@ class AgentConversationLedgerTest {
         agent.setConversationLedger(ledger);
 
         assertTrue(agent.run("列出当前目录").contains("计划执行完成"));
+        assertEquals(2, llm.requests.size(), "规划和执行必须分别调用模型");
 
         List<ConversationLedger.Entry> entries = ledger.readAll();
         assertTrue(entries.stream().anyMatch(entry ->

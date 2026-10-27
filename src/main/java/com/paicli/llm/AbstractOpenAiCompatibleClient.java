@@ -1,5 +1,7 @@
 package com.paicli.llm;
 import com.paicli.observability.LangfuseTelemetry;
+import com.paicli.runtime.CancellationContext;
+import com.paicli.runtime.CancellationToken;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
+
+    @Override
+    public boolean managesRequestRetries() { return true; }
 
     private static final Logger log = LoggerFactory.getLogger(AbstractOpenAiCompatibleClient.class);
     protected static final ObjectMapper mapper = new ObjectMapper();
@@ -112,7 +117,7 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
 
     private ChatResponse chatUntraced(List<Message> messages, List<Tool> tools,
                                       StreamListener listener) throws IOException {
-        if (cancellationRequested.get()) {
+        if (isRequestCancelled()) {
             throw new IOException("LLM request cancelled");
         }
         StreamListener streamListener = listener == null ? StreamListener.NO_OP : listener;
@@ -129,7 +134,7 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
         LlmRetryPolicy retryPolicy = retryPolicy();
         IOException lastFailure = null;
         for (int attempt = 1; attempt <= retryPolicy.maxAttempts(); attempt++) {
-            if (cancellationRequested.get()) {
+            if (isRequestCancelled()) {
                 throw new IOException("LLM request cancelled");
             }
             AttemptProgress progress = new AttemptProgress(streamListener != StreamListener.NO_OP);
@@ -142,7 +147,7 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
                 lastFailure = failure;
 
                 boolean canRetry = attempt < retryPolicy.maxAttempts()
-                        && !cancellationRequested.get()
+                        && !isRequestCancelled()
                         && !progress.hasConsumableOutput()
                         && retryPolicy.isRetryableFailure(failure);
                 if (!canRetry) {
@@ -167,10 +172,15 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
         httpClient().dispatcher().cancelAll();
     }
 
+    private boolean isRequestCancelled() {
+        return cancellationRequested.get() || CancellationContext.isCancelled()
+                || Thread.currentThread().isInterrupted();
+    }
+
     private void sleepBeforeRetry(LlmRetryPolicy retryPolicy, long delayMillis) throws IOException {
         long remaining = Math.max(0L, delayMillis);
         while (remaining > 0L) {
-            if (cancellationRequested.get()) {
+            if (isRequestCancelled()) {
                 throw new IOException("LLM request cancelled");
             }
             long slice = Math.min(100L, remaining);
@@ -183,7 +193,11 @@ public abstract class AbstractOpenAiCompatibleClient implements LlmClient {
                                         StreamListener streamListener,
                                         AttemptProgress progress,
                                         LlmRetryPolicy retryPolicy) throws IOException {
-        try (Response response = httpClient().newCall(builtRequest).execute()) {
+        Call call = httpClient().newCall(builtRequest);
+        CancellationToken token = CancellationContext.current();
+        // Cancel this request only, never the shared dispatcher's unrelated calls.
+        try (CancellationToken.Registration cancellation = token == null ? null : token.onCancel(call::cancel);
+             Response response = call.execute()) {
             ResponseBody responseBodyObj = response.body();
             if (!response.isSuccessful()) {
                 String errorBody = responseBodyObj != null ? responseBodyObj.string() : "无响应体";

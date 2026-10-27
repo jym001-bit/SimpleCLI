@@ -12,6 +12,8 @@ public class Task {
     private volatile TaskStatus status;
     private volatile String result;
     private volatile String error;
+    private volatile boolean toolExecutionAttempted;
+    private volatile int recoveryIterationAllowance = Integer.MAX_VALUE;
     private final List<String> dependencies;  // 依赖的其他任务ID
     private final List<String> dependents;    // 依赖此任务的其他任务ID
 
@@ -52,6 +54,11 @@ public class Task {
     public TaskStatus getStatus() { return status; }
     public String getResult() { return result; }
     public String getError() { return error; }
+    public boolean hasAttemptedToolExecution() { return toolExecutionAttempted; }
+    public void markToolExecutionAttempted() { toolExecutionAttempted = true; }
+    public void rememberPartialResult(String content) { result = content; }
+    public boolean isRecoveryBudgetAvailable(int replansUsed) { return replansUsed < recoveryIterationAllowance; }
+    public void setRecoveryIterationAllowance(int remaining) { recoveryIterationAllowance = Math.max(0, remaining); }
     public List<String> getDependencies() { return new ArrayList<>(dependencies); }
     public List<String> getDependents() { return new ArrayList<>(dependents); }
 
@@ -79,6 +86,12 @@ public class Task {
     public void markFailed(String error) {
         this.status = TaskStatus.FAILED;
         this.error = error;
+    }
+
+    /** Keep partial work without satisfying dependencies or expanding the public status enum. */
+    public void markIncomplete(String result, String reason) {
+        this.result = result;
+        markFailed(reason);
     }
 
     public void markSkipped() {

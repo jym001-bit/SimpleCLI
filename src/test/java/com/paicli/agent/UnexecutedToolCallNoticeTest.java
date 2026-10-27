@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 模型在正文里写了工具调用却没被执行时，用户必须看到提示，不能把调用文字当成操作已完成。 */
@@ -57,18 +58,32 @@ class UnexecutedToolCallNoticeTest {
 
     @Test
     void ordinaryAnswerHasNoNotice() {
-        FlaggingClient llm = new FlaggingClient("demo 目录里只有 Hello.java");
-        ToolRegistry tools = new ToolRegistry();
+        FlaggingClient llm = new FlaggingClient("你好。");
+        var executed = new java.util.concurrent.atomic.AtomicInteger();
+        ToolRegistry tools = new ToolRegistry() {
+            @Override
+            public List<ToolExecutionResult> executeTools(List<ToolInvocation> invocations) {
+                executed.addAndGet(invocations.size());
+                return super.executeTools(invocations);
+            }
+        };
         tools.setProjectPath(tempDir.toString());
 
-        String result = new Agent(llm, tools).run("demo 目录里有什么");
+        Agent agent = new Agent(llm, tools);
+        String result = agent.run("你好");
 
         assertFalse(result.contains("没有被执行"), result);
+        assertEquals("你好。", result);
+        assertEquals(1, llm.calls);
+        assertEquals(0, executed.get());
+        var history = agent.getConversationHistory();
+        assertEquals(LlmClient.Message.assistant("你好。"), history.get(history.size() - 1));
     }
 
     /** 不流式输出、按 DSML 标记识别残留调用的最小客户端。 */
     private static final class FlaggingClient implements LlmClient {
         private final String answer;
+        private int calls;
 
         private FlaggingClient(String answer) {
             this.answer = answer;
@@ -81,6 +96,7 @@ class UnexecutedToolCallNoticeTest {
 
         @Override
         public ChatResponse chat(List<Message> messages, List<Tool> tools, StreamListener listener) {
+            calls++;
             return new ChatResponse("assistant", answer, null, 10, 2);
         }
 

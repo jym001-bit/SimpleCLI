@@ -45,6 +45,19 @@ class ToolRegistryTest {
     }
 
     @Test
+    void missingReadFileIsRecordedAsTypedToolFailure(@TempDir Path tempDir) {
+        ToolRegistry registry = new ToolRegistry();
+        registry.setProjectPath(tempDir.toString());
+
+        ToolRegistry.ToolExecutionResult result = registry.executeTools(List.of(
+                new ToolRegistry.ToolInvocation("missing-file", "read_file", "{\"path\":\"missing.txt\"}")))
+                .get(0);
+
+        assertFalse(result.successful());
+        assertTrue(result.result().startsWith("读取文件失败"));
+    }
+
+    @Test
     void exposesToolDefinitionsInStableNameOrder() {
         ToolRegistry registry = new ToolRegistry();
 

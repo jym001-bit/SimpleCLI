@@ -194,7 +194,17 @@ public class ConversationHistoryCompactor {
         List<String> chunks = renderSummaryChunks(messages);
         if (chunks.isEmpty()) return null;
         if (chunks.size() == 1) {
-            return ensureStructuredSummary(requestSummary(String.format(SUMMARY_PROMPT, chunks.get(0))));
+            String source = chunks.get(0);
+            // A fixed "be concise" instruction can expand short histories into a lengthy report.
+            // This is a soft target: never truncate the response or discard facts to meet it.
+            int suggestedChars = Math.max(400, Math.min(MAX_PARTIAL_SUMMARY_CHARS, source.length() / 3));
+            String prompt = String.format(SUMMARY_PROMPT, source) + String.format(Locale.ROOT,
+                    "\n本次待摘要原文约 %d 字符，建议摘要控制在 %d 字符以内（含四个标题）。"
+                            + "合并重复事实，省略收到、确认、过程性复述和不影响后续动作的背景。"
+                            + "优先保留当前目标、不可违反的约束、未完成事项、精确代号和必要工具证据；"
+                            + "信息确有必要时可以超过建议长度，不得为了凑字数删掉关键事实或补造信息。",
+                    source.length(), suggestedChars);
+            return ensureStructuredSummary(requestSummary(prompt));
         }
 
         List<String> summaries = new ArrayList<>(chunks.size());

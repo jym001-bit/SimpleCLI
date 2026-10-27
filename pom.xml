@@ -200,6 +200,7 @@
                     <argLine>-Dfile.encoding=UTF-8</argLine>
                     <skipTests>${skipTests}</skipTests>
                     <environmentVariables>
+                        <LANGFUSE_ENABLED>false</LANGFUSE_ENABLED>
                         <PAICLI_LANGFUSE_ENABLED>false</PAICLI_LANGFUSE_ENABLED>
                     </environmentVariables>
                 </configuration>

@@ -7,6 +7,7 @@ import com.paicli.plan.Task;
 import com.paicli.runtime.CancellationContext;
 import com.paicli.runtime.CancellationToken;
 import com.paicli.tool.ToolRegistry;
+import com.paicli.tool.CommandCancellationFixture;
 import com.paicli.tool.ToolRegistry.ToolExecutionResult;
 import com.paicli.tool.ToolRegistry.ToolInvocation;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,90 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 计划执行的收尾控制：取消不触发重规划，任务循环内的防打转提醒和预算收尾。
  */
 class PlanExecutionControlTest {
+
+    @Test
+    void cancellationDuringRealCommandPreservesOutputAndStopsPlan(@org.junit.jupiter.api.io.TempDir java.nio.file.Path temp)
+            throws Exception {
+        CancellationToken token = CancellationContext.startRun();
+        java.nio.file.Path ready = temp.resolve("child.pid");
+        var cancellation = java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try { CommandCancellationFixture.awaitReady(ready); }
+            catch (Exception e) { throw new RuntimeException(e); }
+            finally { token.cancel(); }
+        });
+        try {
+            String args = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(
+                    java.util.Map.of("command", CommandCancellationFixture.command(ready)));
+            ScriptedClient client = new ScriptedClient(new ArrayDeque<>(List.of(
+                    new LlmClient.ChatResponse("assistant", "", List.of(new LlmClient.ToolCall("cmd",
+                            new LlmClient.ToolCall.Function("execute_command", args))), 10, 2))));
+            ChainPlanner planner = new ChainPlanner(client);
+            ToolRegistry registry = new ToolRegistry();
+            registry.setProjectPath(temp.toString());
+            PlanExecuteAgent agent = new PlanExecuteAgent(client, registry, planner, null,
+                    (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(), SILENT);
+            String result = agent.run("执行受控命令后生成报告");
+            cancellation.get(12, java.util.concurrent.TimeUnit.SECONDS);
+            assertTrue(result.startsWith("⏹️"), result);
+            assertTrue(result.contains("ACTUAL_PARTIAL_OUTPUT"), result);
+            assertEquals(1, client.requests.size(), "No model request after command cancellation");
+            assertEquals(1, planner.created.get());
+            assertEquals(ExecutionPlan.PlanStatus.CANCELLED, planner.lastPlan.getStatus());
+            assertEquals("CANCELLED", planner.lastPlan.getTask("x").getError());
+            assertEquals(Task.TaskStatus.SKIPPED, planner.lastPlan.getTask("y").getStatus());
+            long child = Long.parseLong(java.nio.file.Files.readString(ready));
+            assertTrue(ProcessHandle.of(child).map(h -> !h.isAlive()).orElse(true));
+        } finally { token.cancel(); CancellationContext.clear(token); }
+    }
+
+    @Test
+    void cancellationAfterToolOutputRetainsPartialWorkAndSkipsDependents() {
+        CancellationToken token = CancellationContext.startRun();
+        try {
+            var calls = new AtomicInteger();
+            ScriptedClient client = new ScriptedClient(new ArrayDeque<>()) {
+                @Override public ChatResponse chat(List<Message> messages, List<Tool> tools, StreamListener listener)
+                        throws IOException {
+                    if (calls.incrementAndGet() == 1) {
+                        return new ChatResponse("assistant", "", List.of(new ToolCall("read",
+                                new ToolCall.Function("read_file", "{\"path\":\"a.txt\"}"))), 10, 2);
+                    }
+                    token.cancel();
+                    throw new IOException("HTTP cancelled");
+                }
+            };
+            ChainPlanner planner = new ChainPlanner(client);
+            PlanExecuteAgent agent = new PlanExecuteAgent(client, new OkToolRegistry(), planner, null,
+                    (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(), SILENT);
+
+            String result = agent.run("读取文件后生成报告");
+
+            assertTrue(result.startsWith("⏹️"));
+            assertTrue(result.contains("文件内容：hello"));
+            assertEquals(2, calls.get());
+            assertEquals(1, planner.created.get());
+            assertEquals(ExecutionPlan.PlanStatus.CANCELLED, planner.lastPlan.getStatus());
+            assertEquals("CANCELLED", planner.lastPlan.getTask("x").getError());
+            assertEquals(Task.TaskStatus.SKIPPED, planner.lastPlan.getTask("y").getStatus());
+        } finally { CancellationContext.clear(token); }
+    }
+
+    @Test
+    void cancellationDuringPlanningIsNotReportedAsModelFailure() {
+        CancellationToken token = CancellationContext.startRun();
+        try {
+            ScriptedClient client = new ScriptedClient(new ArrayDeque<>()) {
+                @Override public ChatResponse chat(List<Message> messages, List<Tool> tools, StreamListener listener)
+                        throws IOException {
+                    token.cancel();
+                    throw new IOException("cancelled during planner HTTP request");
+                }
+            };
+            PlanExecuteAgent agent = new PlanExecuteAgent(client, new ToolRegistry(), null,
+                    (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(), SILENT);
+            assertEquals("⏹️ 已取消当前计划执行。", agent.run("规划并读取文件"));
+        } finally { CancellationContext.clear(token); }
+    }
 
     private static final PrintStream SILENT = new PrintStream(OutputStream.nullOutputStream());
 

@@ -24,6 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -32,6 +33,7 @@ import java.util.function.Supplier;
 public final class LangfuseTelemetry {
     private static final Logger log = LoggerFactory.getLogger(LangfuseTelemetry.class);
     private static final ContextKey<TraceLabels> LABELS = ContextKey.named("paicli-langfuse-labels");
+    private static final ContextKey<TraceCapture> EVALUATION = ContextKey.named("paicli-evaluation-trace");
     private static final String MODE_KEY = "langfuse.trace.metadata.mode";
     private static final String SESSION_KEY = "langfuse.session.id";
     private static final String TRACE_NAME_KEY = "langfuse.trace.name";
@@ -47,6 +49,19 @@ public final class LangfuseTelemetry {
         return STATE.tracer() != null;
     }
 
+    /** Runs one evaluation task with its own ID and returns the ID of the actual root span. */
+    public static <T> TracedResult<T> evaluate(String taskId, Supplier<T> action) {
+        if (taskId == null || taskId.isBlank()) throw new IllegalArgumentException("taskId is required");
+        TraceCapture capture = new TraceCapture(taskId);
+        T value;
+        try (Scope ignored = Context.current().with(EVALUATION, capture).makeCurrent()) {
+            value = action.get();
+        }
+        return new TracedResult<>(value, capture.traceId);
+    }
+
+    public record TracedResult<T>(T value, String traceId) {}
+
     /** Flush the short-lived CLI's pending spans without holding the terminal open. */
     public static void shutdown() {
         if (STATE.provider() == null || !CLOSED.compareAndSet(false, true)) return;
@@ -57,11 +72,14 @@ public final class LangfuseTelemetry {
         }
     }
 
-    public static String observeTurn(String mode, String sessionId, Supplier<String> action) {
+    public static <T> T observeTurn(String mode, String sessionId, Supplier<T> action) {
         if (!enabled()) return action.get();
-        TraceLabels labels = new TraceLabels(mode, sessionId);
+        TraceCapture capture = Context.current().get(EVALUATION);
+        String taskId = capture == null ? UUID.randomUUID().toString() : capture.taskId;
+        TraceLabels labels = new TraceLabels(mode, sessionId, taskId);
         Span span = STATE.tracer().spanBuilder("simple-cli " + mode).startSpan();
         span.setAttribute(OBSERVATION_TYPE_KEY, "agent");
+        if (capture != null) capture.traceId = span.getSpanContext().getTraceId();
         applyLabels(span, labels);
         try (Scope scope = Context.current().with(LABELS, labels).with(span).makeCurrent()) {
             return action.get();
@@ -88,9 +106,49 @@ public final class LangfuseTelemetry {
         applyLabels(span, Context.current().get(LABELS));
         try (Scope scope = span.makeCurrent()) {
             LlmClient.ChatResponse response = action.call();
-            span.setAttribute("langfuse.observation.usage_details", usageJson(response));
+            if (response.usagePresent()) {
+                span.setAttribute("langfuse.observation.usage_details", usageJson(response));
+            } else {
+                span.setAttribute(OBSERVATION_METADATA + "usage_available", false);
+            }
+            List<String> callIds = response.toolCalls() == null ? List.of() : response.toolCalls().stream()
+                    .map(LlmClient.ToolCall::id)
+                    .filter(LangfuseTelemetry::safeCallId)
+                    .toList();
+            span.setAttribute(OBSERVATION_METADATA + "tool_call_count",
+                    response.toolCalls() == null ? 0 : response.toolCalls().size());
+            if (!callIds.isEmpty()) {
+                span.setAttribute(AttributeKey.stringArrayKey(OBSERVATION_METADATA + "tool_call_ids"), callIds);
+            }
             return response;
         } catch (IOException | RuntimeException | Error failure) {
+            markFailure(span, failure);
+            throw failure;
+        } finally {
+            span.end();
+        }
+    }
+
+    /** Mark a handled business failure without exporting an error message or user content. */
+    public static void recordFailure(String errorType) {
+        if (!enabled()) return;
+        Span span = Span.current();
+        if (!span.getSpanContext().isValid()) return;
+        span.setStatus(StatusCode.ERROR);
+        if (errorType != null && errorType.matches("[A-Z_]{1,64}")) {
+            span.setAttribute(OBSERVATION_METADATA + "error_type", errorType);
+        }
+    }
+
+    /** Trace a real execution phase while keeping its inputs and outputs local. */
+    public static <T> T observeStage(String name, Supplier<T> action) {
+        if (!enabled()) return action.get();
+        Span span = STATE.tracer().spanBuilder(name).startSpan();
+        span.setAttribute(OBSERVATION_TYPE_KEY, "span");
+        applyLabels(span, Context.current().get(LABELS));
+        try (Scope scope = span.makeCurrent()) {
+            return action.get();
+        } catch (RuntimeException | Error failure) {
             markFailure(span, failure);
             throw failure;
         } finally {
@@ -112,8 +170,14 @@ public final class LangfuseTelemetry {
             span.setAttribute(OBSERVATION_METADATA + "duration_ms", elapsed);
             span.setAttribute(OBSERVATION_METADATA + "successful", result.successful());
             span.setAttribute(OBSERVATION_METADATA + "timed_out", result.timedOut());
+            if (safeCallId(result.id())) {
+                span.setAttribute(OBSERVATION_METADATA + "tool_call_id", result.id());
+            }
             applyLabels(span, labels);
-            if (!result.successful()) span.setStatus(StatusCode.ERROR);
+            if (!result.successful()) {
+                span.setStatus(StatusCode.ERROR);
+                span.setAttribute(OBSERVATION_METADATA + "tool_error_type", safeToolErrorType(result));
+            }
             span.end();
         }
     }
@@ -131,6 +195,7 @@ public final class LangfuseTelemetry {
         if (labels == null) return;
         span.setAttribute(TRACE_NAME_KEY, "simple-cli " + labels.mode());
         span.setAttribute(MODE_KEY, labels.mode());
+        span.setAttribute(OBSERVATION_METADATA + "task_id", labels.taskId());
         if (labels.sessionId() != null && !labels.sessionId().isBlank()) {
             span.setAttribute(SESSION_KEY, labels.sessionId());
         }
@@ -146,12 +211,29 @@ public final class LangfuseTelemetry {
         int input = Math.max(0, response.inputTokens());
         int output = Math.max(0, response.outputTokens());
         int cached = Math.max(0, response.cachedInputTokens());
-        return "{\"input\":" + input + ",\"output\":" + output
+        // OpenAI-compatible prompt_tokens includes cached_tokens. Langfuse treats usage_details
+        // entries as mutually exclusive buckets, so only uncached input belongs in "input".
+        int uncached = Math.max(0, input - Math.min(input, cached));
+        return "{\"input\":" + uncached + ",\"output\":" + output
                 + ",\"input_cached\":" + cached + "}";
     }
 
+    private static boolean safeCallId(String id) {
+        return id != null && id.matches("[A-Za-z0-9_-]{1,128}");
+    }
+
+    private static String safeToolErrorType(ToolExecutionResult result) {
+        if (result.timedOut()) return "TOOL_TIMEOUT";
+        String text = result.result() == null ? "" : result.result().stripLeading();
+        if ("read_file".equals(result.name()) && text.startsWith("读取文件失败")) return "READ_FILE_FAILED";
+        if (text.startsWith("参数校验失败") || text.startsWith("参数错误")) return "TOOL_ARGUMENT_ERROR";
+        return "TOOL_FAILURE";
+    }
+
     private static State createState() {
-        if (!"true".equalsIgnoreCase(System.getenv("PAICLI_LANGFUSE_ENABLED"))) return new State(null, null);
+        String enabled = System.getenv("LANGFUSE_ENABLED");
+        if (enabled == null) enabled = System.getenv("PAICLI_LANGFUSE_ENABLED");
+        if (!"true".equalsIgnoreCase(enabled)) return new State(null, null);
         String publicKey = System.getenv("LANGFUSE_PUBLIC_KEY");
         String secretKey = System.getenv("LANGFUSE_SECRET_KEY");
         String baseUrl = System.getenv("LANGFUSE_BASE_URL");
@@ -194,6 +276,11 @@ public final class LangfuseTelemetry {
         }
     }
 
-    private record TraceLabels(String mode, String sessionId) {}
+    private record TraceLabels(String mode, String sessionId, String taskId) {}
+    private static final class TraceCapture {
+        private final String taskId;
+        private String traceId;
+        private TraceCapture(String taskId) { this.taskId = taskId; }
+    }
     private record State(Tracer tracer, SdkTracerProvider provider) {}
 }

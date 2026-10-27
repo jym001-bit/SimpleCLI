@@ -21,6 +21,24 @@ public final class CancellationContext {
         return token == null ? CURRENT.get() : token;
     }
 
+    /** The caller's run only; unlike current(), never borrows another run's global fallback. */
+    public static CancellationToken currentThreadToken() {
+        return LOCAL.get();
+    }
+
+    /** Explicitly propagate a captured run into a pool thread, restoring its previous scope. */
+    public static Scope bind(CancellationToken token) {
+        CancellationToken previous = LOCAL.get();
+        LOCAL.set(java.util.Objects.requireNonNull(token, "token"));
+        return () -> {
+            if (previous == null) LOCAL.remove(); else LOCAL.set(previous);
+        };
+    }
+
+    public interface Scope extends AutoCloseable {
+        @Override void close();
+    }
+
     public static boolean isCancelled() {
         CancellationToken token = current();
         return token != null && token.isCancelled();

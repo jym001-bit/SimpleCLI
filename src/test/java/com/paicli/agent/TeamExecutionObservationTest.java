@@ -238,21 +238,26 @@ class TeamExecutionObservationTest {
         assertNoRaw(events, "PRIVATE_RETRY_ERROR_ONE", "PRIVATE_RETRY_ERROR_TWO", "retained-original-worker");
     }
 
-    @Test void budgetFinalizationIsPartialWithNoToolsWithoutChangingNativeCompletion() throws Exception {
+    @Test void budgetFinalizationIsPartialWithNoToolsAndCannotCompleteStep() throws Exception {
         String property = "paicli.react.hard.max.iterations", prior = System.getProperty(property);
         try {
             System.setProperty(property, "1");
             var client = new ScriptClient(text(singlePlan()), tools(call("shared", "read_file", "{\"path\":\"input.txt\"}")), text("仅完成读取，未完成业务"), review(true));
             var events = new CopyOnWriteArrayList<Event>();
             String result = observed(client, new ToolRegistry(), events::add).runExplicitTask(GOAL, GOAL);
-            assertTrue(result.contains("部分完成")); assertTrue(result.startsWith("✅"));
-            assertEquals(4, client.requests.size()); assertTrue(client.exposedTools.get(2).isEmpty());
+            assertTrue(result.contains("部分完成")); assertFalse(result.startsWith("✅"));
+            assertEquals(3, client.requests.size()); assertTrue(client.exposedTools.get(2).isEmpty());
             BudgetFinalization budget = only(events, BudgetFinalization.class);
             assertEquals(AgentRole.WORKER, budget.activation().role()); assertEquals(1, budget.iteration());
             assertEquals("HARD_ITERATION_LIMIT", budget.exitReason());
             var exit = select(events, ActivationExited.class).stream().filter(event -> event.activation().activationId().equals(budget.activation().activationId())).findFirst().orElseThrow();
             assertEquals(ExitKind.PARTIAL, exit.kind());
-            assertEquals(ProductStatus.COMPLETED, only(events, StepExited.class).productStatus());
+            var step = only(events, StepExited.class);
+            assertEquals(ProductStatus.FAILED, step.productStatus());
+            assertEquals(StepExitReason.WORKER_INCOMPLETE, step.reason());
+            assertEquals(budget.activation().activationId(), step.acceptedWorkerActivationId());
+            assertEquals(RunExitReason.INCOMPLETE, only(events, RunExited.class).reason());
+            assertTrue(select(events, ReviewEvaluated.class).isEmpty(), "预算停止后不能让 Reviewer 改判为完成");
         } finally {
             if (prior == null) System.clearProperty(property); else System.setProperty(property, prior);
         }

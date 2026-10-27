@@ -7,6 +7,27 @@ import static org.junit.jupiter.api.Assertions.*;
 class AgentMessageTest {
 
     @Test
+    void terminationMetadataDoesNotDependOnRenderedWordsOrMessageType() {
+        for (AgentBudget.ExitReason reason : AgentBudget.ExitReason.values()) {
+            if (reason == AgentBudget.ExitReason.WITHIN_BUDGET) continue;
+            AgentMessage partial = AgentMessage.execution("worker", AgentRole.WORKER,
+                    ExecutionOutcome.budgetExhausted(reason, "模型声称完成"));
+            assertEquals(AgentMessage.Type.RESULT, partial.type(), "保留消息协议兼容");
+            assertFalse(partial.outcome().completed());
+            assertEquals(reason.name(), partial.outcome().reason().name());
+        }
+        AgentMessage cancelled = AgentMessage.execution("worker", AgentRole.WORKER,
+                new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED, "已取消"));
+        assertEquals(AgentMessage.Type.ERROR, cancelled.type());
+        assertEquals(ExecutionOutcome.Reason.CANCELLED, cancelled.outcome().reason());
+        assertEquals(ExecutionOutcome.Reason.MODEL_ERROR,
+                AgentMessage.error("worker", AgentRole.WORKER, "故障").outcome().reason());
+        assertTrue(AgentMessage.result("worker", AgentRole.WORKER, "部分完成只是普通措辞").outcome().completed());
+        assertThrows(IllegalArgumentException.class, () -> ExecutionOutcome.budgetExhausted(
+                AgentBudget.ExitReason.WITHIN_BUDGET, "不能伪造预算停止"));
+    }
+
+    @Test
     void shouldCreateTaskMessage() {
         AgentMessage msg = AgentMessage.task("orchestrator", "分析代码结构");
         assertEquals("orchestrator", msg.fromAgent());

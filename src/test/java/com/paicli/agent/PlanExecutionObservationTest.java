@@ -173,7 +173,7 @@ class PlanExecutionObservationTest {
         var client = new BaseClient() {
             @Override public ChatResponse chat(List<Message> messages, List<Tool> tools, StreamListener listener)
                     throws IOException {
-                if (calls.incrementAndGet() == 1) throw new IOException("private failure detail");
+                if (calls.incrementAndGet() == 1) throw new java.net.ConnectException("private failure detail");
                 return text("replanned result");
             }
         };
@@ -198,7 +198,7 @@ class PlanExecutionObservationTest {
         assertNotEquals(plans.get(0).executionId(), plans.get(1).executionId());
         var exits = select(events, TaskExited.class);
         assertEquals(ExitKind.THREW, exits.get(0).kind());
-        assertEquals(IOException.class.getName(), exits.get(0).exceptionType());
+        assertEquals(java.net.ConnectException.class.getName(), exits.get(0).exceptionType());
         assertFalse(exits.get(0).result().present());
         assertEquals(ExitKind.RETURNED, exits.get(1).kind());
         assertEquals(TextFingerprint.of("replanned result"), exits.get(1).result());

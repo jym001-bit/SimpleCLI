@@ -4,6 +4,44 @@
 
 总入口见 `/AGENTS.md`。
 
+## 执行结果与预算终止（阶段五）
+
+`ExecutionOutcome` 表示本次执行因什么停止以及返回的内容。它用于 Plan 单任务返回值和 Team 的 `AgentMessage`，不靠“部分完成”“成功”等正文关键词判断状态。正常完成、Token/轮数/停滞预算停止、取消、模型异常和其他执行异常分开表达；工具返回错误仍交给原来的模型循环判断，不直接等同任务失败。
+
+预算收尾仍通过现有 Kernel 的一次无工具请求执行。Plan 将部分内容保存在 Task，使用原有 FAILED 状态阻止依赖放行，同时保留具体终止原因；预算停止不触发现有异常重规划分支。Team 保留 Worker 部分内容，但不启动后续审查、重试或依赖步骤，观察事件记为 WORKER_INCOMPLETE。AgentMessage 原有四参数构造及 RESULT/ERROR 类型仍兼容，新增 outcome 提供明确原因，调用方不能仅凭 RESULT 判断完全完成。
+
+ReAct 当前返回字符串，预算出口本来就明确显示部分完成，没有相同的依赖放行问题，因此本阶段不改其公共返回类型。各模式继续负责会话记录、Memory 汇总和 renderer 清理；没有统一 Planner/Reviewer 的策略，也没有新增故障恢复系统。
+
+## Plan 失败恢复准入（阶段六）
+
+`FailureRecoveryPolicy` 用于 Plan 实际失败出口，决定是否允许原有重规划，不另加 HTTP 或工具重试循环。内置 OpenAI 兼容客户端通过 `managesRequestRetries()` 声明自己负责 HTTP 重试，`ProfiledLlmClient` 透传该声明；这类客户端的最终 IOException 不再触发外层重规划。旧版队列模拟客户端不走 HTTP，测试中显式声明不管理请求重试，不冒充真实客户端已重试。
+
+只有客户端不管理内部重试、`LlmFailureClassifier` 明确判为临时网络/服务错误、整份计划尚未尝试任何工具、预算仍允许且未达到 `MAX_REPLANS` 时，才允许重规划；默认最多额外 2 次。权限、参数、未知错误、取消、预算停止均不盲目重试。没有幂等性声明的工具一律保守处理，包括只读工具、被拒绝调用和 MCP 工具：只要已进入工具执行阶段，就不允许整份计划自动重做。记录位在调用工具前设置，覆盖“已执行但返回失败/超时，结果不确定”的情况。
+
+恢复准入保存任务剩余硬轮数，并扣除已使用的重规划次数，避免换新计划后把硬轮数清零；Token/停滞停止继续遵循原有 AgentBudget 与 ExecutionOutcome。失败前返回的工具输出保存在 Task 并显示为部分输出，不标作任务完成。模型 HTTP 退避、Retry-After、流式输出后的禁止重试仍由原客户端负责。本阶段没有新增全任务剩余秒数机制，也没有改造 Team 审查重试或实现工具幂等恢复。
+
+## 模型请求取消传播（阶段七）
+
+`CancellationToken` 现在允许为取消动作注册一次性回调，并在作用域结束时注销。OpenAI 兼容客户端在每次模型 HTTP 请求前，为当前 `Call` 注册取消回调；用户取消会撤销对应的请求，并阻止该请求继续重试。回调只取消自己的 `Call`，不会取消共享客户端上的其他请求。`AgentExecutionKernel` 将取消引起的请求异常转成已有的取消结果，不虚构已中断请求的 Token Usage。
+
+Plan 在任务执行或重规划期间收到取消时，标记整份计划为 `CANCELLED`，停止后续任务，并显示已经取得的部分工具输出。客户端撤销 HTTP 请求不能证明远端模型立即停止生成或计费。
+
+### 命令子进程取消传播（阶段八）
+
+`ToolRegistry.execute_command` 在启动进程后，立即向当前 `CancellationToken` 注册一次性取消回调。回调只终止本次命令的 shell 及可识别后代，不等待进程退出；执行线程负责有限等待退出、读取已有输出和注销回调。启动前再次检查取消，注册时已取消也会立即终止进程。取消、线程中断和超时沿用失败工具结果，观察事件分别标为 `CANCELLED`、`INTERRUPTED` 和 `TIMED_OUT`；取消不会报告命令正常完成。
+
+清理先保存后代句柄，再请求强制终止；进程退出和输出读取各最多等待 2 秒，输出线程关闭再最多等待 2 秒。超时或读取异常时保留已读的完整行，仍遵守原有输出大小限制。Plan 继续使用已有取消出口保留结果、跳过依赖且不重规划。本轮在 Windows PowerShell 上用真实 shell → Java → Java 进程树验证；Linux/macOS、已脱离的后台进程与取消瞬间新生成的后代没有同等实测保证。这不是操作系统级进程隔离，也没有引入任务级 Deadline。
+
+### Team Worker 取消传播与隔离（阶段九）
+
+Team 在入口固定调用线程所属的 Token；没有调用方 Token 时创建本次 Team 独有的 Token，不借用 `CancellationContext` 的全局回退。`CancellationContext.bind()` 在每个 Worker 执行期间显式绑定并在结束时恢复线程原来的上下文，模型 HTTP 与命令进程继续使用阶段七、八的既有回调机制。
+
+单步和并行批次都通过本次批次独有的执行器运行，单步仍直接流式输出，并行仍按步骤顺序刷新缓冲。调度等待每 100ms 检查取消；取消时只中断本批次执行器、取消未开始的任务，最多等待 6 秒让已执行 Worker 返回部分结果。Worker、Reviewer 和重试入口检查取消，Reviewer 的 CANCELLED 不能落入原有“审查失败但保留为成功”的分支。
+
+Team 取消汇总保留已完成步骤及已返回的部分内容，根观察状态为 CANCELLED；未完成步骤仍用既有 FAILED 状态，观察原因单独记 CANCELLED。SubAgent 保存真实工具输出与已收到的当前响应正文作为取消结果，不补造 Token Usage。若操作不响应取消，达到清理上限仅代表停止等待；同一编排器在旧执行器真正退出前拒绝新任务，不复用仍在执行的角色实例。不同 Team 实例可以共享模型客户端，取消一个任务不取消另一个任务的请求。
+
+这 6 秒是取消后的清理上限，不是任务总 Deadline。任意 MCP、网络工具或自定义客户端不一定能被中断；远端模型是否停止计费、脱离进程树的后台进程、其他平台的进程清理未得到保证。具体测试与限制见执行内核迭代记录的阶段九。
+
 ---
 
 ## 配置读取顺序
@@ -134,6 +172,7 @@ stdio 的 stdout 按行处理：不是 JSON 的行（server 往 stdout 打的日
   - 占位文本以 `[已清理的旧工具结果]` 开头，写明工具名、原长度和“重新调用该工具”，有卸载文件时附上路径。只替换 tool 消息正文，不增删消息，tool_call/tool_result 的配对不变。
   - `Result.clearedToolResults` 记录清理条数，ReAct 会打印 🧹 提示；三条路径都会往会话记录里追加一条 `strategy=tool_result_clearing` 的 compaction 事件；`/context` 会显示清理阈值。
 - 摘要阶段有两条路径：
+  - 完整摘要只有一个输入片段时，请求按原文字符数的约三分之一给出建议长度，最低 400、最高 8000 字符；这是提示模型的软目标，不截断响应，不改变四栏目、净压缩和工具消息边界检查。事实确有必要时允许超过建议长度。长历史的分段与合并策略不变。阶段十只测到保留上下文变短，没有证明整体降本或提速。
   1. `PAICLI_SESSION_MEMORY_COMPACTION_ENABLED=true` 时，`SessionMemoryCompactor` 在到达阈值前就在后台为每份 history 单独维护一份增量会话摘要，到阈值后优先用这份摘要，并保留最近的原始消息。
   2. 摘要还没准备好、摘要对应的切分位置在当前历史里已找不到、压缩后仍超阈值，或功能关闭时，退回 `ConversationHistoryCompactor` 做完整摘要。旧历史超过单次 60000 字符的输入时，按顺序分段摘要，再把各段摘要逐层合并；最终必须包含目标、用户要求、已完成证据、未解决事项四个栏目，格式不对会重新整理一次，仍不对就保持原 history 不动。原始消息仍从 user 消息处切开，最近几轮原样保留。
 - 两条路径都在 user 消息处切开，直接原地重建真实的 conversationHistory；Plan 并行任务和 Team worker 各自的预计算状态互不影响。
@@ -656,6 +695,8 @@ Seatbelt profile 额外放行了对根目录 "/" 本身的读取（literal，只
 
 ### 架构、代码搜索与 Planner 校验
 
+Harness 当前源码审计、架构图及后续实施边界见 `docs/harness-stage12-architecture-2026-10-27.md`；源码定位和关键文件 SHA 见同目录 stage12 evidence JSON。下一阶段建议先贯通根任务结构化结果，目标设计不能当成已实现功能，也不要因路线图自动启动后续阶段。
+
 - 已交付 23 期（ReAct → Plan+DAG → Memory → RAG → Multi-Agent → HITL → 并行工具 → 多模型 → 联网 → MCP 核心 → MCP 高级 → 长上下文 → Chrome DevTools → CDP 会话复用 → Skill → TUI → LSP 诊断 → Side-Git 快照 → Prompt 分层 → Runtime API → 图片输入 → 微信 iLink 通道文本 MVP）
 
 核心内置工具见 AGENTS.md 里的 18 个清单。`edit_file` 默认只替换唯一匹配的 `old_text`，`replace_all=true` 时全部替换；匹配规则由 `TextEditMatcher` 实现（精确匹配 → 逐行归一化后模糊匹配 → 剥掉 read_file 行号前缀再试一次），有多处匹配时报告出现次数和起始行，局部修改时模型不用输出整个文件；它和 `write_file` 一样受路径限制、HITL 审批和审计约束。
@@ -665,4 +706,6 @@ Seatbelt profile 额外放行了对根目录 "/" 本身的读取（literal，只
 - Planner 的 JSON 计划必须有非空的 tasks、唯一的非空字符串 id，依赖必须精确引用已声明的原始 id；缺少 dependencies 等同于空数组，其他形状错误、未知依赖和环直接失败，不会悄悄删边，也不会猜测重新编号后的别名。description 可以省略，此时为空字符串，保持兼容；出现时必须是字符串，不把数值、null 或对象强转成文本。id 是否为空白按 Java `String.isBlank()` 判断，NBSP 不算空白。
 ### Langfuse 观测（可选）
 
-设置 `PAICLI_LANGFUSE_ENABLED=true` 后，`LangfuseTelemetry` 通过 OpenTelemetry OTLP/HTTP 向 `LANGFUSE_BASE_URL` 发送 trace。每轮 ReAct、Plan、Team 创建一个根 span；共用的模型客户端记录 generation，`TurnToolPolicy` 在完成整批调用后记录 tool（包括策略拒绝的调用）。Plan/Team 的线程池任务传递 OpenTelemetry 上下文。只发送模式、会话 ID、模型名、Token、工具名、耗时、成功状态和异常类型，不发送提示词、思考内容、工具参数或结果。CLI 正常退出时刷新队列；发送失败不改变 Agent 执行。`LANGFUSE_SECRET_KEY` 不传给 `execute_command` 子进程。Maven 测试默认关闭外发观测，`LangfuseTelemetryTest` 只连接本地模拟服务。
+ReAct 每次调用模型前，用 TurnToolPolicy 实际暴露的工具更新真实 system 消息和会话账本；移除宽泛静态工具清单，预算收尾明确没有开放工具。外部上下文仍每个用户轮次只加载一次。该动态清单尚未迁移到 Plan/Team。模型的控制依赖指导不等于运行时能自动验证任意自然语言顺序；L05 严格评分需关联实际参数、错误反馈及后续恢复轮次，本轮修改后仅 1/2 通过，详见 `docs/harness-stage11-2026-10-27.md`。
+
+设置 `LANGFUSE_ENABLED=true` 后，`LangfuseTelemetry` 通过 OpenTelemetry OTLP/HTTP 向 `LANGFUSE_BASE_URL` 发送 trace；旧配置 `PAICLI_LANGFUSE_ENABLED` 仍可用，两个同时设置时以 `LANGFUSE_ENABLED` 为准。每轮 ReAct、Plan、Team 创建一个带 task ID 的根 span；共用的模型客户端记录 generation，只有模型明确返回 usage 时才上传 Token。`TurnToolPolicy` 在完成整批调用后记录 tool（包括策略拒绝的调用）。ReAct 还记录记忆检索和上下文维护阶段；处理过的模型 I/O 错误、取消和预算退出会明确标记根 span。Plan/Team 的线程池任务传递 OpenTelemetry 上下文。只发送模式、会话 ID、模型名、可靠的 Token、工具名、耗时、成功状态和异常类型，不发送提示词、思考内容、工具参数或结果。CLI 正常退出时刷新队列；发送失败不改变 Agent 执行。`LANGFUSE_SECRET_KEY` 不传给 `execute_command` 子进程。Maven 测试默认关闭外发观测，`LangfuseTelemetryTest` 只连接本地模拟服务。固定的离线回归入口和局限见 `docs/harness-engineering-audit-2026-10-26.md`。

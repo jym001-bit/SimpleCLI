@@ -111,10 +111,27 @@ public class McpClient implements AutoCloseable {
         JsonNode result = rpc.request("tools/call", params, 60);
         McpCallToolResult callResult = MAPPER.treeToValue(result, McpCallToolResult.class);
         ToolOutput output = callResult.toToolOutput();
-        if (callResult.isError()) {
+        if (callResult.isError() || isApiErrorPayload(toolName, output.text())) {
             return ToolOutput.failure("MCP 工具返回错误: " + output.text(), output.imageParts());
         }
         return output;
+    }
+
+    /** 部分 API 型 MCP server 把 Notion 的 4xx/5xx 错误正文包成 isError=false 的文本结果。 */
+    private static boolean isApiErrorPayload(String toolName, String text) {
+        if (toolName == null || !toolName.startsWith("API-") || text == null
+                || text.length() > 8192 || !text.stripLeading().startsWith("{")) return false;
+        try {
+            JsonNode body = MAPPER.readTree(text);
+            return body.isObject()
+                    && "error".equals(body.path("object").asText())
+                    && body.path("status").isInt()
+                    && body.path("status").asInt() >= 400
+                    && body.path("code").isTextual()
+                    && body.path("message").isTextual();
+        } catch (IOException ignored) {
+            return false;
+        }
     }
 
     public List<McpResourceDescriptor> listResources() throws IOException {

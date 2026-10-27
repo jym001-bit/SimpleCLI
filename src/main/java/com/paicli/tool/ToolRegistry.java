@@ -21,6 +21,7 @@ import com.paicli.policy.CommandGuard;
 import com.paicli.policy.PathGuard;
 import com.paicli.policy.PolicyException;
 import com.paicli.runtime.CancellationContext;
+import com.paicli.runtime.CancellationToken;
 import com.paicli.snapshot.RestoreResult;
 import com.paicli.snapshot.SnapshotService;
 import com.paicli.skill.Skill;
@@ -33,6 +34,8 @@ import com.paicli.web.SearchProvider;
 import com.paicli.web.SearchProviderFactory;
 import com.paicli.web.SearchResult;
 import com.paicli.web.WebFetcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStreamReader;
@@ -58,6 +61,7 @@ import java.util.regex.PatternSyntaxException;
  * 工具注册表 - 管理所有可用工具
  */
 public class ToolRegistry {
+    private static final Logger log = LoggerFactory.getLogger(ToolRegistry.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     private final ToolArgumentValidator argumentValidator = new ToolArgumentValidator(mapper);
     private static final int DEFAULT_COMMAND_TIMEOUT_SECONDS = 60;
@@ -1549,6 +1553,7 @@ public class ToolRegistry {
                 || value.startsWith("用户取消了")
                 || value.startsWith("工具执行失败")
                 || value.startsWith("工具执行超时")
+                || value.startsWith("读取文件失败")
                 || value.startsWith("未知工具")
                 || value.startsWith("MCP 工具返回错误")
                 || value.startsWith("MCP 工具调用失败")
@@ -1794,6 +1799,11 @@ public class ToolRegistry {
         });
 
         Process process = null;
+        CancellationToken token = CancellationContext.current();
+        CancellationToken.Registration cancellation = null;
+        CommandProcess commandProcess = null;
+        Future<String> outputFuture = null;
+        StringBuffer partialOutput = new StringBuffer();
         try {
             CommandSandbox activeSandbox = commandSandbox;
             CommandSandbox.Invocation sandboxInvocation = activeSandbox == null
@@ -1815,21 +1825,38 @@ public class ToolRegistry {
                 activeSandbox.configureEnvironment(pb.environment());
             }
             if (observation != null) observation.arguments = List.copyOf(pb.command());
+            if (token != null && token.isCancelled()) {
+                ToolOutput result = ToolOutput.failure("用户取消了此次工具调用");
+                observeCommand(observation, CommandExecutionObserver.Phase.FINISHED,
+                        CommandExecutionObserver.Outcome.CANCELLED, result);
+                return result;
+            }
             process = pb.start();
+            commandProcess = new CommandProcess(process);
+            CommandProcess activeCommand = commandProcess;
+            if (token != null) cancellation = token.onCancel(activeCommand::cancel);
             if (observation != null) observation.processId = process.pid();
             observeCommand(observation, CommandExecutionObserver.Phase.STARTED,
                     CommandExecutionObserver.Outcome.NONE, null);
 
             Process runningProcess = process;
-            Future<String> outputFuture = outputReaderExecutor.submit(() -> readProcessOutput(runningProcess));
+            outputFuture = outputReaderExecutor.submit(() -> readProcessOutput(runningProcess, partialOutput));
 
             boolean finished = process.waitFor(commandTimeoutSeconds, TimeUnit.SECONDS);
+            if (commandProcess.cancelled.get() || token != null && token.isCancelled()) {
+                String output = stopCommandAndReadOutput(commandProcess, outputFuture, partialOutput);
+                ToolOutput result = ToolOutput.failure("用户取消了此次工具调用\n" + output);
+                if (observation != null && !process.isAlive()) observation.exitCode = process.exitValue();
+                observeCommand(observation, CommandExecutionObserver.Phase.FINISHED,
+                        CommandExecutionObserver.Outcome.CANCELLED, result);
+                return result;
+            }
             if (!finished) {
-                process.destroyForcibly();
-                process.waitFor(2, TimeUnit.SECONDS);
-                outputFuture.cancel(true);
+                // A shell may have spawned a child that still owns the working directory.
+                // Stop children before the shell so Windows can release that directory.
+                String output = stopCommandAndReadOutput(commandProcess, outputFuture, partialOutput);
                 ToolOutput result = ToolOutput.failure(
-                        "命令执行超时（" + commandTimeoutSeconds + "秒），已强制终止");
+                        "命令执行超时（" + commandTimeoutSeconds + "秒），已强制终止\n" + output);
                 if (observation != null && !process.isAlive()) observation.exitCode = process.exitValue();
                 observeCommand(observation, CommandExecutionObserver.Phase.FINISHED,
                         CommandExecutionObserver.Outcome.TIMED_OUT, result);
@@ -1837,6 +1864,12 @@ public class ToolRegistry {
             }
 
             String output = getCommandOutput(outputFuture);
+            if (commandProcess.cancelled.get() || token != null && token.isCancelled()) {
+                ToolOutput result = ToolOutput.failure("用户取消了此次工具调用\n" + output);
+                observeCommand(observation, CommandExecutionObserver.Phase.FINISHED,
+                        CommandExecutionObserver.Outcome.CANCELLED, result);
+                return result;
+            }
             int exitCode = process.exitValue();
             String result = String.format("命令执行完成 (exit code: %d)\n%s", exitCode, output);
             ToolOutput toolOutput = exitCode == 0 ? ToolOutput.text(result) : ToolOutput.failure(result);
@@ -1845,24 +1878,99 @@ public class ToolRegistry {
                     CommandExecutionObserver.Outcome.EXITED, toolOutput);
             return toolOutput;
         } catch (InterruptedException e) {
+            String output = commandProcess == null ? ""
+                    : stopCommandAndReadOutput(commandProcess, outputFuture, partialOutput);
             Thread.currentThread().interrupt();
-            if (process != null) {
-                process.destroyForcibly();
-            }
-            ToolOutput result = ToolOutput.failure("用户取消了此次工具调用");
+            ToolOutput result = ToolOutput.failure("用户取消了此次工具调用\n" + output);
             observeCommand(observation, CommandExecutionObserver.Phase.FINISHED,
                     CommandExecutionObserver.Outcome.INTERRUPTED, result);
             return result;
         } catch (Exception e) {
-            if (process != null) {
-                process.destroyForcibly();
-            }
-            ToolOutput result = ToolOutput.failure("执行命令失败: " + e.getMessage());
+            String output = commandProcess == null ? ""
+                    : stopCommandAndReadOutput(commandProcess, outputFuture, partialOutput);
+            boolean cancelled = commandProcess != null && commandProcess.cancelled.get()
+                    || token != null && token.isCancelled();
+            ToolOutput result = ToolOutput.failure(cancelled ? "用户取消了此次工具调用\n" + output
+                    : "执行命令失败: " + e.getMessage());
             observeCommand(observation, CommandExecutionObserver.Phase.FINISHED,
-                    CommandExecutionObserver.Outcome.FAILED, result);
+                    cancelled ? CommandExecutionObserver.Outcome.CANCELLED : CommandExecutionObserver.Outcome.FAILED, result);
             return result;
         } finally {
+            if (cancellation != null) cancellation.close();
+            boolean interrupted = Thread.interrupted();
             outputReaderExecutor.shutdownNow();
+            try {
+                outputReaderExecutor.awaitTermination(2, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                interrupted = true;
+            }
+            if (interrupted) Thread.currentThread().interrupt();
+        }
+    }
+
+    /** Owns only this invocation's process tree; cancellation callbacks never wait. */
+    private static final class CommandProcess {
+        private final Process process;
+        private final java.util.concurrent.atomic.AtomicBoolean cancelled = new java.util.concurrent.atomic.AtomicBoolean();
+        private List<ProcessHandle> descendants = List.of();
+
+        private CommandProcess(Process process) { this.process = process; }
+
+        private void cancel() {
+            cancelled.set(true);
+            stop();
+        }
+
+        private synchronized void stop() {
+            // Capture before the shell exits and children may be reparented.
+            try {
+                if (process.isAlive()) {
+                    Set<ProcessHandle> known = new LinkedHashSet<>(descendants);
+                    known.addAll(process.descendants().toList());
+                    descendants = List.copyOf(known);
+                }
+                for (int i = descendants.size() - 1; i >= 0; i--) {
+                    try { descendants.get(i).destroyForcibly(); }
+                    catch (RuntimeException e) { log.debug("Could not stop command descendant", e); }
+                }
+            } catch (RuntimeException e) {
+                log.debug("Could not enumerate command descendants", e);
+            } finally { process.destroyForcibly(); }
+        }
+
+        private void awaitStopped() throws Exception {
+            long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+            List<ProcessHandle> handles;
+            synchronized (this) {
+                handles = new ArrayList<>(descendants);
+                handles.add(process.toHandle());
+            }
+            for (ProcessHandle handle : handles) {
+                long remaining = deadline - System.nanoTime();
+                if (handle.isAlive() && remaining > 0) handle.onExit().get(remaining, TimeUnit.NANOSECONDS);
+            }
+        }
+    }
+
+    private String stopCommandAndReadOutput(CommandProcess command, Future<String> future, StringBuffer partial) {
+        boolean interrupted = Thread.interrupted();
+        try {
+            command.stop();
+            command.awaitStopped();
+            if (future != null) return future.get(2, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            interrupted = true;
+        } catch (Exception e) {
+            log.debug("Stopped command output could not be fully drained", e);
+        } finally {
+            if (future != null && !future.isDone()) future.cancel(true);
+            try { command.process.getInputStream().close(); }
+            catch (IOException e) { log.debug("Stopped command stream close failed", e); }
+            if (interrupted) Thread.currentThread().interrupt();
+        }
+        synchronized (partial) {
+            return partial.length() <= MAX_COMMAND_OUTPUT_CHARS ? partial.toString()
+                    : partial.substring(0, MAX_COMMAND_OUTPUT_CHARS) + "\n...(输出已截断)";
         }
     }
 
@@ -1928,10 +2036,9 @@ public class ToolRegistry {
                 || normalized.equals("AUTHORIZATION");
     }
 
-    private String readProcessOutput(Process process) throws Exception {
+    private String readProcessOutput(Process process, StringBuffer output) throws Exception {
         boolean offload = toolResultOffloader.isEnabled();
         int captureLimit = offload ? MAX_COMMAND_CAPTURE_CHARS : MAX_COMMAND_OUTPUT_CHARS;
-        StringBuilder output = new StringBuilder();
         boolean overflow = false;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;

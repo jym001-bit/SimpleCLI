@@ -16,6 +16,11 @@ public interface LlmClient {
 
     String getProviderName();
 
+    /** True when chat owns transport retries; a terminal IOException must not restart the task. */
+    default boolean managesRequestRetries() {
+        return false;
+    }
+
     /**
      * Best-effort cancellation hook for requests that are currently in flight.
      * Implementations that own transport resources should override this method.

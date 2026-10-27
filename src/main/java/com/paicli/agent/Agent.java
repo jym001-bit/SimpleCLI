@@ -2,7 +2,6 @@ package com.paicli.agent;
 import com.paicli.observability.LangfuseTelemetry;
 
 import com.paicli.llm.LlmClient;
-import com.paicli.llm.LlmTraceLogger;
 import com.paicli.context.ContextProfile;
 import com.paicli.context.TokenUsageFormatter;
 import com.paicli.history.ConversationLedger;
@@ -25,7 +24,6 @@ import com.paicli.tool.LoadedSkillMessages;
 import com.paicli.tool.ToolRegistry;
 import com.paicli.tool.ToolResultBoundary;
 import com.paicli.tool.ToolRegistry.ToolExecutionResult;
-import com.paicli.tool.ToolRegistry.ToolInvocation;
 import com.paicli.tool.TurnToolPolicy;
 import com.paicli.util.TerminalMarkdownRenderer;
 import com.paicli.image.ImageReferenceParser;
@@ -206,8 +204,10 @@ public class Agent {
 
         // 检索相关长期记忆，注入到 system prompt
         ContextProfile contextProfile = memoryManager.getContextProfile();
-        String memoryContext = memoryManager.buildContextForQuery(userInput, contextProfile.memoryContextTokens());
+        String memoryContext = LangfuseTelemetry.observeStage("memory retrieval",
+                () -> memoryManager.buildContextForQuery(userInput, contextProfile.memoryContextTokens()));
         updateSystemPromptWithMemory(memoryContext);
+        String turnSystemPrompt = conversationHistory.get(0).content();
 
         appendConversationMessage(ImageReferenceParser.userMessage(
                 userInput,
@@ -225,43 +225,57 @@ public class Agent {
         while (true) {
             if (CancellationContext.isCancelled()) {
                 log.info("ReAct run cancelled before iteration");
+                LangfuseTelemetry.recordFailure("CANCELLED");
                 pushStatus(budget, startNanos, "idle");
                 return "⏹️ 已取消当前任务。";
             }
             // 调 LLM 前只评估真正发送的 conversationHistory。会话记忆快速路径和完整摘要
             // 回退路径都由同一个协调器管理，不再复制一份影子短期记忆。
             injectPendingLspDiagnostics();
-            maybeCompactHistory();
-            AgentBudget.ExitReason exitReason = budget.check();
-            if (exitReason != AgentBudget.ExitReason.WITHIN_BUDGET) {
+            LangfuseTelemetry.observeStage("context maintenance", () -> {
+                maybeCompactHistory();
+                return null;
+            });
+            AgentExecutionKernel.IterationAdmission admission = AgentExecutionKernel.admitIteration(budget);
+            if (admission.state() == AgentExecutionKernel.IterationState.CANCELLED) {
+                log.info("ReAct run cancelled at iteration admission");
+                LangfuseTelemetry.recordFailure("CANCELLED");
+                pushStatus(budget, startNanos, "idle");
+                return "⏹️ 已取消当前任务。";
+            }
+            if (admission.state() == AgentExecutionKernel.IterationState.BUDGET_EXHAUSTED) {
                 return finalizePartialResult(
-                        exitReason, budget, startNanos, reasoningTranscript, streamRenderer);
+                        admission.exitReason(), budget, startNanos, reasoningTranscript, streamRenderer, turnSystemPrompt);
             }
 
-            int iteration = budget.beginIteration();
+            int iteration = admission.iteration();
 
             try {
                 List<LlmClient.Tool> toolDefinitions = llmClient.supportsTools()
                         ? toolRegistry.getToolDefinitions()
                         : null;
                 TurnToolPolicy.ToolExposure toolExposure = turnToolPolicy.expose(toolDefinitions);
+                updateSystemPromptForTools(turnSystemPrompt, toolExposure.definitions());
                 logRequestContext("react iteration=" + iteration, toolExposure.definitions());
                 streamRenderer.beginThinking();
                 // 调用 LLM
-                LlmClient.ChatResponse response = llmClient.chat(
+                AgentExecutionKernel.ModelTurn modelTurn = AgentExecutionKernel.requestModelTurn(
+                        llmClient,
                         conversationHistory,
                         toolExposure.definitions(),
-                        streamRenderer
+                        streamRenderer,
+                        budget,
+                        log,
+                        "react iteration=" + iteration
                 );
-                LlmTraceLogger.logReasoning(log, "react iteration=" + iteration, llmClient, response.reasoningContent());
-                if (CancellationContext.isCancelled()) {
-                    log.info("ReAct run cancelled after LLM response");
+                if (modelTurn.cancelled()) {
+                    log.info("ReAct run cancelled during model turn");
+                    LangfuseTelemetry.recordFailure("CANCELLED");
                     streamRenderer.finish();
                     pushStatus(budget, startNanos, "idle");
                     return "⏹️ 已取消当前任务。";
                 }
-
-                budget.recordTokens(response.inputTokens(), response.outputTokens(), response.cachedInputTokens());
+                LlmClient.ChatResponse response = modelTurn.response();
 
                 // 如果有工具调用
                 if (response.hasToolCalls()) {
@@ -341,7 +355,9 @@ public class Agent {
 
             } catch (IOException e) {
                 log.error("LLM call failed in ReAct loop", e);
+                LangfuseTelemetry.recordFailure("LLM_IO_ERROR");
                 streamRenderer.finish();
+                pushStatus(budget, startNanos, "idle");
                 return "❌ 调用 LLM 失败: " + e.getMessage();
             }
         }
@@ -356,11 +372,13 @@ public class Agent {
             AgentBudget budget,
             long startNanos,
             StringBuilder reasoningTranscript,
-            StreamRenderer streamRenderer) {
+            StreamRenderer streamRenderer,
+            String baseSystemPrompt) {
         String description = budget.describeExit(exitReason);
         log.warn("ReAct run exhausted budget: reason={}, iteration={}, tokens={}/{}",
                 exitReason, budget.iteration(),
-                budget.totalInputTokens() + budget.totalOutputTokens(), budget.tokenBudget());
+                (long) budget.totalInputTokens() + budget.totalOutputTokens(), budget.tokenBudget());
+        LangfuseTelemetry.recordFailure(exitReason.name());
 
         appendConversationMessage(
                 LlmClient.Message.user(budget.finalizationInstruction(exitReason)),
@@ -368,12 +386,12 @@ public class Agent {
         renderer().stream().println(AnsiStyle.section("⚠️ 执行预算已触发，正在整理部分结果"));
 
         try {
+            updateSystemPromptForTools(baseSystemPrompt, List.of());
             streamRenderer.beginThinking();
-            LlmClient.ChatResponse response = llmClient.chat(
+            LlmClient.ChatResponse response = AgentExecutionKernel.requestFinalizationTurn(
+                    llmClient,
                     conversationHistory,
-                    List.of(),
-                    streamRenderer);
-            budget.recordTokens(response.inputTokens(), response.outputTokens(), response.cachedInputTokens());
+                    streamRenderer, budget, log, "ReAct budget finalization");
             appendReasoning(reasoningTranscript, response.reasoningContent());
 
             String responseContent = response.content() == null ? "" : response.content().trim();
@@ -534,6 +552,16 @@ public class Agent {
         conversationHistory.set(0, systemMessage);
         conversationLedger.appendMessage(
                 "react", "agent", "memory_context_refresh", systemMessage);
+    }
+
+    private void updateSystemPromptForTools(String baseSystemPrompt, List<LlmClient.Tool> tools) {
+        String names = tools == null ? "" : tools.stream().map(LlmClient.Tool::name)
+                .collect(java.util.stream.Collectors.joining(", "));
+        LlmClient.Message system = LlmClient.Message.system(llmClient.supportsTools()
+                ? PromptAssembler.withToolAvailability(baseSystemPrompt, names) : baseSystemPrompt);
+        if (system.equals(conversationHistory.get(0))) return;
+        conversationHistory.set(0, system);
+        conversationLedger.appendMessage("react", "agent", "tool_exposure_refresh", system);
     }
 
     private String buildSystemPrompt(String memoryContext) {
@@ -902,7 +930,7 @@ public class Agent {
         try {
             String model = llmClient == null ? "—" : com.paicli.llm.ModelCatalog.statusName(llmClient.getProviderName(), llmClient.getModelName());
             long totalTokens = budget == null ? 0L
-                    : (long) (budget.totalInputTokens() + budget.totalOutputTokens());
+                    : (long) budget.totalInputTokens() + budget.totalOutputTokens();
             long contextWindow = llmClient == null ? 0L : llmClient.maxContextWindow();
             boolean hitl = Boolean.TRUE.equals(hitlEnabledSupplier.get());
             long elapsed = (System.nanoTime() - startNanos) / 1_000_000L;
@@ -943,19 +971,17 @@ public class Agent {
                                                        int iteration,
                                                        TurnToolPolicy turnToolPolicy,
                                                        TurnToolPolicy.ToolExposure toolExposure) {
-        List<ToolInvocation> invocations = new ArrayList<>();
         for (LlmClient.ToolCall toolCall : toolCalls) {
             String toolName = toolCall.function().name();
-            String toolArgs = toolCall.function().arguments();
             log.info("Scheduling tool: {} (iteration={})", toolName, iteration);
-            log.debug("Tool args [{}]: {}", toolName, toolArgs);
-            invocations.add(new ToolInvocation(toolCall.id(), toolName, toolArgs));
+            log.debug("Tool args [{}]: {}", toolName, toolCall.function().arguments());
         }
 
-        if (invocations.size() > 1) {
-            log.info("Executing {} tool calls; read-only calls run in parallel (iteration={})", invocations.size(), iteration);
+        if (toolCalls.size() > 1) {
+            log.info("Executing {} tool calls; read-only calls run in parallel (iteration={})", toolCalls.size(), iteration);
         }
-        List<ToolExecutionResult> results = turnToolPolicy.execute(toolRegistry, invocations, toolExposure);
+        List<ToolExecutionResult> results = AgentExecutionKernel.executeToolCalls(
+                turnToolPolicy, toolRegistry, toolCalls, toolExposure);
         for (ToolExecutionResult result : results) {
             log.debug("Tool result preview [{}]: {}", result.name(), preview(result.result(), 300));
             emitToolResultSummary(result);

@@ -15,7 +15,7 @@ public interface CommandExecutionObserver {
     void onEvent(Event event);
 
     enum Phase { REJECTED, STARTED, FINISHED }
-    enum Outcome { NONE, EMPTY_COMMAND, POLICY_DENIED, EXITED, TIMED_OUT, INTERRUPTED, FAILED }
+    enum Outcome { NONE, EMPTY_COMMAND, POLICY_DENIED, EXITED, TIMED_OUT, INTERRUPTED, FAILED, CANCELLED }
 
     /** invocationId is local to one registry, independent of provider call IDs. */
     record Event(long invocationId, Phase phase, String command, String workingDirectory,

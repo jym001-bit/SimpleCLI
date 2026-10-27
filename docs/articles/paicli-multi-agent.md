@@ -211,6 +211,10 @@ List<ExecutionStep> getExecutableSteps(List<ExecutionStep> steps) {
 
 我们用了 `ExecutorService` + `BlockingQueue` 实现 Worker 的并发。每个步骤获取一个 Worker，用完放回池子。
 
+取消也要按任务传下去。现在编排器会把当前 Team 的取消信号显式绑定到各个 Worker，底下的模型 HTTP 请求和命令工具继续使用同一个任务的取消信号。取消后不再启动排队的 Worker、Reviewer 或重试，已经完成的结果和能拿到的部分输出仍会保留。每个批次用自己的线程池，取消它不会关闭其他 Team 的线程池或取消共享模型客户端的其他请求。
+
+单步任务也通过独立执行器运行，输出仍直接流式展示。取消后的清理最多等待 6 秒；如果自定义操作不响应取消，只能先停止等待，不能宣称后台工作已被杀掉。旧工作退出前，同一个 Team 编排器暂时不接新任务，避免复用尚未清理完的 Worker。这还不是贯穿整项任务的总 Deadline。
+
 流式输出写入 `ByteArrayOutputStream`，批次结束后按 step_id 顺序 flush 到 stdout，保正用户看到的执行过程是有序的。
 
 ```java

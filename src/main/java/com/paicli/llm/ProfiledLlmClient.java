@@ -24,6 +24,7 @@ final class ProfiledLlmClient implements LlmClient {
         return delegate.chat(messages, tools, listener);
     }
     public void cancelInFlightCalls() { delegate.cancelInFlightCalls(); }
+    public boolean managesRequestRetries() { return delegate.managesRequestRetries(); }
     public String getModelName() { return model; }
     public String getProviderName() { return delegate.getProviderName(); }
     public int maxContextWindow() {

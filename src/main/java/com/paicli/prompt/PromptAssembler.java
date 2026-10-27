@@ -52,6 +52,20 @@ public class PromptAssembler {
         return assembled;
     }
 
+    /** Refresh only request capabilities; do not reread memory or invoke external context suppliers. */
+    public static String withToolAvailability(String prompt, String names) {
+        String base = prompt.replaceFirst("(?s)\\n## Tools\\n.*?(?=\\n## Tool Policy\\n)",
+                "\n## Tools\n\n工具名称和参数以本次请求的 tools 定义为准。\n");
+        base = base.replaceFirst("(?s)\\n\\n## Tool Availability\\n.*?(?=\\n\\n## |\\z)", "");
+        String section = "## Tool Availability\n\n" + (names.isBlank()
+                ? "本次请求没有开放工具，不再发起工具调用。"
+                : "本次请求实际开放的工具只有：" + names + "。通用工具建议仅适用于这里已开放的工具，"
+                        + "不得调用列表之外的工具；用户已给出可直接读取的路径时，不必借助未开放的发现工具。");
+        int project = base.indexOf("\n\n## Project Context\n");
+        return project < 0 ? base + "\n\n" + section
+                : base.substring(0, project) + "\n\n" + section + base.substring(project);
+    }
+
     private String approvalMode(PromptContext context) {
         String mode = context.approvalMode();
         if (mode == null || mode.isBlank()) {

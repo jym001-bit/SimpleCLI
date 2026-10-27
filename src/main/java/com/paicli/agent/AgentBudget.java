@@ -93,9 +93,9 @@ public class AgentBudget {
     }
 
     public void recordTokens(int inputTokens, int outputTokens, int cachedInputTokens) {
-        this.totalInputTokens += Math.max(0, inputTokens);
-        this.totalOutputTokens += Math.max(0, outputTokens);
-        this.totalCachedInputTokens += Math.max(0, cachedInputTokens);
+        this.totalInputTokens = saturatingAdd(totalInputTokens, inputTokens);
+        this.totalOutputTokens = saturatingAdd(totalOutputTokens, outputTokens);
+        this.totalCachedInputTokens = saturatingAdd(totalCachedInputTokens, cachedInputTokens);
     }
 
     /**
@@ -124,7 +124,7 @@ public class AgentBudget {
         if (stagnant) {
             return ExitReason.STAGNATION_DETECTED;
         }
-        if (totalInputTokens + totalOutputTokens >= tokenBudget) {
+        if ((long) totalInputTokens + totalOutputTokens >= tokenBudget) {
             return ExitReason.TOKEN_BUDGET_EXCEEDED;
         }
         if (hasHardIterationLimit() && iteration >= hardMaxIterations) {
@@ -170,7 +170,7 @@ public class AgentBudget {
             case WITHIN_BUDGET -> "未触发兜底条件";
             case TOKEN_BUDGET_EXCEEDED -> String.format(Locale.ROOT,
                     "Token 预算已用尽（%d / %d），将停止工具执行并收尾",
-                    totalInputTokens + totalOutputTokens, tokenBudget);
+                    (long) totalInputTokens + totalOutputTokens, tokenBudget);
             case STAGNATION_DETECTED -> String.format(Locale.ROOT,
                     "检测到连续 %d 轮重复的工具调用，疑似死循环，将停止工具执行并收尾",
                     stagnationWindow);
@@ -196,6 +196,10 @@ public class AgentBudget {
             sb.append(tc.function().name()).append('|').append(tc.function().arguments()).append(';');
         }
         return sb.toString();
+    }
+
+    private static int saturatingAdd(int current, int incoming) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) current + Math.max(0, incoming));
     }
 
     private static int readIntProperty(String key, int defaultValue) {

@@ -15,8 +15,23 @@ public record AgentMessage(
         String fromAgent,
         AgentRole fromRole,
         String content,
-        Type type
+        Type type,
+        ExecutionOutcome outcome
 ) {
+    /** Preserve existing callers and the message protocol; termination metadata is additive. */
+    public AgentMessage(String fromAgent, AgentRole fromRole, String content, Type type) {
+        this(fromAgent, fromRole, content, type,
+                type == Type.RESULT ? ExecutionOutcome.completed(content)
+                        : type == Type.ERROR ? new ExecutionOutcome(ExecutionOutcome.Reason.MODEL_ERROR, content) : null);
+    }
+
+    public static AgentMessage execution(String fromAgent, AgentRole role, ExecutionOutcome outcome) {
+        return new AgentMessage(fromAgent, role, outcome.content(),
+                outcome.reason() == ExecutionOutcome.Reason.CANCELLED
+                        || outcome.reason() == ExecutionOutcome.Reason.MODEL_ERROR ? Type.ERROR : Type.RESULT,
+                outcome);
+    }
+
     public enum Type {
         TASK,
         RESULT,

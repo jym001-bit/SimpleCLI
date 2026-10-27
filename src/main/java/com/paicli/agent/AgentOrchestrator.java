@@ -6,6 +6,7 @@ import com.paicli.llm.LlmClient;
 import com.paicli.memory.MemoryManager;
 import com.paicli.memory.TokenBudget;
 import com.paicli.runtime.CancellationContext;
+import com.paicli.runtime.CancellationToken;
 import com.paicli.tool.ToolRegistry;
 import com.paicli.tool.TurnToolPolicy;
 import com.paicli.util.AnsiStyle;
@@ -62,6 +63,8 @@ public class AgentOrchestrator {
     private Supplier<String> externalContextSupplier = () -> "";
     private volatile TeamExecutionObserver executionObserver;
     private final AtomicLong executionObservationFailures = new AtomicLong();
+    private final AtomicBoolean runActive = new AtomicBoolean();
+    private volatile ExecutorService cancellationCleanup;
 
     /** Optional, process-local diagnostics only; callbacks may run concurrently. */
     public void setExecutionObserver(TeamExecutionObserver observer) { this.executionObserver = observer; }
@@ -180,9 +183,20 @@ public class AgentOrchestrator {
     private String runInternal(String userInput,
                                String submittedUserInput,
                                boolean explicitTaskEnvelope) {
-        return LangfuseTelemetry.observeTurn("team",
-                conversationLedger.isEnabled() ? conversationLedger.sessionId() : null,
-                () -> runTraced(userInput, submittedUserInput, explicitTaskEnvelope));
+        if (!runActive.compareAndSet(false, true)) return "⏹️ 当前 Team 任务仍在执行或清理，请稍后再试。";
+        try {
+            ExecutorService previous = cancellationCleanup;
+            if (previous != null && !previous.isTerminated()) {
+                return "⏹️ 上一次 Team 任务仍在清理，请稍后再试。";
+            }
+            CancellationToken callerToken = CancellationContext.currentThreadToken();
+            try (CancellationContext.Scope ignored = CancellationContext.bind(
+                    callerToken == null ? new CancellationToken() : callerToken)) {
+                return LangfuseTelemetry.observeTurn("team",
+                        conversationLedger.isEnabled() ? conversationLedger.sessionId() : null,
+                        () -> runTraced(userInput, submittedUserInput, explicitTaskEnvelope));
+            }
+        } finally { runActive.set(false); }
     }
 
     private String runTraced(String userInput,
@@ -264,7 +278,7 @@ public class AgentOrchestrator {
         }
 
         // 2. 解析计划
-        List<ExecutionStep> steps = parsePlan(planResult.content());
+        List<ExecutionStep> steps = new CopyOnWriteArrayList<>(parsePlan(planResult.content()));
         observation.emit(() -> new PlanPrepared(observation.runId, observation.now(),
                 ActivationObservation.id(planActivation), TextFingerprint.of(planResult.content()),
                 steps.stream().map(step -> new StepNode(step.id(), TextFingerprint.of(step.description()),
@@ -287,8 +301,7 @@ public class AgentOrchestrator {
 
         while (true) {
             if (CancellationContext.isCancelled()) {
-                observation.runExitReason = RunExitReason.CANCELLED;
-                return "⏹️ 已取消当前多 Agent 任务。";
+                return cancelTeam(steps, observation);
             }
             List<ExecutionStep> executable = getExecutableSteps(steps);
             if (executable.isEmpty()) {
@@ -306,16 +319,8 @@ public class AgentOrchestrator {
                 TurnToolPolicy stepPolicy = turnToolPolicy.forkWithTrustedUrls(dependencyUrls);
                 String context = buildStepContext(steps, step, dependencyUrls);
                 StepObservation stepObservation = observation.step(step, steps, context, batchIndex);
-                try {
-                    runStep(step, steps, retryCount, worker, reviewer, context, out,
-                            stepPolicy, stepTrustedUrls, stepObservation);
-                } catch (RuntimeException | Error e) {
-                    if (stepObservation != null) stepObservation.threw(e);
-                    throw e;
-                } finally {
-                    if (stepObservation != null) stepObservation.exited(steps);
-                }
-                worker.clearHistory();
+                runSingleStep(step, steps, retryCount, worker, context, stepPolicy,
+                        stepTrustedUrls, stepObservation);
             } else {
                 // 多步批次：真正并行执行，每步用独立的 PrintStream 缓冲，完成后按 step_id 顺序 flush
                 out.println("⚡ 批次 #" + batchIndex + "：" + executable.size()
@@ -324,6 +329,8 @@ public class AgentOrchestrator {
                         observation, batchIndex);
             }
         }
+
+        if (CancellationContext.isCancelled()) return cancelTeam(steps, observation);
 
         // 5. 处理因前置失败而无法执行的残留步骤（显式提示用户）
         for (ExecutionStep step : steps) {
@@ -344,6 +351,62 @@ public class AgentOrchestrator {
                 LlmClient.Message.assistant(finalResult));
 
         return finalResult;
+    }
+
+    private void runSingleStep(ExecutionStep step, List<ExecutionStep> steps,
+                               Map<String, Integer> retryCount, SubAgent worker, String context,
+                               TurnToolPolicy stepPolicy,
+                               Map<String, TurnToolPolicy.TrustedUrlContext> stepTrustedUrls,
+                               StepObservation observation) {
+        CancellationToken token = Objects.requireNonNull(CancellationContext.currentThreadToken());
+        ExecutorService executor = newTeamExecutor(1);
+        Future<?> future = executor.submit(LangfuseTelemetry.wrap(() -> {
+            try (CancellationContext.Scope ignored = CancellationContext.bind(token)) {
+                try {
+                    if (token.isCancelled()) {
+                        if (observation != null) observation.reason = StepExitReason.CANCELLED;
+                        return;
+                    }
+                    runStep(step, steps, retryCount, worker, reviewer, context, out,
+                            stepPolicy, stepTrustedUrls, observation);
+                } catch (RuntimeException | Error e) {
+                    if (observation != null) observation.threw(e);
+                    throw e;
+                } finally {
+                    worker.clearHistory();
+                    if (observation != null) observation.exited(steps);
+                }
+            }
+        }));
+        awaitTeamBatch(List.of(future), executor, token, true);
+    }
+
+    private static ExecutorService newTeamExecutor(int parallelism) {
+        return Executors.newFixedThreadPool(parallelism, r -> {
+            Thread thread = new Thread(r, "paicli-multi-agent");
+            thread.setDaemon(true);
+            return thread;
+        });
+    }
+
+    private String cancelTeam(List<ExecutionStep> steps, TeamObservation observation) {
+        observation.runExitReason = RunExitReason.CANCELLED;
+        StringBuilder result = new StringBuilder("⏹️ 已取消当前多 Agent 任务。\n已保留的结果（不代表整个任务完成）：\n");
+        for (ExecutionStep step : steps) {
+            if (step.status() != StepStatus.COMPLETED) {
+                ExecutionStep cancelled = step.withFailed(step.result() == null ? "用户取消" : step.result());
+                updateStep(steps, step.id(), cancelled);
+                observation.cancelledBeforeStart(cancelled);
+            }
+            result.append('[').append(step.id()).append("] ")
+                    .append(step.status() == StepStatus.COMPLETED ? "已完成：" : "未完成：")
+                    .append(step.description()).append('\n');
+            if (step.result() != null && !step.result().isBlank()) result.append(step.result()).append('\n');
+        }
+        String text = result.toString();
+        conversationLedger.appendEvent("run_cancelled", "team", "orchestrator", "execution", Map.of());
+        conversationLedger.appendMessage("team", "orchestrator", "run_result", LlmClient.Message.assistant(text));
+        return text;
     }
 
     /**
@@ -409,16 +472,14 @@ public class AgentOrchestrator {
                                   Map<String, TurnToolPolicy.TrustedUrlContext> stepTrustedUrls,
                                   TeamObservation observation, int batchOrdinal) {
         int parallelism = Math.min(batch.size(), workers.size());
-        ExecutorService executor = Executors.newFixedThreadPool(parallelism, r -> {
-            Thread t = new Thread(r, "paicli-multi-agent");
-            t.setDaemon(true);
-            return t;
-        });
+        ExecutorService executor = newTeamExecutor(parallelism);
         BlockingQueue<SubAgent> workerPool = new LinkedBlockingQueue<>(workers);
         Map<String, ByteArrayOutputStream> buffers = new ConcurrentHashMap<>();
         List<Future<?>> futures = new ArrayList<>();
+        CancellationToken token = Objects.requireNonNull(CancellationContext.currentThreadToken());
 
         for (ExecutionStep step : batch) {
+            if (token.isCancelled()) break;
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             buffers.put(step.id(), baos);
             PrintStream stepOut = new PrintStream(baos, true, StandardCharsets.UTF_8);
@@ -428,54 +489,51 @@ public class AgentOrchestrator {
             String context = buildStepContext(steps, step, dependencyUrls);
 
             futures.add(executor.submit(LangfuseTelemetry.wrap(() -> {
-                StepObservation stepObservation = observation.step(step, steps, context, batchOrdinal);
-                try {
-                    SubAgent worker = null;
-                    SubAgent localReviewer = new SubAgent(
-                            "reviewer-" + step.id(), AgentRole.REVIEWER, llmClient, toolRegistry);
-                    localReviewer.setConversationLedger(conversationLedger);
+                try (CancellationContext.Scope ignored = CancellationContext.bind(token)) {
+                    if (token.isCancelled()) return null;
+                    StepObservation stepObservation = observation.step(step, steps, context, batchOrdinal);
                     try {
-                        worker = workerPool.take();
-                        runStep(step, steps, retryCount, worker, localReviewer, context, stepOut,
-                                stepPolicy, stepTrustedUrls, stepObservation);
-                    } catch (InterruptedException e) {
-                        if (stepObservation != null) stepObservation.cancelled(e);
-                        Thread.currentThread().interrupt();
-                        updateStep(steps, step.id(), step.withFailed("并行执行被中断"));
-                        stepOut.println("❌ 步骤 [" + step.id() + "] 被中断\n");
-                    } catch (RuntimeException e) {
-                        if (stepObservation != null) stepObservation.threw(e);
-                        log.error("Parallel step {} failed unexpectedly", step.id(), e);
-                        updateStep(steps, step.id(), step.withFailed("并行执行异常: " + e.getMessage()));
-                        stepOut.println("❌ 步骤 [" + step.id() + "] 并行执行异常：" + e.getMessage() + "\n");
-                    } finally {
-                        if (worker != null) {
-                            worker.clearHistory();
-                            workerPool.offer(worker);
+                        SubAgent worker = null;
+                        SubAgent localReviewer = new SubAgent(
+                                "reviewer-" + step.id(), AgentRole.REVIEWER, llmClient, toolRegistry);
+                        localReviewer.setConversationLedger(conversationLedger);
+                        try {
+                            worker = workerPool.take();
+                            if (token.isCancelled()) {
+                                if (stepObservation != null) stepObservation.reason = StepExitReason.CANCELLED;
+                                return null;
+                            }
+                            runStep(step, steps, retryCount, worker, localReviewer, context, stepOut,
+                                    stepPolicy, stepTrustedUrls, stepObservation);
+                        } catch (InterruptedException e) {
+                            if (stepObservation != null) stepObservation.cancelled(e);
+                            Thread.currentThread().interrupt();
+                            updateStep(steps, step.id(), step.withFailed("并行执行被中断"));
+                            stepOut.println("❌ 步骤 [" + step.id() + "] 被中断\n");
+                        } catch (RuntimeException e) {
+                            if (stepObservation != null) stepObservation.threw(e);
+                            log.error("Parallel step {} failed unexpectedly", step.id(), e);
+                            updateStep(steps, step.id(), step.withFailed("并行执行异常: " + e.getMessage()));
+                            stepOut.println("❌ 步骤 [" + step.id() + "] 并行执行异常：" + e.getMessage() + "\n");
+                        } finally {
+                            if (worker != null) {
+                                worker.clearHistory();
+                                workerPool.offer(worker);
+                            }
+                            stepOut.flush();
                         }
-                        stepOut.flush();
+                        return null;
+                    } catch (RuntimeException | Error e) {
+                        if (stepObservation != null) stepObservation.threw(e);
+                        throw e;
+                    } finally {
+                        if (stepObservation != null) stepObservation.exited(steps);
                     }
-                    return null;
-                } catch (RuntimeException | Error e) {
-                    if (stepObservation != null) stepObservation.threw(e);
-                    throw e;
-                } finally {
-                    if (stepObservation != null) stepObservation.exited(steps);
                 }
             })));
         }
 
-        for (Future<?> f : futures) {
-            try {
-                f.get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("Batch wait interrupted");
-            } catch (ExecutionException e) {
-                log.error("Parallel step task failed", e.getCause());
-            }
-        }
-        executor.shutdownNow();
+        awaitTeamBatch(futures, executor, token, false);
 
         // 按 step_id 顺序 flush 各步骤的缓冲输出，保证用户看到的执行过程有稳定顺序
         for (ExecutionStep step : batch) {
@@ -484,6 +542,49 @@ public class AgentOrchestrator {
                 out.print(buf.toString(StandardCharsets.UTF_8));
                 out.flush();
             }
+        }
+    }
+
+    /** Cancel only this batch's private executor; allow cooperative workers to return partial results. */
+    private void awaitTeamBatch(List<Future<?>> futures, ExecutorService executor,
+                                CancellationToken token, boolean propagateFailure) {
+        boolean interrupted = false;
+        long cleanupEnd = 0;
+        try {
+            for (Future<?> future : futures) {
+                while (true) {
+                    if (token.isCancelled() && cleanupEnd == 0) {
+                        cleanupEnd = System.nanoTime() + TimeUnit.SECONDS.toNanos(6);
+                        for (Runnable queued : executor.shutdownNow()) {
+                            if (queued instanceof Future<?> pending) pending.cancel(false);
+                        }
+                    }
+                    if (cleanupEnd != 0 && System.nanoTime() >= cleanupEnd) {
+                        cancellationCleanup = executor;
+                        future.cancel(true);
+                        break;
+                    }
+                    try {
+                        future.get(100, TimeUnit.MILLISECONDS);
+                        break;
+                    } catch (TimeoutException ignored) {
+                        // Poll cancellation, not an additional task deadline.
+                    } catch (InterruptedException e) {
+                        interrupted = true;
+                        token.cancel();
+                    } catch (CancellationException e) {
+                        break;
+                    } catch (ExecutionException e) {
+                        if (propagateFailure && e.getCause() instanceof Error fatal) throw fatal;
+                        if (propagateFailure && e.getCause() instanceof RuntimeException error) throw error;
+                        log.error("Parallel step task failed", e.getCause());
+                        break;
+                    }
+                }
+            }
+        } finally {
+            executor.shutdown();
+            if (interrupted) Thread.currentThread().interrupt();
         }
     }
 
@@ -523,13 +624,9 @@ public class AgentOrchestrator {
         AgentMessage taskMsg = AgentMessage.task("orchestrator", step.description());
         ActivationObservation workerActivation = observation == null ? null : observation.worker(worker, 1);
         AgentMessage result = worker.executeWithContext(taskMsg, context, out, stepPolicy, workerActivation);
-        if (CancellationContext.isCancelled()) {
-            if (observation != null) observation.reason = StepExitReason.CANCELLED;
-            updateStep(steps, step.id(), step.withFailed("用户取消"));
-            out.println("⏹️ 步骤 [" + step.id() + "] 已取消\n");
-            return;
-        }
+        if (stopCancelledStep(step, steps, result, result.content(), out, observation, workerActivation)) return;
 
+        if (retainIncompleteWorkerResult(step, steps, result, out, observation, workerActivation)) return;
         if (result.type() == AgentMessage.Type.ERROR) {
             if (observation != null) observation.reason = StepExitReason.WORKER_ERROR;
             updateStep(steps, step.id(), step.withFailed(result.content()));
@@ -543,11 +640,15 @@ public class AgentOrchestrator {
             return;
         }
 
+        updateStep(steps, step.id(), new ExecutionStep(step.id(), step.description(), step.type(),
+                step.dependencies(), result.content(), StepStatus.RUNNING));
+        if (stopCancelledStep(step, steps, null, result.content(), out, observation, workerActivation)) return;
         out.println("🔍 " + reviewer.getName() + " 正在审查步骤 [" + step.id() + "] 的结果...");
         if (observation != null) observation.accepted(workerActivation);
         ActivationObservation reviewerActivation = observation == null ? null : observation.reviewer(reviewer, 1);
         AgentMessage reviewResult = reviewer.review(step.description(), result.content(), out, reviewerActivation);
         reviewer.clearHistory();
+        if (stopCancelledStep(step, steps, reviewResult, result.content(), out, observation, workerActivation)) return;
 
         if (reviewResult.type() == AgentMessage.Type.ERROR) {
             if (observation != null) observation.reviewed(1, workerActivation, reviewerActivation,
@@ -577,6 +678,7 @@ public class AgentOrchestrator {
         log.info("Step {} rejected (retry {}/{}): {}", step.id(), retries, MAX_RETRIES_PER_STEP, issues);
 
         while (!approved && retries < MAX_RETRIES_PER_STEP) {
+            if (stopCancelledStep(step, steps, null, acceptedResult, out, observation, workerActivation)) return;
             retries++;
             retryCount.put(step.id(), retries);
             out.println("⚠️ 步骤 [" + step.id() + "] 审查未通过，正在重新执行...");
@@ -586,6 +688,10 @@ public class AgentOrchestrator {
             workerActivation = observation == null ? null : observation.worker(worker, retries + 1);
             AgentMessage retryResult = worker.executeWithContext(
                     taskMsg, feedbackContext, out, stepPolicy, workerActivation);
+            if (stopCancelledStep(step, steps, retryResult,
+                    acceptedResult + "\n重试中已取得的部分结果：\n" + retryResult.content(),
+                    out, observation, workerActivation)) return;
+            if (retainIncompleteWorkerResult(step, steps, retryResult, out, observation, workerActivation)) return;
             if (retryResult.type() == AgentMessage.Type.ERROR) {
                 log.warn("Step {} retry {} failed at LLM layer: {}", step.id(), retries, retryResult.content());
                 issues = "重试时 LLM 调用失败：" + retryResult.content();
@@ -602,10 +708,14 @@ public class AgentOrchestrator {
             }
 
             acceptedResult = retryResult.content();
+            updateStep(steps, step.id(), new ExecutionStep(step.id(), step.description(), step.type(),
+                    step.dependencies(), acceptedResult, StepStatus.RUNNING));
+            if (stopCancelledStep(step, steps, null, acceptedResult, out, observation, workerActivation)) return;
             if (observation != null) observation.accepted(workerActivation);
             reviewerActivation = observation == null ? null : observation.reviewer(reviewer, retries + 1);
             AgentMessage retryReview = reviewer.review(step.description(), acceptedResult, out, reviewerActivation);
             reviewer.clearHistory();
+            if (stopCancelledStep(step, steps, retryReview, acceptedResult, out, observation, workerActivation)) return;
 
             if (retryReview.type() == AgentMessage.Type.ERROR) {
                 if (observation != null) observation.reviewed(retries + 1, workerActivation,
@@ -624,12 +734,45 @@ public class AgentOrchestrator {
                     retryReview.content(), issues);
         }
 
+        if (stopCancelledStep(step, steps, null, acceptedResult, out, observation, workerActivation)) return;
         markStepCompleted(steps, step, acceptedResult, stepPolicy, stepTrustedUrls);
         if (approved) {
             out.println("✅ 步骤 [" + step.id() + "] 重试后审查通过\n");
         } else {
             out.println("⚠️ 步骤 [" + step.id() + "] 超过最大重试次数，保留当前结果\n");
         }
+    }
+
+    private boolean stopCancelledStep(ExecutionStep step, List<ExecutionStep> steps,
+                                      AgentMessage response, String partial, PrintStream out,
+                                      StepObservation observation, ActivationObservation workerActivation) {
+        if (!CancellationContext.isCancelled() && (response == null || response.outcome() == null
+                || response.outcome().reason() != ExecutionOutcome.Reason.CANCELLED)) return false;
+        if (observation != null) {
+            observation.reason = StepExitReason.CANCELLED;
+            observation.accepted(workerActivation);
+        }
+        updateStep(steps, step.id(), step.withFailed(partial));
+        out.println("⏹️ 步骤 [" + step.id() + "] 已取消，保留已有结果\n");
+        return true;
+    }
+
+    /** A Worker budget summary must not be promoted to success by a Reviewer. */
+    private boolean retainIncompleteWorkerResult(ExecutionStep step, List<ExecutionStep> steps,
+                                                 AgentMessage result, PrintStream out,
+                                                 StepObservation observation, ActivationObservation workerActivation) {
+        ExecutionOutcome outcome = result.outcome();
+        if (outcome == null || outcome.completed()
+                || outcome.reason() == ExecutionOutcome.Reason.MODEL_ERROR
+                || outcome.reason() == ExecutionOutcome.Reason.EXECUTION_ERROR) return false;
+        if (observation != null) {
+            observation.reason = outcome.reason() == ExecutionOutcome.Reason.CANCELLED
+                    ? StepExitReason.CANCELLED : StepExitReason.WORKER_INCOMPLETE;
+            observation.accepted(workerActivation); // Identifies the retained content, not completion.
+        }
+        updateStep(steps, step.id(), step.withFailed(outcome.content()));
+        out.println("⚠️ 步骤 [" + step.id() + "] 未完成（" + outcome.reason() + "），保留部分结果\n");
+        return true;
     }
 
     private String buildStepContext(List<ExecutionStep> steps, ExecutionStep currentStep,
@@ -802,6 +945,12 @@ public class AgentOrchestrator {
                     : new StepExited(runId, now(), step.id(), ProductStatus.PENDING,
                             StepExitReason.BLOCKED_DEPENDENCY, null, null,
                             TextFingerprint.of(step.result()), null));
+        }
+
+        private void cancelledBeforeStart(ExecutionStep step) {
+            emit(() -> enteredSteps.contains(step.id()) ? null
+                    : new StepExited(runId, now(), step.id(), ProductStatus.FAILED,
+                            StepExitReason.CANCELLED, null, null, TextFingerprint.of(step.result()), null));
         }
 
         private void finish(String result, Throwable failure) {

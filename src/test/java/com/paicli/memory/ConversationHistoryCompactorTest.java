@@ -13,6 +13,36 @@ import static org.junit.jupiter.api.Assertions.*;
 class ConversationHistoryCompactorTest {
 
     @Test
+    void summarySizeGuidanceNeverTruncatesAnOtherwiseValidResponse() {
+        String summary = "## 当前目标与成功条件\n检查项目\n## 用户要求与已确认决定\n"
+                + "已确认事实".repeat(240) + "\n## 已完成工作及证据\n已读取\n## 未解决问题与下一步\nPINNED-7315";
+        LlmClient client = new LlmClient() {
+            @Override public ChatResponse chat(List<Message> messages, List<Tool> tools) {
+                assertTrue(tools == null || tools.isEmpty());
+                return new ChatResponse("assistant", summary, List.of(), 10, 10);
+            }
+            @Override public ChatResponse chat(List<Message> messages, List<Tool> tools, StreamListener listener) {
+                return chat(messages, tools);
+            }
+            @Override public String getModelName() { return "test"; }
+            @Override public String getProviderName() { return "test"; }
+        };
+        List<LlmClient.Message> history = new ArrayList<>(List.of(
+                LlmClient.Message.system("SYSTEM"),
+                LlmClient.Message.user("原文".repeat(600) + " PINNED-7315"),
+                LlmClient.Message.assistant("收到"),
+                LlmClient.Message.user("原文".repeat(600)),
+                LlmClient.Message.assistant("收到"),
+                LlmClient.Message.user("最新消息原样保留"), LlmClient.Message.assistant("收到")));
+        int before = TokenBudget.estimateMessagesTokens(history);
+
+        assertTrue(new ConversationHistoryCompactor(client, 1).compactNow(history));
+        assertEquals("[已压缩的历史对话摘要]\n" + summary, history.get(1).content());
+        assertTrue(TokenBudget.estimateMessagesTokens(history) < before);
+        assertEquals("最新消息原样保留", history.get(history.size() - 2).content());
+    }
+
+    @Test
     void doesNothingWhenBelowTrigger() {
         StubCompactor c = new StubCompactor("MOCK SUMMARY", 3);
         List<LlmClient.Message> history = new ArrayList<>();

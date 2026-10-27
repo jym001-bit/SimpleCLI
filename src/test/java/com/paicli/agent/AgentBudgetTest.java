@@ -10,6 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AgentBudgetTest {
+    @Test
+    void hugeUsageCannotWrapAroundAndDisableTokenLimit() {
+        AgentBudget budget = new AgentBudget(Integer.MAX_VALUE, 5, AgentBudget.UNLIMITED_ITERATIONS);
+        budget.recordTokens(Integer.MAX_VALUE - 10, 20, Integer.MAX_VALUE);
+        budget.recordTokens(100, 0, 100);
+        assertEquals(AgentBudget.ExitReason.TOKEN_BUDGET_EXCEEDED, budget.check());
+        assertEquals(Integer.MAX_VALUE, budget.totalInputTokens());
+        assertEquals(Integer.MAX_VALUE, budget.totalCachedInputTokens());
+    }
+
 
     @Test
     void initiallyWithinBudget() {

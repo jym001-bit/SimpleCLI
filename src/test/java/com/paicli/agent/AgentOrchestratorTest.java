@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -28,6 +29,66 @@ import java.util.function.Function;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AgentOrchestratorTest {
+
+    @Test
+    void budgetStopDuringReviewRetryDoesNotStartAnotherReview(@TempDir Path tempDir) {
+        String key = "paicli.react.hard.max.iterations";
+        String old = System.getProperty(key);
+        try {
+            System.setProperty(key, "1");
+            StubGLMClient client = new StubGLMClient(List.of(
+                    response("""
+                            {"summary":"分析","steps":[
+                            {"id":"s1","description":"分析目录","type":"ANALYSIS","dependencies":[]}]}
+                            """),
+                    response("首次分析结果"),
+                    response("{\"approved\":false,\"issues\":[\"需核对目录\"]}"),
+                    toolResponse("list", "list_dir", "{\"path\":\".\"}"),
+                    response("重试已核对目录，但分析尚未完成")));
+            ToolRegistry registry = new ToolRegistry();
+            registry.setProjectPath(tempDir.toString());
+            AgentOrchestrator orchestrator = new AgentOrchestrator(client, registry,
+                    new NoOpMemoryManager(tempDir.toFile()));
+
+            String result = orchestrator.run("请分析当前目录");
+
+            assertEquals(5, client.toolSnapshots.size(), "预算停止后不得继续 Reviewer 或其他重试");
+            assertTrue(result.contains("未完全完成"));
+            assertTrue(result.contains("重试已核对目录"));
+        } finally {
+            if (old == null) System.clearProperty(key); else System.setProperty(key, old);
+        }
+    }
+
+    @Test
+    void budgetPartialIsRetainedWithoutReviewOrRunningDependent(@TempDir Path tempDir) {
+        String key = "paicli.react.hard.max.iterations";
+        String old = System.getProperty(key);
+        try {
+            System.setProperty(key, "1");
+            StubGLMClient client = new StubGLMClient(List.of(
+                    response("""
+                            {"summary":"两步分析","steps":[
+                            {"id":"s1","description":"分析目录","type":"ANALYSIS","dependencies":[]},
+                            {"id":"s2","description":"验证分析","type":"ANALYSIS","dependencies":["s1"]}]}
+                            """),
+                    toolResponse("list", "list_dir", "{\"path\":\".\"}"),
+                    response("目录已读取，分析尚未完成")));
+            ToolRegistry registry = new ToolRegistry();
+            registry.setProjectPath(tempDir.toString());
+            AgentOrchestrator orchestrator = new AgentOrchestrator(client, registry,
+                    new NoOpMemoryManager(tempDir.toFile()));
+
+            String result = orchestrator.run("请分析当前目录后验证结果");
+
+            assertEquals(3, client.toolSnapshots.size(), "预算停止不能再启动 Reviewer、重试或依赖 Worker");
+            assertTrue(result.contains("未完全完成"));
+            assertTrue(result.contains("目录已读取"));
+            assertFalse(result.startsWith("✅"));
+        } finally {
+            if (old == null) System.clearProperty(key); else System.setProperty(key, old);
+        }
+    }
 
     @Test
     void shouldShareOneLedgerAcrossPlannerWorkersAndReviewer(@TempDir Path tempDir)
@@ -281,11 +342,24 @@ class AgentOrchestratorTest {
                 new ToolRegistry(),
                 new NoOpMemoryManager(tempDir.toFile())
         );
+        List<TeamExecutionObserver.Event> events = new CopyOnWriteArrayList<>();
+        orchestrator.setExecutionObserver(events::add);
 
         String finalResult = orchestrator.run("测试重试逻辑");
 
         assertTrue(finalResult.contains("第三次执行结果"));
         assertFalse(finalResult.contains("第二次执行结果"));
+        var reviews = events.stream().filter(TeamExecutionObserver.ReviewEvaluated.class::isInstance)
+                .map(TeamExecutionObserver.ReviewEvaluated.class::cast).toList();
+        assertEquals(List.of(TeamExecutionObserver.ReviewDecision.REJECTED,
+                TeamExecutionObserver.ReviewDecision.REJECTED,
+                TeamExecutionObserver.ReviewDecision.APPROVED), reviews.stream().map(TeamExecutionObserver.ReviewEvaluated::decision).toList());
+        assertEquals(List.of(1, 2, 3), reviews.stream().map(TeamExecutionObserver.ReviewEvaluated::attempt).toList());
+        var exits = events.stream().filter(TeamExecutionObserver.StepExited.class::isInstance)
+                .map(TeamExecutionObserver.StepExited.class::cast).toList();
+        assertEquals(1, exits.size());
+        assertEquals(TeamExecutionObserver.StepExitReason.APPROVED, exits.get(0).reason());
+        assertEquals(TeamExecutionObserver.TextFingerprint.of("第三次执行结果"), exits.get(0).result());
     }
 
     @Test
@@ -307,6 +381,12 @@ class AgentOrchestratorTest {
                         }
                         """);
             }
+            // Reviewer 的输入也包含任务描述，必须先识别其角色，不能误派为 Worker。
+            if (body.contains("原始任务")) {
+                return response("""
+                        {"approved": true, "summary": "通过", "issues": []}
+                        """);
+            }
             if (body.contains("任务A")) {
                 return awaitBarrierThenReturn(workersInFlight, currentConcurrency, peakConcurrency,
                         response("任务A 的结果"));
@@ -314,11 +394,6 @@ class AgentOrchestratorTest {
             if (body.contains("任务B")) {
                 return awaitBarrierThenReturn(workersInFlight, currentConcurrency, peakConcurrency,
                         response("任务B 的结果"));
-            }
-            if (body.contains("原始任务")) {
-                return response("""
-                        {"approved": true, "summary": "通过", "issues": []}
-                        """);
             }
             return response("fallback");
         };
@@ -329,6 +404,8 @@ class AgentOrchestratorTest {
                 new ToolRegistry(),
                 new NoOpMemoryManager(tempDir.toFile())
         );
+        List<TeamExecutionObserver.Event> events = new CopyOnWriteArrayList<>();
+        orchestrator.setExecutionObserver(events::add);
 
         String finalResult = orchestrator.run("测试并行执行");
 
@@ -336,6 +413,13 @@ class AgentOrchestratorTest {
         assertTrue(finalResult.contains("任务B"), "finalResult should mention task B");
         // 两个 Worker 同时持有 chat() 调用 → 并发峰值至少为 2
         assertEquals(2, peakConcurrency.get(), "Expected two workers to run concurrently");
+        var exits = events.stream().filter(TeamExecutionObserver.StepExited.class::isInstance)
+                .map(TeamExecutionObserver.StepExited.class::cast).toList();
+        assertEquals(2, exits.size());
+        assertTrue(exits.stream().allMatch(exit -> exit.reason() == TeamExecutionObserver.StepExitReason.APPROVED
+                && exit.productStatus() == TeamExecutionObserver.ProductStatus.COMPLETED));
+        assertEquals(2, events.stream().filter(TeamExecutionObserver.ReviewEvaluated.class::isInstance).count(),
+                "两个 Worker 应各通过一次复核，不得因错误的 Mock 分发触发额外重试");
     }
 
     private static LlmClient.ChatResponse awaitBarrierThenReturn(CountDownLatch latch,

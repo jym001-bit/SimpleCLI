@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paicli.history.ConversationLedger;
 import com.paicli.llm.LlmClient;
-import com.paicli.llm.LlmTraceLogger;
 import com.paicli.lsp.LspDiagnosticReport;
 import com.paicli.memory.AutoCompactionManager;
 import com.paicli.memory.MemoryManager;
@@ -22,7 +21,6 @@ import com.paicli.tool.LoadedSkillMessages;
 import com.paicli.tool.ToolRegistry;
 import com.paicli.tool.ToolResultBoundary;
 import com.paicli.tool.ToolRegistry.ToolExecutionResult;
-import com.paicli.tool.ToolRegistry.ToolInvocation;
 import com.paicli.tool.TurnToolPolicy;
 import com.paicli.util.TerminalMarkdownRenderer;
 import com.paicli.image.ImageReferenceParser;
@@ -68,22 +66,31 @@ public class PlanExecuteAgent {
         }
     }
 
-    private record TaskRunResult(String result, boolean streamedOutput,
+    private record TaskRunResult(ExecutionOutcome outcome, boolean streamedOutput,
                                  TurnToolPolicy.TrustedUrlContext trustedUrls) {
+        String result() { return outcome.content(); }
+
         static TaskRunResult of(String result, boolean streamedOutput, TurnToolPolicy policy) {
-            return new TaskRunResult(result, streamedOutput, policy.trustedUrlContext());
+            return of(ExecutionOutcome.completed(result), streamedOutput, policy);
+        }
+
+        static TaskRunResult of(ExecutionOutcome outcome, boolean streamedOutput, TurnToolPolicy policy) {
+            return new TaskRunResult(outcome, streamedOutput, policy.trustedUrlContext());
         }
     }
 
-    private record TaskExecutionResult(Task task, String result, boolean streamedOutput,
+    private record TaskExecutionResult(Task task, ExecutionOutcome outcome, boolean streamedOutput,
                                        TurnToolPolicy.TrustedUrlContext trustedUrls, Exception error) {
-        static TaskExecutionResult success(Task task, TaskRunResult taskRunResult) {
-            return new TaskExecutionResult(task, taskRunResult.result(), taskRunResult.streamedOutput(),
+        String result() { return outcome.content(); }
+
+        static TaskExecutionResult returned(Task task, TaskRunResult taskRunResult) {
+            return new TaskExecutionResult(task, taskRunResult.outcome(), taskRunResult.streamedOutput(),
                     taskRunResult.trustedUrls(), null);
         }
 
         static TaskExecutionResult failure(Task task, Exception error) {
-            return new TaskExecutionResult(task, null, false, null, error);
+            return new TaskExecutionResult(task, new ExecutionOutcome(
+                    ExecutionOutcome.Reason.EXECUTION_ERROR, null), false, null, error);
         }
 
         boolean failed() {
@@ -364,6 +371,10 @@ public class PlanExecuteAgent {
             }
             return outcome.result();
         } catch (Exception e) {
+            if (CancellationContext.isCancelled()) {
+                conversationLedger.appendEvent("run_cancelled", "plan", "plan-agent", "model_request", Map.of());
+                return CANCELLED_PLAN_MESSAGE;
+            }
             log.error("Plan run failed", e);
             String errorMessage = "❌ 执行失败: " + e.getMessage();
             conversationLedger.appendMessage(
@@ -447,8 +458,7 @@ public class PlanExecuteAgent {
 
         while (!stopAfterBatch) {
             if (CancellationContext.isCancelled()) {
-                plan.markCancelled();
-                return CANCELLED_PLAN_MESSAGE;
+                return cancelPlan(plan, streamedTaskOutputs);
             }
             List<Task> executableTasks = getExecutableTasksInOrder(plan);
             if (executableTasks.isEmpty()) {
@@ -459,11 +469,27 @@ public class PlanExecuteAgent {
                     plan, executableTasks, streamState, taskTrustedUrls, observation);
             // 取消会打断本轮正在执行的任务，这些中断不是任务本身失败，不能再触发重新规划
             if (CancellationContext.isCancelled()) {
-                plan.markCancelled();
-                return CANCELLED_PLAN_MESSAGE;
+                return cancelPlan(plan, streamedTaskOutputs);
             }
             for (TaskExecutionResult batchResult : batchResults) {
                 Task task = batchResult.task();
+
+                if (!batchResult.failed() && !batchResult.outcome().completed()) {
+                    if (batchResult.outcome().reason() == ExecutionOutcome.Reason.CANCELLED) {
+                        return cancelPlan(plan, streamedTaskOutputs);
+                    }
+                    // Budget termination is not task success and must not trigger exception-driven replanning.
+                    task.markIncomplete(batchResult.result(), batchResult.outcome().reason().name());
+                    failureLines.add("任务 " + task.getId() + " 部分完成: " + batchResult.outcome().reason());
+                    if (!batchResult.streamedOutput() && batchResult.result() != null) {
+                        failureLines.add(batchResult.result());
+                    }
+                    out.println("⚠️ 部分完成 [" + task.getId() + "]\n");
+                    for (Task skipped : plan.skipDependentsOf(task.getId())) {
+                        failureLines.add("任务 " + skipped.getId() + " 已跳过: 依赖的任务 " + task.getId() + " 未完成");
+                    }
+                    continue;
+                }
 
                 if (!batchResult.failed()) {
                     task.markCompleted(batchResult.result());
@@ -486,14 +512,36 @@ public class PlanExecuteAgent {
                 out.println("❌ 失败 [" + task.getId() + "]: " + errorMessage + "\n");
 
                 failureLines.add("任务 " + task.getId() + " 失败: " + errorMessage);
+                if (task.hasAttemptedToolExecution() && task.getResult() != null && !task.getResult().isBlank()) {
+                    failureLines.add("失败任务保留的部分输出（不代表任务完成）:\n[" + task.getId() + "] " + task.getResult());
+                }
 
                 if (!stopAfterBatch && plan.getProgress() < 0.5) {
                     int maxReplans = maxReplans();
-                    if (replansUsed < maxReplans) {
+                    FailureRecoveryPolicy.Decision recovery = FailureRecoveryPolicy.decide(
+                            batchResult.outcome(), batchResult.error(), llmClient.managesRequestRetries(),
+                            plan.getAllTasks().stream().noneMatch(Task::hasAttemptedToolExecution),
+                            task.isRecoveryBudgetAvailable(replansUsed), replansUsed, maxReplans);
+                    if (recovery == FailureRecoveryPolicy.Decision.CANCELLED) {
+                        return cancelPlan(plan, streamedTaskOutputs);
+                    }
+                    if (recovery == FailureRecoveryPolicy.Decision.REPLAN) {
                         out.println("🔄 尝试重新规划（第 " + (replansUsed + 1) + "/" + maxReplans + " 次）...\n");
-                        ExecutionPlan replanned = planner.replan(plan, errorMessage);
+                        ExecutionPlan replanned;
+                        try { replanned = planner.replan(plan, errorMessage); }
+                        catch (IOException failure) {
+                            if (CancellationContext.isCancelled()) return cancelPlan(plan, streamedTaskOutputs);
+                            throw failure;
+                        }
                         return reviewAndExecutePlan(replanned, streamState, explicitTaskEnvelope, replansUsed + 1)
                                 .result();
+                    }
+                    if (recovery != FailureRecoveryPolicy.Decision.REPLAN_LIMIT) {
+                        failureLines.add("任务 " + task.getId() + " 不自动重新规划: " + recovery);
+                        for (Task skipped : plan.skipDependentsOf(task.getId())) {
+                            failureLines.add("任务 " + skipped.getId() + " 已跳过: 依赖的任务 " + task.getId() + " 失败");
+                        }
+                        continue;
                     }
                     // 与重规划触发点保持一致：不再启动任何新任务，只收完本批已返回的结果
                     String stopNotice = "已达到重新规划上限（" + maxReplans + " 次），停止执行剩余任务";
@@ -534,6 +582,22 @@ public class PlanExecuteAgent {
         return "✅ 计划执行完成！\n" + planSummary;
     }
 
+    private String cancelPlan(ExecutionPlan plan, Map<String, Boolean> streamedTaskOutputs) {
+        plan.markCancelled();
+        for (Task task : plan.getAllTasks()) {
+            if (task.getStatus() == Task.TaskStatus.RUNNING) {
+                task.markIncomplete(task.getResult(), ExecutionOutcome.Reason.CANCELLED.name());
+            }
+        }
+        plan.skipAllPending();
+        List<String> retained = plan.getExecutionOrder().stream().map(plan::getTask)
+                .filter(task -> task.getResult() != null && !task.getResult().isBlank())
+                .filter(task -> !Boolean.TRUE.equals(streamedTaskOutputs.get(task.getId())))
+                .map(task -> "[" + task.getId() + "] " + task.getResult()).toList();
+        return retained.isEmpty() ? CANCELLED_PLAN_MESSAGE
+                : CANCELLED_PLAN_MESSAGE + "\n已保留的部分结果（不代表整个计划完成）:\n" + String.join("\n", retained);
+    }
+
     private List<Task> getExecutableTasksInOrder(ExecutionPlan plan) {
         Set<String> executableIds = plan.getExecutableTasks().stream()
                 .map(Task::getId)
@@ -556,7 +620,7 @@ public class PlanExecuteAgent {
             task.markStarted();
 
             try {
-                return List.of(TaskExecutionResult.success(task, executeTask(
+                return List.of(TaskExecutionResult.returned(task, executeTask(
                         plan.getGoal(), plan, task, streamState, out, taskTrustedUrls, observation)));
             } catch (Exception e) {
                 return List.of(TaskExecutionResult.failure(task, e));
@@ -585,7 +649,7 @@ public class PlanExecuteAgent {
                 PrintStream taskOut = new PrintStream(baos, true, StandardCharsets.UTF_8);
                 futures.add(executor.submit(LangfuseTelemetry.wrap(() -> {
                     try {
-                        return TaskExecutionResult.success(task, executeTask(
+                        return TaskExecutionResult.returned(task, executeTask(
                                 plan.getGoal(), plan, task, streamState, taskOut, taskTrustedUrls, observation));
                     } catch (Exception e) {
                         return TaskExecutionResult.failure(task, e);
@@ -716,24 +780,31 @@ public class PlanExecuteAgent {
         while (true) {
             if (CancellationContext.isCancelled()) {
                 streamRenderer.finish();
-                return TaskRunResult.of("⏹️ 已取消任务 [" + task.getId() + "]。",
+                return TaskRunResult.of(new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED,
+                                "⏹️ 已取消任务 [" + task.getId() + "]。"),
                         streamRenderer.hasStreamedOutput(), taskToolPolicy);
             }
 
-            AgentBudget.ExitReason exitReason = budget.check();
-            if (exitReason != AgentBudget.ExitReason.WITHIN_BUDGET) {
+            AgentExecutionKernel.IterationAdmission admission = AgentExecutionKernel.admitIteration(budget);
+            if (admission.state() == AgentExecutionKernel.IterationState.CANCELLED) {
+                streamRenderer.finish();
+                return TaskRunResult.of(new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED,
+                                "⏹️ 已取消任务 [" + task.getId() + "]。"),
+                        streamRenderer.hasStreamedOutput(), taskToolPolicy);
+            }
+            if (admission.state() == AgentExecutionKernel.IterationState.BUDGET_EXHAUSTED) {
                 return finalizePartialTask(
                         task,
                         messages,
                         actor,
-                        exitReason,
+                        admission.exitReason(),
                         budget,
                         allResults,
                         streamRenderer,
                         taskToolPolicy,
                         out);
             }
-            int iteration = budget.beginIteration();
+            int iteration = admission.iteration();
 
             // 调 LLM 前评估 messages 是否接近 window 上限；超阈值压缩早期消息为摘要。
             injectPendingLspDiagnostics(messages, out, actor);
@@ -743,22 +814,25 @@ public class PlanExecuteAgent {
                     ? toolRegistry.getToolDefinitions()
                     : null;
             TurnToolPolicy.ToolExposure toolExposure = taskToolPolicy.expose(toolDefinitions);
-            LlmClient.ChatResponse response = llmClient.chat(
+            // A failed admitted turn has still consumed its iteration. Replanning must not reset that limit.
+            task.setRecoveryIterationAllowance(budget.check() == AgentBudget.ExitReason.WITHIN_BUDGET
+                    ? budget.hardMaxIterations() - budget.iteration() : 0);
+            AgentExecutionKernel.ModelTurn modelTurn = AgentExecutionKernel.requestModelTurn(
+                    llmClient,
                     messages,
                     toolExposure.definitions(),
-                    streamRenderer
+                    streamRenderer,
+                    budget,
+                    log,
+                    "plan-task task=" + task.getId() + " iteration=" + iteration
             );
-            LlmTraceLogger.logReasoning(log,
-                    "plan-task task=" + task.getId() + " iteration=" + iteration,
-                    llmClient,
-                    response.reasoningContent());
-            if (CancellationContext.isCancelled()) {
+            if (modelTurn.cancelled()) {
                 streamRenderer.finish();
-                return TaskRunResult.of("⏹️ 已取消任务 [" + task.getId() + "]。",
+                return TaskRunResult.of(new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED,
+                                "⏹️ 已取消任务 [" + task.getId() + "]。"),
                         streamRenderer.hasStreamedOutput(), taskToolPolicy);
             }
-
-            budget.recordTokens(response.inputTokens(), response.outputTokens(), response.cachedInputTokens());
+            LlmClient.ChatResponse response = modelTurn.response();
 
             log.info("Task {} iteration {} response: toolCalls={}, reasoningChars={}, contentChars={}",
                     task.getId(),
@@ -802,6 +876,8 @@ public class PlanExecuteAgent {
             // 被 HITL 提示"跨过"导致 🧠 / 🤖 标题与内容错位
             streamRenderer.resetBetweenIterations();
 
+            // No idempotency contract exists for arbitrary tools, including MCP tools. Fail closed on replay.
+            task.markToolExecutionAttempted();
             LoadedSkillMessages.Injection skills = LoadedSkillMessages.prepare(
                     executeToolCalls(task.getId(), iteration, response.toolCalls(), taskToolPolicy,
                             toolExposure, observation),
@@ -816,6 +892,7 @@ public class PlanExecuteAgent {
                         "tool_execution",
                         LlmClient.Message.tool(toolResult.id(), ToolResultBoundary.wrap(toolResult)));
             }
+            task.rememberPartialResult(allResults.toString().trim());
             appendImageToolMessages(messages, toolResults, actor);
             appendLoadedSkillMessage(messages, skills.message(), actor);
             runawayGuard.observe(toolResults).ifPresent(reminder -> {
@@ -856,8 +933,9 @@ public class PlanExecuteAgent {
 
         String content;
         try {
-            LlmClient.ChatResponse response = llmClient.chat(messages, List.of(), streamRenderer);
-            budget.recordTokens(response.inputTokens(), response.outputTokens(), response.cachedInputTokens());
+            LlmClient.ChatResponse response = AgentExecutionKernel.requestFinalizationTurn(
+                    llmClient, messages, streamRenderer, budget, log,
+                    "Plan task " + task.getId() + " budget finalization");
             content = response.content() == null ? "" : response.content().trim();
             appendTaskMessage(
                     messages,
@@ -878,7 +956,8 @@ public class PlanExecuteAgent {
                 budget.totalOutputTokens(),
                 budget.totalCachedInputTokens());
         streamRenderer.finish();
-        return TaskRunResult.of(partialResult, streamRenderer.hasStreamedOutput(), taskToolPolicy);
+        return TaskRunResult.of(ExecutionOutcome.budgetExhausted(exitReason, partialResult),
+                streamRenderer.hasStreamedOutput(), taskToolPolicy);
     }
 
     private String formatPartialResult(String description, String content) {
@@ -939,19 +1018,17 @@ public class PlanExecuteAgent {
                                                        TurnToolPolicy taskToolPolicy,
                                                        TurnToolPolicy.ToolExposure toolExposure,
                                                        PlanObservation observation) {
-        List<ToolInvocation> invocations = new ArrayList<>();
         for (LlmClient.ToolCall toolCall : toolCalls) {
             String toolName = toolCall.function().name();
-            String toolArgs = toolCall.function().arguments();
             log.info("Task {} scheduling tool {}", taskId, toolName);
-            log.debug("Task {} tool args [{}]: {}", taskId, toolName, toolArgs);
-            invocations.add(new ToolInvocation(toolCall.id(), toolName, toolArgs));
+            log.debug("Task {} tool args [{}]: {}", taskId, toolName, toolCall.function().arguments());
         }
 
-        if (invocations.size() > 1) {
-            log.info("Task {} executing {} tool calls in parallel", taskId, invocations.size());
+        if (toolCalls.size() > 1) {
+            log.info("Task {} executing {} tool calls in parallel", taskId, toolCalls.size());
         }
-        List<ToolExecutionResult> results = taskToolPolicy.execute(toolRegistry, invocations, toolExposure);
+        List<ToolExecutionResult> results = AgentExecutionKernel.executeToolCalls(
+                taskToolPolicy, toolRegistry, toolCalls, toolExposure);
         long returned = observation.now();
         observation.emit(() -> {
             List<PlanExecutionObserver.ToolResult> snapshots = new ArrayList<>();

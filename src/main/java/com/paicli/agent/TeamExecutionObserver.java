@@ -108,7 +108,7 @@ public interface TeamExecutionObserver {
 
     enum ProductStatus { PENDING, RUNNING, COMPLETED, FAILED }
     enum StepExitReason { APPROVED, REVIEW_ERROR_RETAINED, RETRIES_EXHAUSTED_RETAINED,
-        WORKER_ERROR, EMPTY_RESULT, CANCELLED, THREW, BLOCKED_DEPENDENCY }
+        WORKER_ERROR, WORKER_INCOMPLETE, EMPTY_RESULT, CANCELLED, THREW, BLOCKED_DEPENDENCY }
 
     /** Product COMPLETED does not imply reviewer approval; reason and review events remain independent. */
     record StepExited(String runId, long elapsedNanos, String stepId, ProductStatus productStatus,

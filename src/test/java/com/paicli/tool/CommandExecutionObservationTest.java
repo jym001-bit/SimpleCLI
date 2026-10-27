@@ -14,6 +14,18 @@ class CommandExecutionObservationTest {
     @TempDir Path temp;
     private final List<CommandExecutionObserver.Event> events = new CopyOnWriteArrayList<>();
 
+    private static boolean windows() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+    }
+
+    private static String print(String text) {
+        return (windows() ? "Write-Output '" : "printf '") + text + "'";
+    }
+
+    private static String sleep(int seconds) {
+        return windows() ? "Start-Sleep -Seconds " + seconds : "exec sleep " + seconds;
+    }
+
     private ToolRegistry registry(long timeout) {
         var registry = new ToolRegistry(timeout);
         registry.setProjectPath(temp.toString());
@@ -27,12 +39,15 @@ class CommandExecutionObservationTest {
     }
 
     @Test void actualStartAndExitBindTheReturnedResult() throws Exception {
-        var registry = registry(5); var result = run(registry, "  printf '中文 diagnostic'  ");
+        String command = print("中文 diagnostic");
+        var registry = registry(5); var result = run(registry, "  " + command + "  ");
         assertTrue(result.successful()); assertEquals(2, events.size());
         var start = events.get(0); var end = events.get(1);
         assertEquals(CommandExecutionObserver.Phase.STARTED, start.phase());
         assertEquals(CommandExecutionObserver.Outcome.NONE, start.outcome());
-        assertEquals(List.of("bash", "-c", "printf '中文 diagnostic'"), start.arguments());
+        assertEquals(windows()
+                ? List.of("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command)
+                : List.of("bash", "-c", command), start.arguments());
         assertTrue(start.processId() > 0); assertEquals(temp.toString(), start.workingDirectory());
         assertEquals(start.invocationId(), end.invocationId()); assertEquals(start.processId(), end.processId());
         assertEquals(start.arguments(), end.arguments()); assertEquals(0, end.exitCode());
@@ -65,8 +80,10 @@ class CommandExecutionObservationTest {
     }
 
     @Test void timeoutHasItsOwnTerminalDisposition() throws Exception {
-        assertFalse(run(registry(1), "exec sleep 10").successful()); assertEquals(2, events.size());
+        assertFalse(run(registry(1), sleep(10)).successful()); assertEquals(2, events.size());
         assertEquals(CommandExecutionObserver.Outcome.TIMED_OUT, events.get(1).outcome());
+        assertFalse(ProcessHandle.of(events.get(0).processId()).map(ProcessHandle::isAlive).orElse(false),
+                "超时结果返回后 shell 进程必须已经退出");
     }
 
     @Test void startFailureDoesNotInventAPid() throws Exception {
@@ -81,17 +98,18 @@ class CommandExecutionObservationTest {
     @Test void observerFailureAndDisableDoNotChangeProductOutput() throws Exception {
         var registry = registry(5);
         registry.setCommandExecutionObserver(event -> { throw new IllegalStateException("diagnostic sink failed"); });
-        assertTrue(run(registry, "printf ok").successful());
+        assertTrue(run(registry, print("ok")).successful());
         assertEquals(2, registry.getCommandObservationFailures());
         registry.setCommandExecutionObserver(null);
-        assertTrue(run(registry, "printf ok").successful());
+        assertTrue(run(registry, print("ok")).successful());
         assertEquals(2, registry.getCommandObservationFailures());
     }
 
     @Test void concurrentCommandsHaveInvocationIdsIndependentOfRepeatedCallIds() throws Exception {
         var registry = registry(5);
         var calls = new ArrayList<ToolRegistry.ToolInvocation>();
-        for (int i = 0; i < 4; i++) calls.add(new ToolRegistry.ToolInvocation("same-id", "execute_command", "{\"command\":\"printf ok\"}"));
+        for (int i = 0; i < 4; i++) calls.add(new ToolRegistry.ToolInvocation("same-id", "execute_command",
+                new ObjectMapper().writeValueAsString(Map.of("command", print("ok")))));
         assertTrue(registry.executeTools(calls).stream().allMatch(ToolRegistry.ToolExecutionResult::successful));
         assertEquals(8, events.size());
         assertEquals(4, events.stream().map(CommandExecutionObserver.Event::invocationId).distinct().count());
@@ -103,7 +121,7 @@ class CommandExecutionObservationTest {
     @Test void assertionErrorInStartedObserverCannotAbandonTheProcess() throws Exception {
         var registry = registry(5);
         registry.setCommandExecutionObserver(event -> { events.add(event); throw new AssertionError("broken diagnostic assertion"); });
-        assertTrue(run(registry, "printf ok").successful());
+        assertTrue(run(registry, print("ok")).successful());
         assertEquals(2, registry.getCommandObservationFailures());
         assertEquals(List.of(CommandExecutionObserver.Phase.STARTED, CommandExecutionObserver.Phase.FINISHED),
                 events.stream().map(CommandExecutionObserver.Event::phase).toList());
@@ -117,7 +135,7 @@ class CommandExecutionObservationTest {
         registry.setCommandExecutionObserver(event -> { events.add(event); if (event.phase() == CommandExecutionObserver.Phase.STARTED) started.countDown(); });
         var result = new java.util.concurrent.atomic.AtomicReference<ToolOutput>();
         Thread thread = new Thread(() -> {
-            try { result.set(run(registry, "exec sleep 30")); }
+            try { result.set(run(registry, sleep(30))); }
             catch (Exception error) { throw new AssertionError(error); }
         });
         thread.start(); assertTrue(started.await(5, TimeUnit.SECONDS)); thread.interrupt(); thread.join(5000);

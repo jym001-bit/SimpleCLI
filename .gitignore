@@ -3,6 +3,10 @@
 .paicli/*
 !.paicli/
 !.paicli/PAI.md
+!.paicli/skills/
+.paicli/skills/*
+!.paicli/skills/notion-knowledge-organizer/
+!.paicli/skills/notion-knowledge-organizer/**
 PAI.local.md
 
 # 编译输出
