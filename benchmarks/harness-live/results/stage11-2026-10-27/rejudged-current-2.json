@@ -1,0 +1,20 @@
+{
+  "results" : [ {
+    "source" : "target/harness-stage11/live-before.json",
+    "originalStatus" : "passed",
+    "traceId" : "0a0eea021ad89876b7da6bf8b69d2409",
+    "revised" : {
+      "status" : "PASSED",
+      "reason" : "error observed before a successful associated recovery"
+    }
+  }, {
+    "source" : "target/harness-stage11/live-after-2.json",
+    "originalStatus" : "failed",
+    "traceId" : "dd5f2270afac594c89774149d676e78d",
+    "revised" : {
+      "status" : "FAILED",
+      "reason" : "first error did not use the requested invalid arguments"
+    }
+  } ],
+  "judgeVersion" : "ordered-recovery-v2"
+}

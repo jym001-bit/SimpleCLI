@@ -1,0 +1,135 @@
+[
+  {
+    "id": "L01",
+    "category": "simple-qa",
+    "prompt": "只回答 17 加 25 的整数结果，不要调用工具。",
+    "expected": "42",
+    "maxToolCalls": 0
+  },
+  {
+    "id": "L02",
+    "category": "single-tool",
+    "prompt": "请用 read_file 读取 alpha.txt，最后只回答 ALPHA 的整数值。",
+    "expected": "17",
+    "requiredPaths": [
+      "alpha.txt"
+    ],
+    "minToolCalls": 1
+  },
+  {
+    "id": "L03",
+    "category": "single-tool",
+    "prompt": "请用 read_file 读取 beta.txt，最后只回答 BETA 的整数值。",
+    "expected": "25",
+    "requiredPaths": [
+      "beta.txt"
+    ],
+    "minToolCalls": 1
+  },
+  {
+    "id": "L04",
+    "category": "multi-tool",
+    "prompt": "请分别用 read_file 读取 alpha.txt 和 beta.txt。最后只回答 ALPHA+BETA 的整数结果。",
+    "expected": "42",
+    "requiredPaths": [
+      "alpha.txt",
+      "beta.txt"
+    ],
+    "minToolCalls": 2
+  },
+  {
+    "id": "L05",
+    "category": "bad-tool-arguments",
+    "prompt": "验证工具参数校验：先故意调用一次 read_file 并提供空 JSON 对象 {} 作为参数；看到参数错误后，再用正确参数读取 alpha.txt。最后只回答整数值。",
+    "expected": "17",
+    "requiredPaths": [
+      "alpha.txt"
+    ],
+    "minToolCalls": 2,
+    "minFailedToolCalls": 1,
+    "orderedRecovery": {
+      "tool": "read_file",
+      "firstArguments": {},
+      "recoveryArguments": {
+        "path": "alpha.txt"
+      },
+      "recoveryResultContains": "ALPHA=17"
+    }
+  },
+  {
+    "id": "L06",
+    "category": "tool-failure-recovery",
+    "prompt": "先用 read_file 尝试读取不存在的 missing.txt。确认失败后，读取 fallback.txt。最后只回答 STATUS 的值。",
+    "expected": "available",
+    "requiredPaths": [
+      "missing.txt",
+      "fallback.txt"
+    ],
+    "minToolCalls": 2,
+    "minFailedToolCalls": 1
+  },
+  {
+    "id": "L07",
+    "category": "long-context",
+    "prompt": "用 read_file 读取 long.txt，找出最后一行 MARKER 的值。只回答该值。",
+    "expected": "ORBIT-7315",
+    "requiredPaths": [
+      "long.txt"
+    ],
+    "minToolCalls": 1
+  },
+  {
+    "id": "L08",
+    "category": "compaction",
+    "prompt": "此前对话中给出的测试代号是什么？只回答代号。",
+    "expected": "ZETA-4826",
+    "manualCompaction": true,
+    "primingTurns": [
+      "为后续对话保留测试代号 ZETA-4826。这个代号只用于本次临时上下文压缩验证，不是长期记忆。请简短回复收到。",
+      "我在规划一个 Harbin 软件工程课程项目。当前记录包括：先整理需求，再拆分实现任务，最后检查测试结果；周报要按已完成、进行中、待验证三栏记录；所有样例文件都只读；任何外部 API 结果都要单独标明来源。请简短回复收到。",
+      "补充项目背景：项目使用 Java 17、Maven 和 JUnit；CLI 默认本地运行；离线测试不得访问模型服务；真实评测单独执行并写入本地结果；临时文件放在 target 目录；记忆检索需要区分当前项目和全局偏好。请简短回复收到。",
+      "再记一组用于上下文的事实：测试时先核对配置是否存在，不打印密钥；模型调用数、工具次数、响应 Token 和耗时都按真实执行记录；云端 Trace 只核验结构，不回传 prompt 和工具正文；失败任务也保留结果；没有价格依据时成本记为 unavailable。请简短回复收到。",
+      "补充当前任务状态：预算溢出测试已完成，命令超时会等待进程退出，失败的工具结果应作为 ERROR Observation；摘要如果比原对话更长就应保留原历史；本次评测只允许读取 target 下的固定文本夹具，不修改源代码。请简短回复收到。",
+      "最后一条上下文信息：这次实验的评测 ID 是 L08，目标是确认手动压缩会实际改变历史，同时让模型仍能回答早先给出的唯一测试代号。此信息仅供当前临时会话使用，不要写入长期记忆。请简短回复收到。"
+    ]
+  },
+  {
+    "id": "L09",
+    "category": "memory-retrieval",
+    "prompt": "请从当前项目长期记忆中找出测试代号。只回答代号。",
+    "expected": "NOVA-9142",
+    "seedMemory": true
+  },
+  {
+    "id": "L10",
+    "category": "iteration-limit",
+    "prompt": "请分别读取 alpha.txt 和 beta.txt，再回答两者之和。",
+    "expected": "PARTIAL",
+    "requiredPaths": [
+      "alpha.txt"
+    ],
+    "minToolCalls": 1,
+    "hardMaxIterations": 1
+  },
+  {
+    "id": "L11",
+    "category": "failure-final-answer",
+    "prompt": "请用 read_file 读取不存在的 missing.txt。如果读取失败，只返回严格 JSON：{\"read_succeeded\":false,\"value\":null}。不能猜测文件内容。",
+    "expectedJson": {
+      "read_succeeded": false,
+      "value": null
+    },
+    "requiredPaths": [
+      "missing.txt"
+    ],
+    "minToolCalls": 1,
+    "minFailedToolCalls": 1
+  },
+  {
+    "id": "L12",
+    "category": "simple-qa",
+    "prompt": "把英文字母 a、b、c 按顺序连接，只回答小写结果，不要调用工具。",
+    "expected": "abc",
+    "maxToolCalls": 0
+  }
+]

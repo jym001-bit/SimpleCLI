@@ -1,0 +1,247 @@
+{
+  "kind" : "real-model-harness-evaluation",
+  "startedUtc" : "2026-10-27T05:50:03.819725900Z",
+  "updatedUtc" : "2026-10-27T05:50:44.516531500Z",
+  "provider" : "deepseek",
+  "model" : "deepseek-v4-flash",
+  "harnessVersion" : "37b09ee+working-tree",
+  "executionMode" : "sequential",
+  "datasetSha256" : "1e783cdf3fbfb6dbfff398f5b372cec16a53f34be991064d5e3bbc98bbad03fe",
+  "attempts" : [ {
+    "caseId" : "D01",
+    "taskId" : "53ec583f-05c2-4020-af3b-b6425c2d0774",
+    "category" : "compaction-state",
+    "startedUtc" : "2026-10-27T05:50:03.981616200Z",
+    "traceId" : "1cde7f8f0a02eb2805ba88d2c236c33d",
+    "answer" : "{\"goal\":\"GOAL-AUDIT：检查 Java Service\",\"constraint\":\"NO-WRITE：所有文件只读，禁止任何写入或修改操作\",\"pending\":[\"TODO-VERIFY\",\"TODO-REPORT\"],\"verified\":false}",
+    "compacted" : true,
+    "memorySeeded" : false,
+    "compactionBeforeTokensEstimated" : 3632,
+    "compactionAfterTokensEstimated" : 3067,
+    "compressionRatioEstimated" : 0.1555616740088106,
+    "summaryFactChecks" : {
+      "GOAL-AUDIT" : true,
+      "NO-WRITE" : true,
+      "TODO-VERIFY" : true,
+      "TODO-REPORT" : true
+    },
+    "status" : "failed",
+    "judgement" : "JSON value mismatch",
+    "errorCategory" : null,
+    "modelCalls" : 6,
+    "modelFailedCalls" : 0,
+    "modelUsageMissingCalls" : 0,
+    "inputTokens" : 21284,
+    "uncachedInputTokens" : 3108,
+    "outputTokens" : 1120,
+    "cachedInputTokens" : 18176,
+    "tokenUsageSource" : "provider_response",
+    "usageSamples" : [ {
+      "inputUncached" : 247,
+      "inputCached" : 3328,
+      "inputTotal" : 3575,
+      "output" : 199
+    }, {
+      "inputUncached" : 854,
+      "inputCached" : 3328,
+      "inputTotal" : 4182,
+      "output" : 302
+    }, {
+      "inputUncached" : 203,
+      "inputCached" : 4096,
+      "inputTotal" : 4299,
+      "output" : 3
+    }, {
+      "inputUncached" : 232,
+      "inputCached" : 4096,
+      "inputTotal" : 4328,
+      "output" : 3
+    }, {
+      "inputUncached" : 1067,
+      "inputCached" : 0,
+      "inputTotal" : 1067,
+      "output" : 456
+    }, {
+      "inputUncached" : 505,
+      "inputCached" : 3328,
+      "inputTotal" : 3833,
+      "output" : 157
+    } ],
+    "estimatedCostUsd" : null,
+    "costBasis" : "unavailable",
+    "toolCalls" : 0,
+    "tools" : [ ],
+    "durationMillis" : 11768,
+    "provider" : "deepseek",
+    "model" : "deepseek-v4-flash",
+    "configuration" : {
+      "allowedTools" : [ "read_file" ],
+      "hardMaxIterations" : 0
+    }
+  }, {
+    "caseId" : "D02",
+    "taskId" : "1b54a85b-a4b0-4d2a-96d9-65d48a2839cd",
+    "category" : "compaction-tool-evidence",
+    "startedUtc" : "2026-10-27T05:50:15.754651600Z",
+    "traceId" : "edd67b750efe860659e5949a0f4e74e0",
+    "answer" : "{\"alpha\": 17, \"missing_read_succeeded\": false, \"pending\": \"VERIFY-BETA\"}",
+    "compacted" : true,
+    "memorySeeded" : false,
+    "compactionBeforeTokensEstimated" : 3791,
+    "compactionAfterTokensEstimated" : 3152,
+    "compressionRatioEstimated" : 0.16855710894223164,
+    "summaryFactChecks" : {
+      "alpha.txt" : true,
+      "missing.txt" : true,
+      "NO-GUESS" : true,
+      "VERIFY-BETA" : true
+    },
+    "status" : "passed",
+    "judgement" : "passed",
+    "errorCategory" : null,
+    "modelCalls" : 7,
+    "modelFailedCalls" : 0,
+    "modelUsageMissingCalls" : 0,
+    "inputTokens" : 26347,
+    "uncachedInputTokens" : 3819,
+    "outputTokens" : 1276,
+    "cachedInputTokens" : 22528,
+    "tokenUsageSource" : "provider_response",
+    "usageSamples" : [ {
+      "inputUncached" : 235,
+      "inputCached" : 3328,
+      "inputTotal" : 3563,
+      "output" : 126
+    }, {
+      "inputUncached" : 177,
+      "inputCached" : 3584,
+      "inputTotal" : 3761,
+      "output" : 152
+    }, {
+      "inputUncached" : 1136,
+      "inputCached" : 3328,
+      "inputTotal" : 4464,
+      "output" : 186
+    }, {
+      "inputUncached" : 234,
+      "inputCached" : 4352,
+      "inputTotal" : 4586,
+      "output" : 3
+    }, {
+      "inputUncached" : 135,
+      "inputCached" : 4480,
+      "inputTotal" : 4615,
+      "output" : 43
+    }, {
+      "inputUncached" : 1344,
+      "inputCached" : 0,
+      "inputTotal" : 1344,
+      "output" : 707
+    }, {
+      "inputUncached" : 558,
+      "inputCached" : 3456,
+      "inputTotal" : 4014,
+      "output" : 59
+    } ],
+    "estimatedCostUsd" : null,
+    "costBasis" : "unavailable",
+    "toolCalls" : 2,
+    "tools" : [ {
+      "path" : "alpha.txt",
+      "timedOut" : false,
+      "name" : "read_file",
+      "elapsedMillis" : 42,
+      "successful" : true
+    }, {
+      "path" : "missing.txt",
+      "timedOut" : false,
+      "name" : "read_file",
+      "elapsedMillis" : 41,
+      "successful" : false
+    } ],
+    "durationMillis" : 12407,
+    "provider" : "deepseek",
+    "model" : "deepseek-v4-flash",
+    "configuration" : {
+      "allowedTools" : [ "read_file" ],
+      "hardMaxIterations" : 0
+    }
+  }, {
+    "caseId" : "D03",
+    "taskId" : "5f4171fd-ef82-4d68-be3e-649d34c66f49",
+    "category" : "compaction-updated-decision",
+    "startedUtc" : "2026-10-27T05:50:28.168292600Z",
+    "traceId" : "bcf4464e2497eadd56dc3c589159eadf",
+    "answer" : "{\"current_token\":\"NEW-C2\",\"constraint\":\"NO-WRITE\",\"pending\":\"REVIEW-ONLY\"}",
+    "compacted" : true,
+    "memorySeeded" : false,
+    "compactionBeforeTokensEstimated" : 3579,
+    "compactionAfterTokensEstimated" : 3068,
+    "compressionRatioEstimated" : 0.14277731209835154,
+    "summaryFactChecks" : {
+      "NEW-C2" : true,
+      "NO-WRITE" : true,
+      "REVIEW-ONLY" : true
+    },
+    "status" : "passed",
+    "judgement" : "passed",
+    "errorCategory" : null,
+    "modelCalls" : 7,
+    "modelFailedCalls" : 0,
+    "modelUsageMissingCalls" : 0,
+    "inputTokens" : 24811,
+    "uncachedInputTokens" : 3051,
+    "outputTokens" : 1782,
+    "cachedInputTokens" : 21760,
+    "tokenUsageSource" : "provider_response",
+    "usageSamples" : [ {
+      "inputUncached" : 207,
+      "inputCached" : 3328,
+      "inputTotal" : 3535,
+      "output" : 172
+    }, {
+      "inputUncached" : 139,
+      "inputCached" : 3456,
+      "inputTotal" : 3595,
+      "output" : 180
+    }, {
+      "inputUncached" : 874,
+      "inputCached" : 3328,
+      "inputTotal" : 4202,
+      "output" : 338
+    }, {
+      "inputUncached" : 156,
+      "inputCached" : 4096,
+      "inputTotal" : 4252,
+      "output" : 29
+    }, {
+      "inputUncached" : 181,
+      "inputCached" : 4096,
+      "inputTotal" : 4277,
+      "output" : 35
+    }, {
+      "inputUncached" : 1023,
+      "inputCached" : 0,
+      "inputTotal" : 1023,
+      "output" : 955
+    }, {
+      "inputUncached" : 471,
+      "inputCached" : 3456,
+      "inputTotal" : 3927,
+      "output" : 73
+    } ],
+    "estimatedCostUsd" : null,
+    "costBasis" : "unavailable",
+    "toolCalls" : 0,
+    "tools" : [ ],
+    "durationMillis" : 15816,
+    "provider" : "deepseek",
+    "model" : "deepseek-v4-flash",
+    "configuration" : {
+      "allowedTools" : [ "read_file" ],
+      "hardMaxIterations" : 0
+    }
+  } ],
+  "total" : 3,
+  "passed" : 2
+}

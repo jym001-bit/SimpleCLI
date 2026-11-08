@@ -1,0 +1,71 @@
+{
+  "kind": "langfuse-cloud-trace-structure-audit",
+  "checkedUtc": "2026-10-27T06:57:52.7809042+00:00",
+  "cases": [
+    {
+      "caseId": "L05",
+      "queried": true,
+      "traceId": "70874f17769b14e9f82261a9f244bd28",
+      "observations": 11,
+      "roots": 1,
+      "rootName": "simple-cli live-evaluation",
+      "generations": 3,
+      "tools": 2,
+      "agentNodes": 2,
+      "danglingParents": 0,
+      "generationsOutsideAgent": 0,
+      "toolsOutsideAgent": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "usageMatches": 3,
+      "usageObservations": 3,
+      "generationsUsage": [
+        {
+          "model": "deepseek-v4-flash",
+          "input": 3029,
+          "cachedInput": 0,
+          "output": 72,
+          "observedTotalInput": 3029,
+          "observedOutput": 72
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 215,
+          "cachedInput": 2944,
+          "output": 53,
+          "observedTotalInput": 3159,
+          "observedOutput": 53
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 178,
+          "cachedInput": 3072,
+          "output": 2,
+          "observedTotalInput": 3250,
+          "observedOutput": 2
+        }
+      ],
+      "hasNonEmptyObservationIo": false,
+      "fixtureTextDetected": false,
+      "credentialTextDetected": false,
+      "errorObservations": 1,
+      "toolStatuses": [
+        {
+          "name": "tool read_file",
+          "level": "DEFAULT",
+          "errorType": null,
+          "callIdPresent": true,
+          "statusMessagePresent": false
+        },
+        {
+          "name": "tool read_file",
+          "level": "ERROR",
+          "errorType": "TOOL_FAILURE",
+          "callIdPresent": true,
+          "statusMessagePresent": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "kind": "langfuse-cloud-trace-structure-audit",
+  "checkedUtc": "2026-10-27T06:03:16.9681743+00:00",
+  "cases": [
+    {
+      "caseId": "L08",
+      "queried": true,
+      "traceId": "bcf0efd062971887e4260936bb19486c",
+      "observations": 30,
+      "roots": 1,
+      "rootName": "simple-cli live-evaluation",
+      "generations": 8,
+      "tools": 0,
+      "agentNodes": 8,
+      "danglingParents": 0,
+      "generationsOutsideAgent": 0,
+      "toolsOutsideAgent": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "usageMatches": 8,
+      "usageObservations": 8,
+      "generationsUsage": [
+        {
+          "model": "deepseek-v4-flash",
+          "input": 206,
+          "cachedInput": 3328,
+          "output": 114,
+          "observedTotalInput": 3534,
+          "observedOutput": 114
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 170,
+          "cachedInput": 3456,
+          "output": 151,
+          "observedTotalInput": 3626,
+          "observedOutput": 151
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 160,
+          "cachedInput": 3584,
+          "output": 138,
+          "observedTotalInput": 3744,
+          "observedOutput": 138
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 162,
+          "cachedInput": 3712,
+          "output": 187,
+          "observedTotalInput": 3874,
+          "observedOutput": 187
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 165,
+          "cachedInput": 3840,
+          "output": 134,
+          "observedTotalInput": 4005,
+          "observedOutput": 134
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 147,
+          "cachedInput": 3968,
+          "output": 230,
+          "observedTotalInput": 4115,
+          "observedOutput": 230
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 841,
+          "cachedInput": 0,
+          "output": 963,
+          "observedTotalInput": 841,
+          "observedOutput": 963
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 476,
+          "cachedInput": 3456,
+          "output": 77,
+          "observedTotalInput": 3932,
+          "observedOutput": 77
+        }
+      ],
+      "hasNonEmptyObservationIo": false,
+      "fixtureTextDetected": false,
+      "credentialTextDetected": false,
+      "errorObservations": 0,
+      "toolStatuses": []
+    }
+  ]
+}

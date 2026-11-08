@@ -1,0 +1,372 @@
+{
+  "kind": "offline-deterministic-regression",
+  "runId": "a44575ee-2482-4367-994b-7f46c233d01c",
+  "harnessVersion": "37b09ee+working-tree",
+  "sourceFingerprint": "5ac27f8f276893a0a254bafe7a7947f8157c4e5fcedb708f07a16c0666f58bb2",
+  "timestampUtc": "2026-10-27T05:59:52.3273366Z",
+  "mavenExitCode": 0,
+  "cases": 35,
+  "passed": 35,
+  "successRate": 1,
+  "metrics": {
+    "modelCalls": "unavailable",
+    "toolCalls": "unavailable",
+    "tokenUsage": "unavailable",
+    "costPerTask": "unavailable",
+    "recoveryRate": "unavailable",
+    "latencyP50": "unavailable",
+    "latencyP95": "unavailable"
+  },
+  "results": [
+    {
+      "id": "H01",
+      "goal": "初始循环允许执行",
+      "expected": "预算未耗尽",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.0,
+      "error": "",
+      "test": "com.paicli.agent.AgentBudgetTest#initiallyWithinBudget"
+    },
+    {
+      "id": "H02",
+      "goal": "累计 Token 后停止",
+      "expected": "返回 Token 预算退出原因",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.0,
+      "error": "",
+      "test": "com.paicli.agent.AgentBudgetTest#tokenBudgetExceededAfterAccumulation"
+    },
+    {
+      "id": "H03",
+      "goal": "重复工具调用终止",
+      "expected": "检测停滞",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.006,
+      "error": "",
+      "test": "com.paicli.agent.AgentBudgetTest#stagnationDetectedAfterRepeatedToolCalls"
+    },
+    {
+      "id": "H04",
+      "goal": "不同工具调用继续",
+      "expected": "不误报停滞",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.005,
+      "error": "",
+      "test": "com.paicli.agent.AgentBudgetTest#stagnationResetsWhenToolCallsDiffer"
+    },
+    {
+      "id": "H05",
+      "goal": "硬轮数生效",
+      "expected": "达到上限终止",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.001,
+      "error": "",
+      "test": "com.paicli.agent.AgentBudgetTest#hardIterationLimitTriggersAfterEnoughIterations"
+    },
+    {
+      "id": "H06",
+      "goal": "预算退出时收尾",
+      "expected": "只额外调用一次模型且不再开放工具",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.085,
+      "error": "",
+      "test": "com.paicli.agent.AgentBudgetFinalizationTest#explicitIterationLimitUsesOneToolFreeFinalizationCall"
+    },
+    {
+      "id": "H07",
+      "goal": "重复工具调用先提醒",
+      "expected": "只提醒一次并继续",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.038,
+      "error": "",
+      "test": "com.paicli.agent.AgentRunawayReminderTest#repeatedToolCallGetsOneReminderAndTheLoopKeepsGoing"
+    },
+    {
+      "id": "H08",
+      "goal": "工具结果和最终回答入会话记录",
+      "expected": "调用与结果配对且保留最终回答",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.077,
+      "error": "",
+      "test": "com.paicli.agent.AgentConversationLedgerTest#reactLedgerPreservesToolProtocolAndFinalReasoning"
+    },
+    {
+      "id": "H09",
+      "goal": "压缩后恢复会话",
+      "expected": "恢复视图与模型收到的历史一致",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.096,
+      "error": "",
+      "test": "com.paicli.agent.AgentSessionResumeTest#restoredConversationMatchesWhatTheModelSawAfterCompaction"
+    },
+    {
+      "id": "H10",
+      "goal": "恢复外部内容会话",
+      "expected": "暂停自动记忆写入",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.014,
+      "error": "",
+      "test": "com.paicli.agent.AgentSessionResumeTest#resumingWebResultsPausesAutomaticMemory"
+    },
+    {
+      "id": "H11",
+      "goal": "阻断模型虚构网址",
+      "expected": "禁止未授权 web_fetch",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.023,
+      "error": "",
+      "test": "com.paicli.agent.AgentWebSearchDecisionTest#blocksHallucinatedWebFetchWhenUserOnlyProvidesBareTitle"
+    },
+    {
+      "id": "H12",
+      "goal": "用户要求搜索",
+      "expected": "允许 web_search",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.021,
+      "error": "",
+      "test": "com.paicli.agent.AgentWebSearchDecisionTest#allowsWebSearchWhenUserExplicitlyRequestsIt"
+    },
+    {
+      "id": "H13",
+      "goal": "缺少工具必填参数",
+      "expected": "返回字段级错误",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.008,
+      "error": "",
+      "test": "com.paicli.tool.ToolArgumentValidationTest#missingRequiredParameterIsReportedByName"
+    },
+    {
+      "id": "H14",
+      "goal": "无效 JSON 工具参数",
+      "expected": "明确报告解析错误",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.005,
+      "error": "",
+      "test": "com.paicli.tool.ToolArgumentValidationTest#invalidJsonIsReportedSeparatelyWithSnippet"
+    },
+    {
+      "id": "H15",
+      "goal": "MCP 参数校验",
+      "expected": "按原始 schema 拦截",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.002,
+      "error": "",
+      "test": "com.paicli.tool.ToolArgumentValidationTest#mcpToolIsValidatedAgainstRawSchemaNotTheSanitizedOne"
+    },
+    {
+      "id": "H16",
+      "goal": "计划任务失败隔离",
+      "expected": "跳过下游并保留已完成结果",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.015,
+      "error": "",
+      "test": "com.paicli.agent.PlanExecuteAgentTest#failedTaskShouldSkipDependentsAndKeepCompletedResults"
+    },
+    {
+      "id": "H17",
+      "goal": "重新规划达到上限",
+      "expected": "停止再次规划",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.036,
+      "error": "",
+      "test": "com.paicli.agent.PlanExecuteAgentTest#replanningShouldStopAtConfiguredLimit"
+    },
+    {
+      "id": "H18",
+      "goal": "独立 Worker 并行",
+      "expected": "任务并发且结果汇总",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.037,
+      "error": "",
+      "test": "com.paicli.agent.AgentOrchestratorTest#shouldRunIndependentStepsInParallel"
+    },
+    {
+      "id": "H19",
+      "goal": "Reviewer 拒绝后重试",
+      "expected": "修复后通过复核",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.186,
+      "error": "",
+      "test": "com.paicli.agent.AgentOrchestratorTest#shouldRetryRejectedStepUntilApproval"
+    },
+    {
+      "id": "H20",
+      "goal": "OTLP Trace 脱敏和导出",
+      "expected": "发送模型与工具元数据且不含敏感正文",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.892,
+      "error": "",
+      "test": "com.paicli.observability.LangfuseTelemetryTest#sendsOneTraceWithModelAndToolMetricsButNoContent"
+    },
+    {
+      "id": "H21",
+      "goal": "模型请求失败",
+      "expected": "明确终止并返回失败消息",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.475,
+      "error": "",
+      "test": "com.paicli.agent.AgentBudgetFinalizationTest#modelIoFailureStopsTheTurnWithAnExplicitFailure"
+    },
+    {
+      "id": "H22",
+      "goal": "命令执行超时",
+      "expected": "在时限内返回超时结果",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 1.063,
+      "error": "",
+      "test": "com.paicli.tool.ToolRegistryTest#shouldTimeoutLongRunningCommandWithoutHanging"
+    },
+    {
+      "id": "H23",
+      "goal": "批量工具超时隔离",
+      "expected": "超时调用被标记且其他结果保留",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 1.005,
+      "error": "",
+      "test": "com.paicli.tool.ToolRegistryTest#shouldCancelToolInvocationWhenBatchTimeoutIsReached"
+    },
+    {
+      "id": "H24",
+      "goal": "一个 MCP 服务不可用",
+      "expected": "故障服务报错且健康服务继续运行",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 5.092,
+      "error": "",
+      "test": "com.paicli.mcp.McpServerManagerTest#singleServerFailureDoesNotBlockOthers"
+    },
+    {
+      "id": "H25",
+      "goal": "用户拒绝危险工具",
+      "expected": "工具不执行且返回拒绝结果",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.013,
+      "error": "",
+      "test": "com.paicli.hitl.HitlToolRegistryTest#rejectedDecisionBlocksExecutionAndReturnsRejectMessage"
+    },
+    {
+      "id": "H26",
+      "goal": "超长工具结果",
+      "expected": "卸载正文并在上下文中保留摘要",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.014,
+      "error": "",
+      "test": "com.paicli.tool.ToolResultOffloaderTest#oversizedResultIsWrittenToSessionFileAndSummarized"
+    },
+    {
+      "id": "H27",
+      "goal": "写入项目外路径",
+      "expected": "路径被拒绝",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.011,
+      "error": "",
+      "test": "com.paicli.tool.ToolRegistryTest#editFileRejectsPathOutsideProject"
+    },
+    {
+      "id": "H28",
+      "goal": "上下文压缩后恢复",
+      "expected": "原始记录保留且视图检查点一致",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.074,
+      "error": "",
+      "test": "com.paicli.agent.AgentConversationLedgerTest#clearAndCompactionOnlyMutateDeliveryView"
+    },
+    {
+      "id": "H29",
+      "goal": "最终回答含未执行工具文本",
+      "expected": "明确提示工具未执行",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.017,
+      "error": "",
+      "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#agentAppendsNoticeWhenFinalAnswerContainsUnexecutedCall"
+    },
+    {
+      "id": "H30",
+      "goal": "工具执行失败",
+      "expected": "返回可分类的失败状态",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.001,
+      "error": "",
+      "test": "com.paicli.tool.ToolRegistryTest#executionResultCarriesTypedFailureStatus"
+    },
+    {
+      "id": "H31",
+      "goal": "简单问题直接回答",
+      "expected": "无工具时正常返回且不误报未执行工具",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.017,
+      "error": "",
+      "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#ordinaryAnswerHasNoNotice"
+    },
+    {
+      "id": "H32",
+      "goal": "长对话分段摘要",
+      "expected": "早期和中间历史都进入摘要流程",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.003,
+      "error": "",
+      "test": "com.paicli.memory.ConversationHistoryCompactorTest#longHistorySummarizesEveryChunkBeforeMerging"
+    },
+    {
+      "id": "H33",
+      "goal": "检索不同项目的长期记忆",
+      "expected": "项目级记忆不会跨项目注入",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.027,
+      "error": "",
+      "test": "com.paicli.memory.LongTermMemoryTest#shouldFilterProjectScopedMemories"
+    },
+    {
+      "id": "H34",
+      "goal": "摘要边界包含工具调用",
+      "expected": "工具调用与结果保持配对",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.0,
+      "error": "",
+      "test": "com.paicli.memory.ConversationHistoryCompactorTest#preservesToolCallPairAtSplitBoundary"
+    },
+    {
+      "id": "H35",
+      "goal": "模型返回无结构摘要",
+      "expected": "拒绝摘要并保持原对话",
+      "passed": true,
+      "failureCategory": null,
+      "elapsedSeconds": 0.001,
+      "error": "",
+      "test": "com.paicli.memory.ConversationHistoryCompactorTest#rejectsUnstructuredSummaryWithoutChangingHistory"
+    }
+  ]
+}

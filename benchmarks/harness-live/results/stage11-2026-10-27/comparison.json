@@ -1,0 +1,704 @@
+{
+  "kind": "stage11-l05-order-investigation",
+  "generatedUtc": "2026-10-27T07:24:07.0194094+00:00",
+  "judgeVersion": "ordered-recovery-v2",
+  "originalPromptUnchanged": true,
+  "compressionCauseExcluded": {
+    "compactorUnchanged": true,
+    "kernelUnchanged": true,
+    "evidence": "One external user turn; full summary retains at least three and returns without requesting a summary; historical logs grow 2/4/6/8 messages. Current saved requests contain original user text, no summary marker.",
+    "historicalFullContextAvailable": false
+  },
+  "historicalRejudge": {
+    "results": [
+      {
+        "source": "benchmarks/harness-live/results/stage10-2026-10-27/live-before.json",
+        "originalStatus": "passed",
+        "traceId": "116811ca17ac9a6481a45604ad59967f",
+        "revised": {
+          "status": "INSUFFICIENT_EVIDENCE",
+          "reason": "historical record lacks exact error arguments"
+        }
+      },
+      {
+        "source": "benchmarks/harness-live/results/stage10-2026-10-27/live-after.json",
+        "originalStatus": "passed",
+        "traceId": "0ac9a3bba79323041ffd0f20a58d926f",
+        "revised": {
+          "status": "FAILED",
+          "reason": "an operation occurred before the required parameter error"
+        }
+      }
+    ],
+    "judgeVersion": "ordered-recovery-v2"
+  },
+  "currentRuns": [
+    {
+      "batch": "live-before",
+      "status": "passed",
+      "legacyWouldPass": true,
+      "strictVerdict": {
+        "status": "PASSED",
+        "reason": "error observed before a successful associated recovery"
+      },
+      "modelCalls": 5,
+      "toolCalls": 4,
+      "nonAdvertisedToolAttempts": 2,
+      "inputTokens": 19128,
+      "outputTokens": 386,
+      "uncachedInputTokens": 824,
+      "cachedInputTokens": 18304,
+      "durationMillis": 7401,
+      "estimatedCostUsd": null,
+      "traceId": "0a0eea021ad89876b7da6bf8b69d2409",
+      "initialMessageTokensEstimated": 2776,
+      "initialProviderInputTokens": 3471,
+      "allOriginalTaskConstraintsStillPresent": true,
+      "decodedResponseArgumentsMatchToolExecution": true,
+      "compressedSummaryMarkerPresent": false,
+      "staticBroadCataloguePresent": true,
+      "actualToolNames": [
+        "read_file"
+      ],
+      "tools": [
+        {
+          "name": "read_file",
+          "path": "",
+          "successful": false,
+          "timedOut": false,
+          "elapsedMillis": 42,
+          "callId": "call_00_AC7lAvOovFPM7czooqZu5890",
+          "argumentsJson": "{}",
+          "result": "❌ 工具 read_file 的参数不符合要求：\n- 缺少必填参数 path\n请按工具定义修正参数后重试",
+          "decisionTurn": 1
+        },
+        {
+          "name": "glob_files",
+          "path": ".",
+          "successful": false,
+          "timedOut": false,
+          "elapsedMillis": 0,
+          "callId": "call_00_6yPN74SjM1e1Y0TAulXj9286",
+          "argumentsJson": "{\"pattern\": \"**/alpha.txt\", \"path\": \".\"}",
+          "result": "🛡️ 工具调用已拒绝 [TOOL_NOT_ADVERTISED]: 该工具未向本轮模型开放。不要伪造或绕过当前工具边界。",
+          "decisionTurn": 2
+        },
+        {
+          "name": "list_dir",
+          "path": ".",
+          "successful": false,
+          "timedOut": false,
+          "elapsedMillis": 0,
+          "callId": "call_00_v4kuw3x0LuKbykkpx7Q30930",
+          "argumentsJson": "{\"path\": \".\"}",
+          "result": "🛡️ 工具调用已拒绝 [TOOL_NOT_ADVERTISED]: 该工具未向本轮模型开放。不要伪造或绕过当前工具边界。",
+          "decisionTurn": 3
+        },
+        {
+          "name": "read_file",
+          "path": "alpha.txt",
+          "successful": true,
+          "timedOut": false,
+          "elapsedMillis": 1,
+          "callId": "call_00_FjxWU3EZ21RuH4XihuvQ9683",
+          "argumentsJson": "{\"path\": \"alpha.txt\"}",
+          "result": "文件内容:\nALPHA=17\n",
+          "decisionTurn": 4
+        }
+      ]
+    },
+    {
+      "batch": "live-after-1",
+      "status": "passed",
+      "legacyWouldPass": true,
+      "strictVerdict": {
+        "status": "PASSED",
+        "reason": "error observed before a successful associated recovery"
+      },
+      "modelCalls": 3,
+      "toolCalls": 2,
+      "nonAdvertisedToolAttempts": 0,
+      "inputTokens": 9438,
+      "outputTokens": 127,
+      "uncachedInputTokens": 3422,
+      "cachedInputTokens": 6016,
+      "durationMillis": 3788,
+      "estimatedCostUsd": null,
+      "traceId": "70874f17769b14e9f82261a9f244bd28",
+      "initialMessageTokensEstimated": 2474,
+      "initialProviderInputTokens": 3029,
+      "allOriginalTaskConstraintsStillPresent": true,
+      "decodedResponseArgumentsMatchToolExecution": true,
+      "compressedSummaryMarkerPresent": false,
+      "staticBroadCataloguePresent": false,
+      "actualToolNames": [
+        "read_file"
+      ],
+      "tools": [
+        {
+          "name": "read_file",
+          "path": "",
+          "successful": false,
+          "timedOut": false,
+          "elapsedMillis": 41,
+          "callId": "call_00_zEVGSKeQg2QOuttkMOem1518",
+          "argumentsJson": "{}",
+          "result": "❌ 工具 read_file 的参数不符合要求：\n- 缺少必填参数 path\n请按工具定义修正参数后重试",
+          "decisionTurn": 1
+        },
+        {
+          "name": "read_file",
+          "path": "alpha.txt",
+          "successful": true,
+          "timedOut": false,
+          "elapsedMillis": 1,
+          "callId": "call_00_BnBw6p3AuEYn6i3AjiVu7951",
+          "argumentsJson": "{\"path\": \"alpha.txt\"}",
+          "result": "文件内容:\nALPHA=17\n",
+          "decisionTurn": 2
+        }
+      ]
+    },
+    {
+      "batch": "live-after-2",
+      "status": "failed",
+      "legacyWouldPass": true,
+      "strictVerdict": {
+        "status": "FAILED",
+        "reason": "first error did not use the requested invalid arguments"
+      },
+      "modelCalls": 3,
+      "toolCalls": 2,
+      "nonAdvertisedToolAttempts": 0,
+      "inputTokens": 9688,
+      "outputTokens": 402,
+      "uncachedInputTokens": 600,
+      "cachedInputTokens": 9088,
+      "durationMillis": 5310,
+      "estimatedCostUsd": null,
+      "traceId": "dd5f2270afac594c89774149d676e78d",
+      "initialMessageTokensEstimated": 2474,
+      "initialProviderInputTokens": 3029,
+      "allOriginalTaskConstraintsStillPresent": true,
+      "decodedResponseArgumentsMatchToolExecution": true,
+      "compressedSummaryMarkerPresent": false,
+      "staticBroadCataloguePresent": false,
+      "actualToolNames": [
+        "read_file"
+      ],
+      "tools": [
+        {
+          "name": "read_file",
+          "path": "{}",
+          "successful": false,
+          "timedOut": false,
+          "elapsedMillis": 38,
+          "callId": "call_00_9zNm6DIqyquW8EL5HouC4494",
+          "argumentsJson": "{\"path\": \"{}\"}",
+          "result": "读取文件失败: 不是普通文件",
+          "decisionTurn": 1
+        },
+        {
+          "name": "read_file",
+          "path": "alpha.txt",
+          "successful": true,
+          "timedOut": false,
+          "elapsedMillis": 1,
+          "callId": "call_00_Jp7icUgfrkL0ddJXpIzN4248",
+          "argumentsJson": "{\"path\": \"alpha.txt\"}",
+          "result": "文件内容:\nALPHA=17\n",
+          "decisionTurn": 2
+        }
+      ]
+    }
+  ],
+  "rootHarnessDefect": "System catalogue claimed glob_files/list_dir although actual tool definitions exposed only read_file. Captured baseline attempted both non-advertised tools during recovery.",
+  "productionChange": "ReAct updates its real system message from the effective exposed tools and disables the advertised set on finalization; shared prompt distinguishes control dependencies and fault-injection arguments.",
+  "promptEquivalence": {
+    "finalPromptRenderingMatchesRecordedRequests": true,
+    "originalBaseFound": true,
+    "recordedPostRequestsChecked": 6
+  },
+  "sourceBefore": {
+    "compactorSha256": "4EAF1226CF975E2944D33C1F19016103FFA3DBF7A81E1B4041466C74EF4B8EA1",
+    "agentSha256": "BABC8D2CAF510234E49B8B1A9B4DA6B444F3701674A8D6FC33E14894962ED82C",
+    "kernelSha256": "DEACBEA4D37CF33D4C84F34BBC4C3C880FC9505AABB006708C7D6AEF24D8D2AF",
+    "promptSha256": "26CCB6F91A04492C4911431C293F7BDB1EEF85BE41E33FE63AF1A7A7CBD28B68",
+    "casesSha256": "F58399CD59EFADCA5FBAFEB6715F78B09DBC87E9DC47817185A23F3272CB5A28",
+    "head": "37b09ee9d3212eb2ef85f5aea7d7f34c550800ed"
+  },
+  "sourceAfter": {
+    "compactorSha256": "4EAF1226CF975E2944D33C1F19016103FFA3DBF7A81E1B4041466C74EF4B8EA1",
+    "agentSha256": "31D10BEEB0984DA0A7062E1F0EA388A1A2437514B9BB6EFA7A14D64344189B6C",
+    "assemblerSha256": "12E13033A689B8512A004E408ABAE4E48DD001A205CAC516C28D3AEFB235074D",
+    "kernelSha256": "DEACBEA4D37CF33D4C84F34BBC4C3C880FC9505AABB006708C7D6AEF24D8D2AF",
+    "promptSha256": "8BC2104F839F9F29A404214C254782EEDA99C3E0578B2492BA284C70286FCA8B",
+    "casesSha256": "D011E99AD9FF9B257B9DED209FAF8FE3E95F8C23FA356147789ED7E1D8A4032E"
+  },
+  "finalTests": {
+    "jdk": "17.0.18",
+    "tests": 33,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "initialEnvironmentError": "JDK 23 Byte Buddy instrumentation unsupported; rerun using project JDK17, no dependency changes"
+  },
+  "offline": {
+    "kind": "offline-deterministic-regression",
+    "runId": "c2a2481d-d064-459d-8941-217ee3b44502",
+    "harnessVersion": "37b09ee+working-tree",
+    "sourceFingerprint": "fd02fda60f2aa944a572385179340f1148ed064d58250557df745d8d195481de",
+    "timestampUtc": "2026-10-27T07:02:41.3924288Z",
+    "mavenExitCode": 0,
+    "cases": 35,
+    "passed": 35,
+    "successRate": 1,
+    "metrics": {
+      "modelCalls": "unavailable",
+      "toolCalls": "unavailable",
+      "tokenUsage": "unavailable",
+      "costPerTask": "unavailable",
+      "recoveryRate": "unavailable",
+      "latencyP50": "unavailable",
+      "latencyP95": "unavailable"
+    },
+    "results": [
+      {
+        "id": "H01",
+        "goal": "初始循环允许执行",
+        "expected": "预算未耗尽",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.001,
+        "error": "",
+        "test": "com.paicli.agent.AgentBudgetTest#initiallyWithinBudget"
+      },
+      {
+        "id": "H02",
+        "goal": "累计 Token 后停止",
+        "expected": "返回 Token 预算退出原因",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.0,
+        "error": "",
+        "test": "com.paicli.agent.AgentBudgetTest#tokenBudgetExceededAfterAccumulation"
+      },
+      {
+        "id": "H03",
+        "goal": "重复工具调用终止",
+        "expected": "检测停滞",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.0,
+        "error": "",
+        "test": "com.paicli.agent.AgentBudgetTest#stagnationDetectedAfterRepeatedToolCalls"
+      },
+      {
+        "id": "H04",
+        "goal": "不同工具调用继续",
+        "expected": "不误报停滞",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.001,
+        "error": "",
+        "test": "com.paicli.agent.AgentBudgetTest#stagnationResetsWhenToolCallsDiffer"
+      },
+      {
+        "id": "H05",
+        "goal": "硬轮数生效",
+        "expected": "达到上限终止",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.0,
+        "error": "",
+        "test": "com.paicli.agent.AgentBudgetTest#hardIterationLimitTriggersAfterEnoughIterations"
+      },
+      {
+        "id": "H06",
+        "goal": "预算退出时收尾",
+        "expected": "只额外调用一次模型且不再开放工具",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.082,
+        "error": "",
+        "test": "com.paicli.agent.AgentBudgetFinalizationTest#explicitIterationLimitUsesOneToolFreeFinalizationCall"
+      },
+      {
+        "id": "H07",
+        "goal": "重复工具调用先提醒",
+        "expected": "只提醒一次并继续",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.037,
+        "error": "",
+        "test": "com.paicli.agent.AgentRunawayReminderTest#repeatedToolCallGetsOneReminderAndTheLoopKeepsGoing"
+      },
+      {
+        "id": "H08",
+        "goal": "工具结果和最终回答入会话记录",
+        "expected": "调用与结果配对且保留最终回答",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.083,
+        "error": "",
+        "test": "com.paicli.agent.AgentConversationLedgerTest#reactLedgerPreservesToolProtocolAndFinalReasoning"
+      },
+      {
+        "id": "H09",
+        "goal": "压缩后恢复会话",
+        "expected": "恢复视图与模型收到的历史一致",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.081,
+        "error": "",
+        "test": "com.paicli.agent.AgentSessionResumeTest#restoredConversationMatchesWhatTheModelSawAfterCompaction"
+      },
+      {
+        "id": "H10",
+        "goal": "恢复外部内容会话",
+        "expected": "暂停自动记忆写入",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.013,
+        "error": "",
+        "test": "com.paicli.agent.AgentSessionResumeTest#resumingWebResultsPausesAutomaticMemory"
+      },
+      {
+        "id": "H11",
+        "goal": "阻断模型虚构网址",
+        "expected": "禁止未授权 web_fetch",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.019,
+        "error": "",
+        "test": "com.paicli.agent.AgentWebSearchDecisionTest#blocksHallucinatedWebFetchWhenUserOnlyProvidesBareTitle"
+      },
+      {
+        "id": "H12",
+        "goal": "用户要求搜索",
+        "expected": "允许 web_search",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.019,
+        "error": "",
+        "test": "com.paicli.agent.AgentWebSearchDecisionTest#allowsWebSearchWhenUserExplicitlyRequestsIt"
+      },
+      {
+        "id": "H13",
+        "goal": "缺少工具必填参数",
+        "expected": "返回字段级错误",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.009,
+        "error": "",
+        "test": "com.paicli.tool.ToolArgumentValidationTest#missingRequiredParameterIsReportedByName"
+      },
+      {
+        "id": "H14",
+        "goal": "无效 JSON 工具参数",
+        "expected": "明确报告解析错误",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.005,
+        "error": "",
+        "test": "com.paicli.tool.ToolArgumentValidationTest#invalidJsonIsReportedSeparatelyWithSnippet"
+      },
+      {
+        "id": "H15",
+        "goal": "MCP 参数校验",
+        "expected": "按原始 schema 拦截",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.003,
+        "error": "",
+        "test": "com.paicli.tool.ToolArgumentValidationTest#mcpToolIsValidatedAgainstRawSchemaNotTheSanitizedOne"
+      },
+      {
+        "id": "H16",
+        "goal": "计划任务失败隔离",
+        "expected": "跳过下游并保留已完成结果",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.014,
+        "error": "",
+        "test": "com.paicli.agent.PlanExecuteAgentTest#failedTaskShouldSkipDependentsAndKeepCompletedResults"
+      },
+      {
+        "id": "H17",
+        "goal": "重新规划达到上限",
+        "expected": "停止再次规划",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.026,
+        "error": "",
+        "test": "com.paicli.agent.PlanExecuteAgentTest#replanningShouldStopAtConfiguredLimit"
+      },
+      {
+        "id": "H18",
+        "goal": "独立 Worker 并行",
+        "expected": "任务并发且结果汇总",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.038,
+        "error": "",
+        "test": "com.paicli.agent.AgentOrchestratorTest#shouldRunIndependentStepsInParallel"
+      },
+      {
+        "id": "H19",
+        "goal": "Reviewer 拒绝后重试",
+        "expected": "修复后通过复核",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.176,
+        "error": "",
+        "test": "com.paicli.agent.AgentOrchestratorTest#shouldRetryRejectedStepUntilApproval"
+      },
+      {
+        "id": "H20",
+        "goal": "OTLP Trace 脱敏和导出",
+        "expected": "发送模型与工具元数据且不含敏感正文",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 1.198,
+        "error": "",
+        "test": "com.paicli.observability.LangfuseTelemetryTest#sendsOneTraceWithModelAndToolMetricsButNoContent"
+      },
+      {
+        "id": "H21",
+        "goal": "模型请求失败",
+        "expected": "明确终止并返回失败消息",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.457,
+        "error": "",
+        "test": "com.paicli.agent.AgentBudgetFinalizationTest#modelIoFailureStopsTheTurnWithAnExplicitFailure"
+      },
+      {
+        "id": "H22",
+        "goal": "命令执行超时",
+        "expected": "在时限内返回超时结果",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 1.053,
+        "error": "",
+        "test": "com.paicli.tool.ToolRegistryTest#shouldTimeoutLongRunningCommandWithoutHanging"
+      },
+      {
+        "id": "H23",
+        "goal": "批量工具超时隔离",
+        "expected": "超时调用被标记且其他结果保留",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 1.002,
+        "error": "",
+        "test": "com.paicli.tool.ToolRegistryTest#shouldCancelToolInvocationWhenBatchTimeoutIsReached"
+      },
+      {
+        "id": "H24",
+        "goal": "一个 MCP 服务不可用",
+        "expected": "故障服务报错且健康服务继续运行",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 5.071,
+        "error": "",
+        "test": "com.paicli.mcp.McpServerManagerTest#singleServerFailureDoesNotBlockOthers"
+      },
+      {
+        "id": "H25",
+        "goal": "用户拒绝危险工具",
+        "expected": "工具不执行且返回拒绝结果",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.009,
+        "error": "",
+        "test": "com.paicli.hitl.HitlToolRegistryTest#rejectedDecisionBlocksExecutionAndReturnsRejectMessage"
+      },
+      {
+        "id": "H26",
+        "goal": "超长工具结果",
+        "expected": "卸载正文并在上下文中保留摘要",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.016,
+        "error": "",
+        "test": "com.paicli.tool.ToolResultOffloaderTest#oversizedResultIsWrittenToSessionFileAndSummarized"
+      },
+      {
+        "id": "H27",
+        "goal": "写入项目外路径",
+        "expected": "路径被拒绝",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.011,
+        "error": "",
+        "test": "com.paicli.tool.ToolRegistryTest#editFileRejectsPathOutsideProject"
+      },
+      {
+        "id": "H28",
+        "goal": "上下文压缩后恢复",
+        "expected": "原始记录保留且视图检查点一致",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.08,
+        "error": "",
+        "test": "com.paicli.agent.AgentConversationLedgerTest#clearAndCompactionOnlyMutateDeliveryView"
+      },
+      {
+        "id": "H29",
+        "goal": "最终回答含未执行工具文本",
+        "expected": "明确提示工具未执行",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.017,
+        "error": "",
+        "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#agentAppendsNoticeWhenFinalAnswerContainsUnexecutedCall"
+      },
+      {
+        "id": "H30",
+        "goal": "工具执行失败",
+        "expected": "返回可分类的失败状态",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.0,
+        "error": "",
+        "test": "com.paicli.tool.ToolRegistryTest#executionResultCarriesTypedFailureStatus"
+      },
+      {
+        "id": "H31",
+        "goal": "简单问题直接回答",
+        "expected": "无工具时正常返回且不误报未执行工具",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.018,
+        "error": "",
+        "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#ordinaryAnswerHasNoNotice"
+      },
+      {
+        "id": "H32",
+        "goal": "长对话分段摘要",
+        "expected": "早期和中间历史都进入摘要流程",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.002,
+        "error": "",
+        "test": "com.paicli.memory.ConversationHistoryCompactorTest#longHistorySummarizesEveryChunkBeforeMerging"
+      },
+      {
+        "id": "H33",
+        "goal": "检索不同项目的长期记忆",
+        "expected": "项目级记忆不会跨项目注入",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.018,
+        "error": "",
+        "test": "com.paicli.memory.LongTermMemoryTest#shouldFilterProjectScopedMemories"
+      },
+      {
+        "id": "H34",
+        "goal": "摘要边界包含工具调用",
+        "expected": "工具调用与结果保持配对",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.001,
+        "error": "",
+        "test": "com.paicli.memory.ConversationHistoryCompactorTest#preservesToolCallPairAtSplitBoundary"
+      },
+      {
+        "id": "H35",
+        "goal": "模型返回无结构摘要",
+        "expected": "拒绝摘要并保持原对话",
+        "passed": true,
+        "failureCategory": null,
+        "elapsedSeconds": 0.002,
+        "error": "",
+        "test": "com.paicli.memory.ConversationHistoryCompactorTest#rejectsUnstructuredSummaryWithoutChangingHistory"
+      }
+    ]
+  },
+  "cloud": [
+    {
+      "batch": "history-before-cloud",
+      "traceId": "116811ca17ac9a6481a45604ad59967f",
+      "queried": true,
+      "generations": 3,
+      "tools": 2,
+      "usageMatches": 3,
+      "usageObservations": 3,
+      "danglingParents": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "hasUploadedIo": false,
+      "credentialDetected": false
+    },
+    {
+      "batch": "history-after-cloud",
+      "traceId": "0ac9a3bba79323041ffd0f20a58d926f",
+      "queried": true,
+      "generations": 4,
+      "tools": 3,
+      "usageMatches": 4,
+      "usageObservations": 4,
+      "danglingParents": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "hasUploadedIo": false,
+      "credentialDetected": false
+    },
+    {
+      "batch": "live-before-cloud",
+      "traceId": "0a0eea021ad89876b7da6bf8b69d2409",
+      "queried": true,
+      "generations": 5,
+      "tools": 4,
+      "usageMatches": 5,
+      "usageObservations": 5,
+      "danglingParents": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "hasUploadedIo": false,
+      "credentialDetected": false
+    },
+    {
+      "batch": "live-after-1-cloud",
+      "traceId": "70874f17769b14e9f82261a9f244bd28",
+      "queried": true,
+      "generations": 3,
+      "tools": 2,
+      "usageMatches": 3,
+      "usageObservations": 3,
+      "danglingParents": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "hasUploadedIo": false,
+      "credentialDetected": false
+    },
+    {
+      "batch": "live-after-2-cloud",
+      "traceId": "dd5f2270afac594c89774149d676e78d",
+      "queried": true,
+      "generations": 3,
+      "tools": 2,
+      "usageMatches": 3,
+      "usageObservations": 3,
+      "danglingParents": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "hasUploadedIo": false,
+      "credentialDetected": false
+    }
+  ],
+  "conclusion": "Tool advertisement mismatch fixed and non-advertised attempts observed 2 -> 0/0. L05 is not reliably solved: strict result 1/1 before, 1/2 after. Second post-run used path=\"{}\" rather than an empty argument object, and was correctly failed.",
+  "limits": [
+    "Three real executions total, same alias/settings but temperature=1 and no seed; no statistical success-rate or stable performance claim.",
+    "Post-run 2 is a failed task; its lower token/time counts cannot be called equivalent-success efficiency.",
+    "Historical first failed-call arguments and request bodies were not saved; exact {} cannot be proved, so old-before is insufficient evidence.",
+    "No full 12-case live rerun because compaction was excluded; no live Plan/Team regression claim.",
+    "Final context-rendering refactor avoids repeated external-context loads; all six recorded post-request system messages were independently shown byte-equivalent.",
+    "No task Deadline, checkpoint system, idempotency or automatic reflection added. No price verified for execution date; costs unknown."
+  ]
+}

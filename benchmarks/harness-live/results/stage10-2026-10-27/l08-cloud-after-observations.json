@@ -1,0 +1,342 @@
+[
+  {
+    "id": "2a872fbbb6ea1d2f",
+    "parent": "fb34ff7ed0dee388",
+    "type": "SPAN",
+    "name": "memory retrieval",
+    "startTime": "2026-10-27T05:57:27.714Z",
+    "endTime": "2026-10-27T05:57:27.715Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "fb34ff7ed0dee388",
+    "parent": "4f66980616b5f3a3",
+    "type": "AGENT",
+    "name": "simple-cli react",
+    "startTime": "2026-10-27T05:57:27.714Z",
+    "endTime": "2026-10-27T05:57:29.949Z",
+    "durationMillis": 2235.0,
+    "usage": {}
+  },
+  {
+    "id": "4f66980616b5f3a3",
+    "parent": null,
+    "type": "AGENT",
+    "name": "simple-cli live-evaluation",
+    "startTime": "2026-10-27T05:57:27.714Z",
+    "endTime": "2026-10-27T05:57:45.666Z",
+    "durationMillis": 17952.0,
+    "usage": {}
+  },
+  {
+    "id": "225331e933eb0ce5",
+    "parent": "fb34ff7ed0dee388",
+    "type": "SPAN",
+    "name": "context maintenance",
+    "startTime": "2026-10-27T05:57:27.719Z",
+    "endTime": "2026-10-27T05:57:27.719Z",
+    "durationMillis": 0.0,
+    "usage": {}
+  },
+  {
+    "id": "a09570f4af042b21",
+    "parent": "fb34ff7ed0dee388",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:27.72Z",
+    "endTime": "2026-10-27T05:57:29.947Z",
+    "durationMillis": 2227.0,
+    "usage": {
+      "input": 206,
+      "output": 240,
+      "input_cached": 3328,
+      "total": 3774
+    }
+  },
+  {
+    "id": "38f57681c2457bb9",
+    "parent": "6947f6ff40359800",
+    "type": "SPAN",
+    "name": "memory retrieval",
+    "startTime": "2026-10-27T05:57:29.949Z",
+    "endTime": "2026-10-27T05:57:29.95Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "6947f6ff40359800",
+    "parent": "4f66980616b5f3a3",
+    "type": "AGENT",
+    "name": "simple-cli react",
+    "startTime": "2026-10-27T05:57:29.949Z",
+    "endTime": "2026-10-27T05:57:31.499Z",
+    "durationMillis": 1550.0,
+    "usage": {}
+  },
+  {
+    "id": "e67781457d8df56e",
+    "parent": "6947f6ff40359800",
+    "type": "SPAN",
+    "name": "context maintenance",
+    "startTime": "2026-10-27T05:57:29.952Z",
+    "endTime": "2026-10-27T05:57:29.953Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "14d44d4da3201c77",
+    "parent": "6947f6ff40359800",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:29.953Z",
+    "endTime": "2026-10-27T05:57:31.497Z",
+    "durationMillis": 1544.0,
+    "usage": {
+      "input": 187,
+      "output": 135,
+      "input_cached": 3456,
+      "total": 3778
+    }
+  },
+  {
+    "id": "66c7a476f7ade5f6",
+    "parent": "69c45ea40a836202",
+    "type": "SPAN",
+    "name": "memory retrieval",
+    "startTime": "2026-10-27T05:57:31.499Z",
+    "endTime": "2026-10-27T05:57:31.5Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "69c45ea40a836202",
+    "parent": "4f66980616b5f3a3",
+    "type": "AGENT",
+    "name": "simple-cli react",
+    "startTime": "2026-10-27T05:57:31.499Z",
+    "endTime": "2026-10-27T05:57:33.057Z",
+    "durationMillis": 1558.0,
+    "usage": {}
+  },
+  {
+    "id": "4023b43cb4bcd8a2",
+    "parent": "69c45ea40a836202",
+    "type": "SPAN",
+    "name": "context maintenance",
+    "startTime": "2026-10-27T05:57:31.503Z",
+    "endTime": "2026-10-27T05:57:31.504Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "f7f45669c08bb331",
+    "parent": "69c45ea40a836202",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:31.504Z",
+    "endTime": "2026-10-27T05:57:33.056Z",
+    "durationMillis": 1552.0,
+    "usage": {
+      "input": 192,
+      "output": 155,
+      "input_cached": 3584,
+      "total": 3931
+    }
+  },
+  {
+    "id": "e74fb9f5b2aa0271",
+    "parent": "4f66980616b5f3a3",
+    "type": "AGENT",
+    "name": "simple-cli react",
+    "startTime": "2026-10-27T05:57:33.057Z",
+    "endTime": "2026-10-27T05:57:34.149Z",
+    "durationMillis": 1092.0,
+    "usage": {}
+  },
+  {
+    "id": "7eb2a5436817fcd7",
+    "parent": "e74fb9f5b2aa0271",
+    "type": "SPAN",
+    "name": "memory retrieval",
+    "startTime": "2026-10-27T05:57:33.058Z",
+    "endTime": "2026-10-27T05:57:33.058Z",
+    "durationMillis": 0.0,
+    "usage": {}
+  },
+  {
+    "id": "570c204417a0f572",
+    "parent": "e74fb9f5b2aa0271",
+    "type": "SPAN",
+    "name": "context maintenance",
+    "startTime": "2026-10-27T05:57:33.061Z",
+    "endTime": "2026-10-27T05:57:33.062Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "e7dc9f73970634ce",
+    "parent": "e74fb9f5b2aa0271",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:33.062Z",
+    "endTime": "2026-10-27T05:57:34.148Z",
+    "durationMillis": 1086.0,
+    "usage": {
+      "input": 214,
+      "output": 104,
+      "input_cached": 3712,
+      "total": 4030
+    }
+  },
+  {
+    "id": "75e1a28ea0d6d333",
+    "parent": "4f66980616b5f3a3",
+    "type": "AGENT",
+    "name": "simple-cli react",
+    "startTime": "2026-10-27T05:57:34.149Z",
+    "endTime": "2026-10-27T05:57:35.744Z",
+    "durationMillis": 1595.0,
+    "usage": {}
+  },
+  {
+    "id": "c3cd3f21d9ff87a4",
+    "parent": "75e1a28ea0d6d333",
+    "type": "SPAN",
+    "name": "memory retrieval",
+    "startTime": "2026-10-27T05:57:34.149Z",
+    "endTime": "2026-10-27T05:57:34.15Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "054e4a8606f89805",
+    "parent": "75e1a28ea0d6d333",
+    "type": "SPAN",
+    "name": "context maintenance",
+    "startTime": "2026-10-27T05:57:34.153Z",
+    "endTime": "2026-10-27T05:57:34.153Z",
+    "durationMillis": 0.0,
+    "usage": {}
+  },
+  {
+    "id": "3e84a63ae494aa45",
+    "parent": "75e1a28ea0d6d333",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:34.154Z",
+    "endTime": "2026-10-27T05:57:35.743Z",
+    "durationMillis": 1589.0,
+    "usage": {
+      "input": 229,
+      "output": 173,
+      "input_cached": 3840,
+      "total": 4242
+    }
+  },
+  {
+    "id": "7053f95467df4465",
+    "parent": "4f66980616b5f3a3",
+    "type": "AGENT",
+    "name": "simple-cli react",
+    "startTime": "2026-10-27T05:57:35.744Z",
+    "endTime": "2026-10-27T05:57:37.566Z",
+    "durationMillis": 1822.0,
+    "usage": {}
+  },
+  {
+    "id": "dad52c3052f7c920",
+    "parent": "7053f95467df4465",
+    "type": "SPAN",
+    "name": "memory retrieval",
+    "startTime": "2026-10-27T05:57:35.744Z",
+    "endTime": "2026-10-27T05:57:35.745Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "04c0926adb3ae44e",
+    "parent": "7053f95467df4465",
+    "type": "SPAN",
+    "name": "context maintenance",
+    "startTime": "2026-10-27T05:57:35.747Z",
+    "endTime": "2026-10-27T05:57:35.748Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "91a5d6e339e8e2fe",
+    "parent": "7053f95467df4465",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:35.748Z",
+    "endTime": "2026-10-27T05:57:37.565Z",
+    "durationMillis": 1817.0,
+    "usage": {
+      "input": 229,
+      "output": 157,
+      "input_cached": 3968,
+      "total": 4354
+    }
+  },
+  {
+    "id": "5d4c062c3abbbb97",
+    "parent": "4f66980616b5f3a3",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:37.569Z",
+    "endTime": "2026-10-27T05:57:45.017Z",
+    "durationMillis": 7448.0,
+    "usage": {
+      "input": 923,
+      "output": 1203,
+      "input_cached": 0,
+      "total": 2126
+    }
+  },
+  {
+    "id": "df8f8c5a4722ed6e",
+    "parent": "4f66980616b5f3a3",
+    "type": "AGENT",
+    "name": "simple-cli react",
+    "startTime": "2026-10-27T05:57:45.02Z",
+    "endTime": "2026-10-27T05:57:45.666Z",
+    "durationMillis": 646.0,
+    "usage": {}
+  },
+  {
+    "id": "8030c96908215c7c",
+    "parent": "df8f8c5a4722ed6e",
+    "type": "SPAN",
+    "name": "memory retrieval",
+    "startTime": "2026-10-27T05:57:45.021Z",
+    "endTime": "2026-10-27T05:57:45.021Z",
+    "durationMillis": 0.0,
+    "usage": {}
+  },
+  {
+    "id": "0eb46b9e36e110db",
+    "parent": "df8f8c5a4722ed6e",
+    "type": "SPAN",
+    "name": "context maintenance",
+    "startTime": "2026-10-27T05:57:45.023Z",
+    "endTime": "2026-10-27T05:57:45.024Z",
+    "durationMillis": 1.0,
+    "usage": {}
+  },
+  {
+    "id": "a2520bd3477beb96",
+    "parent": "df8f8c5a4722ed6e",
+    "type": "GENERATION",
+    "name": "llm deepseek",
+    "startTime": "2026-10-27T05:57:45.024Z",
+    "endTime": "2026-10-27T05:57:45.665Z",
+    "durationMillis": 641.0,
+    "usage": {
+      "input": 534,
+      "output": 6,
+      "input_cached": 3456,
+      "total": 3996
+    }
+  }
+]

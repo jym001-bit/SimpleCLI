@@ -1,0 +1,4 @@
+����: Failed to export 3 spans. The request could not be executed.
+java.util.concurrent.CompletionException: java.io.UncheckedIOException: java.net.http.HttpTimeoutException: request timed out
+Caused by: java.io.UncheckedIOException: java.net.http.HttpTimeoutException: request timed out
+Caused by: java.net.http.HttpTimeoutException: request timed out

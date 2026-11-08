@@ -1,0 +1,20 @@
+{
+  "judgeVersion" : "ordered-recovery-v2",
+  "results" : [ {
+    "source" : "target/harness-stage11/live-before.json",
+    "originalStatus" : "passed",
+    "traceId" : "0a0eea021ad89876b7da6bf8b69d2409",
+    "revised" : {
+      "status" : "PASSED",
+      "reason" : "error observed before a successful associated recovery"
+    }
+  }, {
+    "source" : "target/harness-stage11/live-after-1.json",
+    "originalStatus" : "passed",
+    "traceId" : "70874f17769b14e9f82261a9f244bd28",
+    "revised" : {
+      "status" : "PASSED",
+      "reason" : "error observed before a successful associated recovery"
+    }
+  } ]
+}

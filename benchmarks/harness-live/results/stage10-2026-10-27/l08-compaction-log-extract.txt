@@ -1,0 +1,3 @@
+2026-10-27 13:46:07.917 [main] INFO  c.p.m.ConversationHistoryCompactor - compacted conversationHistory: tokens 3472 -> 3338, messages 7 -> 5, summary chars 815
+2026-10-27 13:57:45.017 [main] INFO  c.p.m.ConversationHistoryCompactor - compacted conversationHistory: tokens 3557 -> 3253, messages 7 -> 5, summary chars 626
+2026-10-27 14:02:18.385 [main] INFO  c.p.m.ConversationHistoryCompactor - compacted conversationHistory: tokens 3479 -> 3205, messages 7 -> 5, summary chars 532

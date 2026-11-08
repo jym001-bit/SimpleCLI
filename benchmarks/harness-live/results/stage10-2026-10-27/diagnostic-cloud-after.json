@@ -1,0 +1,259 @@
+{
+  "kind": "langfuse-cloud-trace-structure-audit",
+  "checkedUtc": "2026-10-27T05:57:12.3220865+00:00",
+  "cases": [
+    {
+      "caseId": "D01",
+      "queried": true,
+      "traceId": "cdac5a765426c87e3166f6e1a78edc18",
+      "observations": 22,
+      "roots": 1,
+      "rootName": "simple-cli live-evaluation",
+      "generations": 6,
+      "tools": 0,
+      "agentNodes": 6,
+      "danglingParents": 0,
+      "generationsOutsideAgent": 0,
+      "toolsOutsideAgent": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "usageMatches": 6,
+      "usageObservations": 6,
+      "generationsUsage": [
+        {
+          "model": "deepseek-v4-flash",
+          "input": 247,
+          "cachedInput": 3328,
+          "output": 198,
+          "observedTotalInput": 3575,
+          "observedOutput": 198
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 853,
+          "cachedInput": 3328,
+          "output": 396,
+          "observedTotalInput": 4181,
+          "observedOutput": 396
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 184,
+          "cachedInput": 4096,
+          "output": 2,
+          "observedTotalInput": 4280,
+          "observedOutput": 2
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 212,
+          "cachedInput": 4096,
+          "output": 2,
+          "observedTotalInput": 4308,
+          "observedOutput": 2
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 1134,
+          "cachedInput": 0,
+          "output": 403,
+          "observedTotalInput": 1134,
+          "observedOutput": 403
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 330,
+          "cachedInput": 3328,
+          "output": 132,
+          "observedTotalInput": 3658,
+          "observedOutput": 132
+        }
+      ],
+      "hasNonEmptyObservationIo": false,
+      "fixtureTextDetected": false,
+      "credentialTextDetected": false,
+      "errorObservations": 0,
+      "toolStatuses": []
+    },
+    {
+      "caseId": "D02",
+      "queried": true,
+      "traceId": "9bbeea892bbf46fbc2c02dc2daea7159",
+      "observations": 26,
+      "roots": 1,
+      "rootName": "simple-cli live-evaluation",
+      "generations": 7,
+      "tools": 2,
+      "agentNodes": 6,
+      "danglingParents": 0,
+      "generationsOutsideAgent": 0,
+      "toolsOutsideAgent": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "usageMatches": 7,
+      "usageObservations": 7,
+      "generationsUsage": [
+        {
+          "model": "deepseek-v4-flash",
+          "input": 235,
+          "cachedInput": 3328,
+          "output": 120,
+          "observedTotalInput": 3563,
+          "observedOutput": 120
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 171,
+          "cachedInput": 3584,
+          "output": 155,
+          "observedTotalInput": 3755,
+          "observedOutput": 155
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 1118,
+          "cachedInput": 3328,
+          "output": 296,
+          "observedTotalInput": 4446,
+          "observedOutput": 296
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 249,
+          "cachedInput": 4352,
+          "output": 3,
+          "observedTotalInput": 4601,
+          "observedOutput": 3
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 150,
+          "cachedInput": 4480,
+          "output": 3,
+          "observedTotalInput": 4630,
+          "observedOutput": 3
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 1444,
+          "cachedInput": 0,
+          "output": 906,
+          "observedTotalInput": 1444,
+          "observedOutput": 906
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 471,
+          "cachedInput": 3456,
+          "output": 66,
+          "observedTotalInput": 3927,
+          "observedOutput": 66
+        }
+      ],
+      "hasNonEmptyObservationIo": false,
+      "fixtureTextDetected": false,
+      "credentialTextDetected": false,
+      "errorObservations": 1,
+      "toolStatuses": [
+        {
+          "name": "tool read_file",
+          "level": "ERROR",
+          "errorType": "READ_FILE_FAILED",
+          "callIdPresent": true,
+          "statusMessagePresent": false
+        },
+        {
+          "name": "tool read_file",
+          "level": "DEFAULT",
+          "errorType": null,
+          "callIdPresent": true,
+          "statusMessagePresent": false
+        }
+      ]
+    },
+    {
+      "caseId": "D03",
+      "queried": true,
+      "traceId": "9bef0cc727b5a16dd69bb941a1f12b8c",
+      "observations": 26,
+      "roots": 1,
+      "rootName": "simple-cli live-evaluation",
+      "generations": 7,
+      "tools": 0,
+      "agentNodes": 7,
+      "danglingParents": 0,
+      "generationsOutsideAgent": 0,
+      "toolsOutsideAgent": 0,
+      "taskIdMatches": true,
+      "toolCallIdsMatch": true,
+      "temporalOrderValid": true,
+      "usageMatches": 7,
+      "usageObservations": 7,
+      "generationsUsage": [
+        {
+          "model": "deepseek-v4-flash",
+          "input": 207,
+          "cachedInput": 3328,
+          "output": 108,
+          "observedTotalInput": 3535,
+          "observedOutput": 108
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 138,
+          "cachedInput": 3456,
+          "output": 2,
+          "observedTotalInput": 3594,
+          "observedOutput": 2
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 872,
+          "cachedInput": 3328,
+          "output": 244,
+          "observedTotalInput": 4200,
+          "observedOutput": 244
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 208,
+          "cachedInput": 4096,
+          "output": 43,
+          "observedTotalInput": 4304,
+          "observedOutput": 43
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 232,
+          "cachedInput": 4096,
+          "output": 31,
+          "observedTotalInput": 4328,
+          "observedOutput": 31
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 1162,
+          "cachedInput": 0,
+          "output": 592,
+          "observedTotalInput": 1162,
+          "observedOutput": 592
+        },
+        {
+          "model": "deepseek-v4-flash",
+          "input": 356,
+          "cachedInput": 3456,
+          "output": 365,
+          "observedTotalInput": 3812,
+          "observedOutput": 365
+        }
+      ],
+      "hasNonEmptyObservationIo": false,
+      "fixtureTextDetected": false,
+      "credentialTextDetected": false,
+      "errorObservations": 0,
+      "toolStatuses": []
+    }
+  ]
+}

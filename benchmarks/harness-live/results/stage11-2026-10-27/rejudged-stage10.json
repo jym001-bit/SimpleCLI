@@ -1,0 +1,20 @@
+{
+  "judgeVersion" : "ordered-recovery-v2",
+  "results" : [ {
+    "source" : "benchmarks/harness-live/results/stage10-2026-10-27/live-before.json",
+    "originalStatus" : "passed",
+    "traceId" : "116811ca17ac9a6481a45604ad59967f",
+    "revised" : {
+      "status" : "INSUFFICIENT_EVIDENCE",
+      "reason" : "historical record lacks exact error arguments"
+    }
+  }, {
+    "source" : "benchmarks/harness-live/results/stage10-2026-10-27/live-after.json",
+    "originalStatus" : "passed",
+    "traceId" : "0ac9a3bba79323041ffd0f20a58d926f",
+    "revised" : {
+      "status" : "FAILED",
+      "reason" : "an operation occurred before the required parameter error"
+    }
+  } ]
+}

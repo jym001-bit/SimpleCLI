@@ -1,0 +1,26 @@
+[
+  {
+    "path": "src/main/java/com/paicli/agent/Agent.java",
+    "sha256": "31D10BEEB0984DA0A7062E1F0EA388A1A2437514B9BB6EFA7A14D64344189B6C"
+  },
+  {
+    "path": "src/main/java/com/paicli/prompt/PromptAssembler.java",
+    "sha256": "12E13033A689B8512A004E408ABAE4E48DD001A205CAC516C28D3AEFB235074D"
+  },
+  {
+    "path": "src/main/java/com/paicli/eval/live/OrderedRecoveryJudge.java",
+    "sha256": "BE8C4D9AF8709C5D098F4821148A1AFDDABE746A46928665516CE7FF12DF7D22"
+  },
+  {
+    "path": "src/main/java/com/paicli/eval/live/LiveHarnessMain.java",
+    "sha256": "A56E11003D0C96B086CE74F3DE8CBF8FEDFF2A6094FA187388CE0E35C7D4BED8"
+  },
+  {
+    "path": "src/main/resources/prompts/base.md",
+    "sha256": "8BC2104F839F9F29A404214C254782EEDA99C3E0578B2492BA284C70286FCA8B"
+  },
+  {
+    "path": "tools/run-harness-live-eval.ps1",
+    "sha256": "FABB402D1A65C81DB3D02349748986055495D81B61ACECDCBB403EFCC9976CF6"
+  }
+]

@@ -1,0 +1,89 @@
+{
+  "kind" : "real-model-harness-evaluation",
+  "startedUtc" : "2026-10-27T06:01:57.392166100Z",
+  "updatedUtc" : "2026-10-27T06:02:20.215317400Z",
+  "provider" : "deepseek",
+  "model" : "deepseek-v4-flash",
+  "harnessVersion" : "37b09ee+working-tree",
+  "executionMode" : "sequential",
+  "datasetSha256" : "f58399cd59efadca5fbafeb6715f78b09dbc87e9dc47817185a23f3272cb5a28",
+  "attempts" : [ {
+    "caseId" : "L08",
+    "taskId" : "3bd31dfb-f40c-417d-9d95-eede9a730c40",
+    "category" : "compaction",
+    "startedUtc" : "2026-10-27T06:01:57.532499500Z",
+    "traceId" : "bcf0efd062971887e4260936bb19486c",
+    "answer" : "ZETA-4826",
+    "compacted" : true,
+    "memorySeeded" : false,
+    "compactionBeforeTokensEstimated" : 3479,
+    "compactionAfterTokensEstimated" : 3205,
+    "compressionRatioEstimated" : 0.07875826386892781,
+    "summaryFactChecks" : { },
+    "status" : "passed",
+    "judgement" : "passed",
+    "errorCategory" : null,
+    "modelCalls" : 8,
+    "modelFailedCalls" : 0,
+    "modelUsageMissingCalls" : 0,
+    "inputTokens" : 27671,
+    "uncachedInputTokens" : 2327,
+    "outputTokens" : 1994,
+    "cachedInputTokens" : 25344,
+    "tokenUsageSource" : "provider_response",
+    "usageSamples" : [ {
+      "output" : 114,
+      "inputTotal" : 3534,
+      "inputCached" : 3328,
+      "inputUncached" : 206
+    }, {
+      "output" : 151,
+      "inputTotal" : 3626,
+      "inputCached" : 3456,
+      "inputUncached" : 170
+    }, {
+      "output" : 138,
+      "inputTotal" : 3744,
+      "inputCached" : 3584,
+      "inputUncached" : 160
+    }, {
+      "output" : 187,
+      "inputTotal" : 3874,
+      "inputCached" : 3712,
+      "inputUncached" : 162
+    }, {
+      "output" : 134,
+      "inputTotal" : 4005,
+      "inputCached" : 3840,
+      "inputUncached" : 165
+    }, {
+      "output" : 230,
+      "inputTotal" : 4115,
+      "inputCached" : 3968,
+      "inputUncached" : 147
+    }, {
+      "output" : 963,
+      "inputTotal" : 841,
+      "inputCached" : 0,
+      "inputUncached" : 841
+    }, {
+      "output" : 77,
+      "inputTotal" : 3932,
+      "inputCached" : 3456,
+      "inputUncached" : 476
+    } ],
+    "estimatedCostUsd" : null,
+    "costBasis" : "unavailable",
+    "toolCalls" : 0,
+    "tools" : [ ],
+    "durationMillis" : 22447,
+    "provider" : "deepseek",
+    "model" : "deepseek-v4-flash",
+    "configuration" : {
+      "hardMaxIterations" : 0,
+      "allowedTools" : [ "read_file" ]
+    }
+  } ],
+  "total" : 1,
+  "passed" : 1
+}

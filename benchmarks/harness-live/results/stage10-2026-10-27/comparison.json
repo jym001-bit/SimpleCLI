@@ -1,0 +1,1792 @@
+{
+  "kind": "stage10-real-model-paired-task-comparison",
+  "generatedUtc": "2026-10-27T06:14:12.5271678+00:00",
+  "controlledChange": "Single-chunk conversation summary receives an input-relative soft length target; no truncation or acceptance guard changes.",
+  "configuration": {
+    "model": "deepseek-v4-flash",
+    "temperature": 1.0,
+    "topP": 0.95,
+    "thinking": "enabled",
+    "reasoningEffort": "max",
+    "seed": null,
+    "safeTools": [
+      "read_file"
+    ],
+    "executionMode": "sequential",
+    "sameTaskPrompts": true,
+    "internalSummaryPromptChanged": true,
+    "vendorBackendRevisionPinned": false
+  },
+  "fixed12": {
+    "before": {
+      "total": 12,
+      "passed": 12,
+      "successRate": 1,
+      "datasetSha256": "f58399cd59efadca5fbafeb6715f78b09dbc87e9dc47817185a23f3272cb5a28",
+      "model": "deepseek-v4-flash",
+      "modelCalls": 29.0,
+      "toolCalls": 12.0,
+      "inputTokens": 104135.0,
+      "uncachedInputTokens": 10695.0,
+      "cachedInputTokens": 93440.0,
+      "outputTokens": 3288.0,
+      "durationMillis": 48522.0,
+      "estimatedCostUsd": null,
+      "costReason": "No verified rate for 2026-10-27; the existing snapshot is date-scoped to 2026-10-26.",
+      "failedCases": []
+    },
+    "after": {
+      "total": 12,
+      "passed": 12,
+      "successRate": 1,
+      "datasetSha256": "f58399cd59efadca5fbafeb6715f78b09dbc87e9dc47817185a23f3272cb5a28",
+      "model": "deepseek-v4-flash",
+      "modelCalls": 31.0,
+      "toolCalls": 14.0,
+      "inputTokens": 114323.0,
+      "uncachedInputTokens": 11291.0,
+      "cachedInputTokens": 103032.0,
+      "outputTokens": 4055.0,
+      "durationMillis": 45918.0,
+      "estimatedCostUsd": null,
+      "costReason": "No verified rate for 2026-10-27; the existing snapshot is date-scoped to 2026-10-26.",
+      "failedCases": []
+    },
+    "automaticScoreLimitation": "L05 checks occurrence but not order. Supplemental order audit is applied to both batches and is reported separately.",
+    "l05OrderAudit": [
+      {
+        "batch": "before",
+        "caseId": "L05",
+        "firstToolFailedThenAlphaRead": true,
+        "automaticStatus": "passed",
+        "tools": [
+          {
+            "timedOut": false,
+            "name": "read_file",
+            "elapsedMillis": 3,
+            "successful": false,
+            "path": ""
+          },
+          {
+            "timedOut": false,
+            "name": "read_file",
+            "elapsedMillis": 1,
+            "successful": true,
+            "path": "alpha.txt"
+          }
+        ]
+      },
+      {
+        "batch": "after",
+        "caseId": "L05",
+        "firstToolFailedThenAlphaRead": false,
+        "automaticStatus": "passed",
+        "tools": [
+          {
+            "path": "alpha.txt",
+            "timedOut": false,
+            "name": "read_file",
+            "elapsedMillis": 1,
+            "successful": true
+          },
+          {
+            "path": "",
+            "timedOut": false,
+            "name": "read_file",
+            "elapsedMillis": 2,
+            "successful": false
+          },
+          {
+            "path": "alpha.txt",
+            "timedOut": false,
+            "name": "read_file",
+            "elapsedMillis": 1,
+            "successful": true
+          }
+        ]
+      }
+    ],
+    "beforeScoreWithOnlyThisAdditionalAudit": 12,
+    "afterScoreWithOnlyThisAdditionalAudit": 11
+  },
+  "diagnostic3": {
+    "before": {
+      "total": 3,
+      "passed": 2,
+      "successRate": 0.6666666666666666,
+      "datasetSha256": "1e783cdf3fbfb6dbfff398f5b372cec16a53f34be991064d5e3bbc98bbad03fe",
+      "model": "deepseek-v4-flash",
+      "modelCalls": 20.0,
+      "toolCalls": 2.0,
+      "inputTokens": 72442.0,
+      "uncachedInputTokens": 9978.0,
+      "cachedInputTokens": 62464.0,
+      "outputTokens": 4178.0,
+      "durationMillis": 39991.0,
+      "estimatedCostUsd": null,
+      "costReason": "No verified rate for 2026-10-27; the existing snapshot is date-scoped to 2026-10-26.",
+      "failedCases": [
+        {
+          "caseId": "D01",
+          "judgement": "JSON value mismatch",
+          "answer": "{\"goal\":\"GOAL-AUDIT：检查 Java Service\",\"constraint\":\"NO-WRITE：所有文件只读，禁止任何写入或修改操作\",\"pending\":[\"TODO-VERIFY\",\"TODO-REPORT\"],\"verified\":false}",
+          "traceId": "1cde7f8f0a02eb2805ba88d2c236c33d"
+        }
+      ]
+    },
+    "after": {
+      "total": 3,
+      "passed": 2,
+      "successRate": 0.6666666666666666,
+      "datasetSha256": "1e783cdf3fbfb6dbfff398f5b372cec16a53f34be991064d5e3bbc98bbad03fe",
+      "model": "deepseek-v4-flash",
+      "modelCalls": 20.0,
+      "toolCalls": 2.0,
+      "inputTokens": 72437.0,
+      "uncachedInputTokens": 9973.0,
+      "cachedInputTokens": 62464.0,
+      "outputTokens": 4067.0,
+      "durationMillis": 38347.0,
+      "estimatedCostUsd": null,
+      "costReason": "No verified rate for 2026-10-27; the existing snapshot is date-scoped to 2026-10-26.",
+      "failedCases": [
+        {
+          "caseId": "D01",
+          "judgement": "JSON value mismatch",
+          "answer": "{\"goal\":\"GOAL-AUDIT：检查 Java Service\",\"constraint\":\"NO-WRITE：所有文件只读\",\"pending\":[\"TODO-VERIFY 未开始\",\"TODO-REPORT 未完成\"],\"verified\":false}",
+          "traceId": "cdac5a765426c87e3166f6e1a78edc18"
+        }
+      ]
+    },
+    "pairs": [
+      {
+        "caseId": "D01",
+        "before": {
+          "caseId": "D01",
+          "taskId": "53ec583f-05c2-4020-af3b-b6425c2d0774",
+          "category": "compaction-state",
+          "startedUtc": "2026-10-27T05:50:03.981616200Z",
+          "traceId": "1cde7f8f0a02eb2805ba88d2c236c33d",
+          "answer": "{\"goal\":\"GOAL-AUDIT：检查 Java Service\",\"constraint\":\"NO-WRITE：所有文件只读，禁止任何写入或修改操作\",\"pending\":[\"TODO-VERIFY\",\"TODO-REPORT\"],\"verified\":false}",
+          "compacted": true,
+          "memorySeeded": false,
+          "compactionBeforeTokensEstimated": 3632,
+          "compactionAfterTokensEstimated": 3067,
+          "compressionRatioEstimated": 0.1555616740088106,
+          "summaryFactChecks": {
+            "GOAL-AUDIT": true,
+            "NO-WRITE": true,
+            "TODO-VERIFY": true,
+            "TODO-REPORT": true
+          },
+          "status": "failed",
+          "judgement": "JSON value mismatch",
+          "errorCategory": null,
+          "modelCalls": 6,
+          "modelFailedCalls": 0,
+          "modelUsageMissingCalls": 0,
+          "inputTokens": 21284,
+          "uncachedInputTokens": 3108,
+          "outputTokens": 1120,
+          "cachedInputTokens": 18176,
+          "tokenUsageSource": "provider_response",
+          "usageSamples": [
+            {
+              "inputUncached": 247,
+              "inputCached": 3328,
+              "inputTotal": 3575,
+              "output": 199
+            },
+            {
+              "inputUncached": 854,
+              "inputCached": 3328,
+              "inputTotal": 4182,
+              "output": 302
+            },
+            {
+              "inputUncached": 203,
+              "inputCached": 4096,
+              "inputTotal": 4299,
+              "output": 3
+            },
+            {
+              "inputUncached": 232,
+              "inputCached": 4096,
+              "inputTotal": 4328,
+              "output": 3
+            },
+            {
+              "inputUncached": 1067,
+              "inputCached": 0,
+              "inputTotal": 1067,
+              "output": 456
+            },
+            {
+              "inputUncached": 505,
+              "inputCached": 3328,
+              "inputTotal": 3833,
+              "output": 157
+            }
+          ],
+          "estimatedCostUsd": null,
+          "costBasis": "unavailable",
+          "toolCalls": 0,
+          "tools": [],
+          "durationMillis": 11768,
+          "provider": "deepseek",
+          "model": "deepseek-v4-flash",
+          "configuration": {
+            "allowedTools": [
+              "read_file"
+            ],
+            "hardMaxIterations": 0
+          }
+        },
+        "after": {
+          "caseId": "D01",
+          "taskId": "74448abf-cc71-4ba6-ac9a-b44575d8bb2d",
+          "category": "compaction-state",
+          "startedUtc": "2026-10-27T05:55:54.561344900Z",
+          "traceId": "cdac5a765426c87e3166f6e1a78edc18",
+          "answer": "{\"goal\":\"GOAL-AUDIT：检查 Java Service\",\"constraint\":\"NO-WRITE：所有文件只读\",\"pending\":[\"TODO-VERIFY 未开始\",\"TODO-REPORT 未完成\"],\"verified\":false}",
+          "compacted": true,
+          "memorySeeded": false,
+          "compactionBeforeTokensEstimated": 3606,
+          "compactionAfterTokensEstimated": 2924,
+          "compressionRatioEstimated": 0.18912922906267338,
+          "summaryFactChecks": {
+            "GOAL-AUDIT": true,
+            "NO-WRITE": true,
+            "TODO-VERIFY": true,
+            "TODO-REPORT": true
+          },
+          "status": "failed",
+          "judgement": "JSON value mismatch",
+          "errorCategory": null,
+          "modelCalls": 6,
+          "modelFailedCalls": 0,
+          "modelUsageMissingCalls": 0,
+          "inputTokens": 21136,
+          "uncachedInputTokens": 2960,
+          "outputTokens": 1133,
+          "cachedInputTokens": 18176,
+          "tokenUsageSource": "provider_response",
+          "usageSamples": [
+            {
+              "output": 198,
+              "inputTotal": 3575,
+              "inputCached": 3328,
+              "inputUncached": 247
+            },
+            {
+              "output": 396,
+              "inputTotal": 4181,
+              "inputCached": 3328,
+              "inputUncached": 853
+            },
+            {
+              "output": 2,
+              "inputTotal": 4280,
+              "inputCached": 4096,
+              "inputUncached": 184
+            },
+            {
+              "output": 2,
+              "inputTotal": 4308,
+              "inputCached": 4096,
+              "inputUncached": 212
+            },
+            {
+              "output": 403,
+              "inputTotal": 1134,
+              "inputCached": 0,
+              "inputUncached": 1134
+            },
+            {
+              "output": 132,
+              "inputTotal": 3658,
+              "inputCached": 3328,
+              "inputUncached": 330
+            }
+          ],
+          "estimatedCostUsd": null,
+          "costBasis": "unavailable",
+          "toolCalls": 0,
+          "tools": [],
+          "durationMillis": 12180,
+          "provider": "deepseek",
+          "model": "deepseek-v4-flash",
+          "configuration": {
+            "hardMaxIterations": 0,
+            "allowedTools": [
+              "read_file"
+            ]
+          }
+        }
+      },
+      {
+        "caseId": "D02",
+        "before": {
+          "caseId": "D02",
+          "taskId": "1b54a85b-a4b0-4d2a-96d9-65d48a2839cd",
+          "category": "compaction-tool-evidence",
+          "startedUtc": "2026-10-27T05:50:15.754651600Z",
+          "traceId": "edd67b750efe860659e5949a0f4e74e0",
+          "answer": "{\"alpha\": 17, \"missing_read_succeeded\": false, \"pending\": \"VERIFY-BETA\"}",
+          "compacted": true,
+          "memorySeeded": false,
+          "compactionBeforeTokensEstimated": 3791,
+          "compactionAfterTokensEstimated": 3152,
+          "compressionRatioEstimated": 0.16855710894223164,
+          "summaryFactChecks": {
+            "alpha.txt": true,
+            "missing.txt": true,
+            "NO-GUESS": true,
+            "VERIFY-BETA": true
+          },
+          "status": "passed",
+          "judgement": "passed",
+          "errorCategory": null,
+          "modelCalls": 7,
+          "modelFailedCalls": 0,
+          "modelUsageMissingCalls": 0,
+          "inputTokens": 26347,
+          "uncachedInputTokens": 3819,
+          "outputTokens": 1276,
+          "cachedInputTokens": 22528,
+          "tokenUsageSource": "provider_response",
+          "usageSamples": [
+            {
+              "inputUncached": 235,
+              "inputCached": 3328,
+              "inputTotal": 3563,
+              "output": 126
+            },
+            {
+              "inputUncached": 177,
+              "inputCached": 3584,
+              "inputTotal": 3761,
+              "output": 152
+            },
+            {
+              "inputUncached": 1136,
+              "inputCached": 3328,
+              "inputTotal": 4464,
+              "output": 186
+            },
+            {
+              "inputUncached": 234,
+              "inputCached": 4352,
+              "inputTotal": 4586,
+              "output": 3
+            },
+            {
+              "inputUncached": 135,
+              "inputCached": 4480,
+              "inputTotal": 4615,
+              "output": 43
+            },
+            {
+              "inputUncached": 1344,
+              "inputCached": 0,
+              "inputTotal": 1344,
+              "output": 707
+            },
+            {
+              "inputUncached": 558,
+              "inputCached": 3456,
+              "inputTotal": 4014,
+              "output": 59
+            }
+          ],
+          "estimatedCostUsd": null,
+          "costBasis": "unavailable",
+          "toolCalls": 2,
+          "tools": [
+            {
+              "path": "alpha.txt",
+              "timedOut": false,
+              "name": "read_file",
+              "elapsedMillis": 42,
+              "successful": true
+            },
+            {
+              "path": "missing.txt",
+              "timedOut": false,
+              "name": "read_file",
+              "elapsedMillis": 41,
+              "successful": false
+            }
+          ],
+          "durationMillis": 12407,
+          "provider": "deepseek",
+          "model": "deepseek-v4-flash",
+          "configuration": {
+            "allowedTools": [
+              "read_file"
+            ],
+            "hardMaxIterations": 0
+          }
+        },
+        "after": {
+          "caseId": "D02",
+          "taskId": "d6efb7e6-2e52-4789-8764-b34f7745a954",
+          "category": "compaction-tool-evidence",
+          "startedUtc": "2026-10-27T05:56:06.746448Z",
+          "traceId": "9bbeea892bbf46fbc2c02dc2daea7159",
+          "answer": "{\"alpha\": 17, \"missing_read_succeeded\": false, \"pending\": \"VERIFY-BETA\"}",
+          "compacted": true,
+          "memorySeeded": false,
+          "compactionBeforeTokensEstimated": 3809,
+          "compactionAfterTokensEstimated": 3076,
+          "compressionRatioEstimated": 0.1924389603570491,
+          "summaryFactChecks": {
+            "alpha.txt": true,
+            "missing.txt": true,
+            "NO-GUESS": true,
+            "VERIFY-BETA": true
+          },
+          "status": "passed",
+          "judgement": "passed",
+          "errorCategory": null,
+          "modelCalls": 7,
+          "modelFailedCalls": 0,
+          "modelUsageMissingCalls": 0,
+          "inputTokens": 26366,
+          "uncachedInputTokens": 3838,
+          "outputTokens": 1549,
+          "cachedInputTokens": 22528,
+          "tokenUsageSource": "provider_response",
+          "usageSamples": [
+            {
+              "output": 120,
+              "inputTotal": 3563,
+              "inputCached": 3328,
+              "inputUncached": 235
+            },
+            {
+              "output": 155,
+              "inputTotal": 3755,
+              "inputCached": 3584,
+              "inputUncached": 171
+            },
+            {
+              "output": 296,
+              "inputTotal": 4446,
+              "inputCached": 3328,
+              "inputUncached": 1118
+            },
+            {
+              "output": 3,
+              "inputTotal": 4601,
+              "inputCached": 4352,
+              "inputUncached": 249
+            },
+            {
+              "output": 3,
+              "inputTotal": 4630,
+              "inputCached": 4480,
+              "inputUncached": 150
+            },
+            {
+              "output": 906,
+              "inputTotal": 1444,
+              "inputCached": 0,
+              "inputUncached": 1444
+            },
+            {
+              "output": 66,
+              "inputTotal": 3927,
+              "inputCached": 3456,
+              "inputUncached": 471
+            }
+          ],
+          "estimatedCostUsd": null,
+          "costBasis": "unavailable",
+          "toolCalls": 2,
+          "tools": [
+            {
+              "path": "alpha.txt",
+              "successful": true,
+              "elapsedMillis": 41,
+              "name": "read_file",
+              "timedOut": false
+            },
+            {
+              "path": "missing.txt",
+              "successful": false,
+              "elapsedMillis": 40,
+              "name": "read_file",
+              "timedOut": false
+            }
+          ],
+          "durationMillis": 13021,
+          "provider": "deepseek",
+          "model": "deepseek-v4-flash",
+          "configuration": {
+            "hardMaxIterations": 0,
+            "allowedTools": [
+              "read_file"
+            ]
+          }
+        }
+      },
+      {
+        "caseId": "D03",
+        "before": {
+          "caseId": "D03",
+          "taskId": "5f4171fd-ef82-4d68-be3e-649d34c66f49",
+          "category": "compaction-updated-decision",
+          "startedUtc": "2026-10-27T05:50:28.168292600Z",
+          "traceId": "bcf4464e2497eadd56dc3c589159eadf",
+          "answer": "{\"current_token\":\"NEW-C2\",\"constraint\":\"NO-WRITE\",\"pending\":\"REVIEW-ONLY\"}",
+          "compacted": true,
+          "memorySeeded": false,
+          "compactionBeforeTokensEstimated": 3579,
+          "compactionAfterTokensEstimated": 3068,
+          "compressionRatioEstimated": 0.14277731209835154,
+          "summaryFactChecks": {
+            "NEW-C2": true,
+            "NO-WRITE": true,
+            "REVIEW-ONLY": true
+          },
+          "status": "passed",
+          "judgement": "passed",
+          "errorCategory": null,
+          "modelCalls": 7,
+          "modelFailedCalls": 0,
+          "modelUsageMissingCalls": 0,
+          "inputTokens": 24811,
+          "uncachedInputTokens": 3051,
+          "outputTokens": 1782,
+          "cachedInputTokens": 21760,
+          "tokenUsageSource": "provider_response",
+          "usageSamples": [
+            {
+              "inputUncached": 207,
+              "inputCached": 3328,
+              "inputTotal": 3535,
+              "output": 172
+            },
+            {
+              "inputUncached": 139,
+              "inputCached": 3456,
+              "inputTotal": 3595,
+              "output": 180
+            },
+            {
+              "inputUncached": 874,
+              "inputCached": 3328,
+              "inputTotal": 4202,
+              "output": 338
+            },
+            {
+              "inputUncached": 156,
+              "inputCached": 4096,
+              "inputTotal": 4252,
+              "output": 29
+            },
+            {
+              "inputUncached": 181,
+              "inputCached": 4096,
+              "inputTotal": 4277,
+              "output": 35
+            },
+            {
+              "inputUncached": 1023,
+              "inputCached": 0,
+              "inputTotal": 1023,
+              "output": 955
+            },
+            {
+              "inputUncached": 471,
+              "inputCached": 3456,
+              "inputTotal": 3927,
+              "output": 73
+            }
+          ],
+          "estimatedCostUsd": null,
+          "costBasis": "unavailable",
+          "toolCalls": 0,
+          "tools": [],
+          "durationMillis": 15816,
+          "provider": "deepseek",
+          "model": "deepseek-v4-flash",
+          "configuration": {
+            "allowedTools": [
+              "read_file"
+            ],
+            "hardMaxIterations": 0
+          }
+        },
+        "after": {
+          "caseId": "D03",
+          "taskId": "ca7e7ef2-4d5b-429c-b6b7-95cb089c2cd8",
+          "category": "compaction-updated-decision",
+          "startedUtc": "2026-10-27T05:56:19.773613300Z",
+          "traceId": "9bef0cc727b5a16dd69bb941a1f12b8c",
+          "answer": "{\"current_token\":\"NEW-C2\",\"constraint\":\"NO-WRITE\",\"pending\":\"REVIEW-ONLY\"}",
+          "compacted": true,
+          "memorySeeded": false,
+          "compactionBeforeTokensEstimated": 3620,
+          "compactionAfterTokensEstimated": 2985,
+          "compressionRatioEstimated": 0.175414364640884,
+          "summaryFactChecks": {
+            "NEW-C2": true,
+            "NO-WRITE": true,
+            "REVIEW-ONLY": true
+          },
+          "status": "passed",
+          "judgement": "passed",
+          "errorCategory": null,
+          "modelCalls": 7,
+          "modelFailedCalls": 0,
+          "modelUsageMissingCalls": 0,
+          "inputTokens": 24935,
+          "uncachedInputTokens": 3175,
+          "outputTokens": 1385,
+          "cachedInputTokens": 21760,
+          "tokenUsageSource": "provider_response",
+          "usageSamples": [
+            {
+              "output": 108,
+              "inputTotal": 3535,
+              "inputCached": 3328,
+              "inputUncached": 207
+            },
+            {
+              "output": 2,
+              "inputTotal": 3594,
+              "inputCached": 3456,
+              "inputUncached": 138
+            },
+            {
+              "output": 244,
+              "inputTotal": 4200,
+              "inputCached": 3328,
+              "inputUncached": 872
+            },
+            {
+              "output": 43,
+              "inputTotal": 4304,
+              "inputCached": 4096,
+              "inputUncached": 208
+            },
+            {
+              "output": 31,
+              "inputTotal": 4328,
+              "inputCached": 4096,
+              "inputUncached": 232
+            },
+            {
+              "output": 592,
+              "inputTotal": 1162,
+              "inputCached": 0,
+              "inputUncached": 1162
+            },
+            {
+              "output": 365,
+              "inputTotal": 3812,
+              "inputCached": 3456,
+              "inputUncached": 356
+            }
+          ],
+          "estimatedCostUsd": null,
+          "costBasis": "unavailable",
+          "toolCalls": 0,
+          "tools": [],
+          "durationMillis": 13146,
+          "provider": "deepseek",
+          "model": "deepseek-v4-flash",
+          "configuration": {
+            "hardMaxIterations": 0,
+            "allowedTools": [
+              "read_file"
+            ]
+          }
+        }
+      }
+    ],
+    "limitation": "D01 fails exact JSON value equality in both batches while all required summary fact markers remain present; task field-value conventions are ambiguous. Criteria were not changed."
+  },
+  "l08": {
+    "before": {
+      "caseId": "L08",
+      "taskId": "7375cfaf-094b-422e-8e2f-2ca301ca2a91",
+      "category": "compaction",
+      "startedUtc": "2026-10-27T05:45:52.995140200Z",
+      "traceId": "99266d2ef95a0a735cf7edbadde052dd",
+      "answer": "ZETA-4826",
+      "compacted": true,
+      "memorySeeded": false,
+      "status": "passed",
+      "judgement": "passed",
+      "errorCategory": null,
+      "modelCalls": 8,
+      "modelFailedCalls": 0,
+      "modelUsageMissingCalls": 0,
+      "inputTokens": 27787,
+      "uncachedInputTokens": 2827,
+      "outputTokens": 1894,
+      "cachedInputTokens": 24960,
+      "tokenUsageSource": "provider_response",
+      "usageSamples": [
+        {
+          "inputUncached": 590,
+          "inputCached": 2944,
+          "inputTotal": 3534,
+          "output": 69
+        },
+        {
+          "inputUncached": 172,
+          "inputCached": 3456,
+          "inputTotal": 3628,
+          "output": 167
+        },
+        {
+          "inputUncached": 170,
+          "inputCached": 3584,
+          "inputTotal": 3754,
+          "output": 64
+        },
+        {
+          "inputUncached": 171,
+          "inputCached": 3712,
+          "inputTotal": 3883,
+          "output": 217
+        },
+        {
+          "inputUncached": 167,
+          "inputCached": 3840,
+          "inputTotal": 4007,
+          "output": 73
+        },
+        {
+          "inputUncached": 150,
+          "inputCached": 3968,
+          "inputTotal": 4118,
+          "output": 178
+        },
+        {
+          "inputUncached": 759,
+          "inputCached": 0,
+          "inputTotal": 759,
+          "output": 1023
+        },
+        {
+          "inputUncached": 648,
+          "inputCached": 3456,
+          "inputTotal": 4104,
+          "output": 103
+        }
+      ],
+      "estimatedCostUsd": null,
+      "costBasis": "unavailable",
+      "toolCalls": 0,
+      "tools": [],
+      "durationMillis": 16302,
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "configuration": {
+        "hardMaxIterations": 0,
+        "allowedTools": [
+          "read_file"
+        ]
+      }
+    },
+    "beforeCompactionLog": {
+      "beforeTokensEstimated": 3472,
+      "afterTokensEstimated": 3338,
+      "compressionRatioEstimated": 0.03859447004608296,
+      "summaryChars": 815,
+      "source": "application log 2026-10-27 13:46:07.917"
+    },
+    "after": {
+      "caseId": "L08",
+      "taskId": "dcf9ccb6-6468-4f99-ac31-52d10f402060",
+      "category": "compaction",
+      "startedUtc": "2026-10-27T05:57:27.714276800Z",
+      "traceId": "6286f0dbc73123fd91cf827ccf7fff07",
+      "answer": "ZETA-4826",
+      "compacted": true,
+      "memorySeeded": false,
+      "compactionBeforeTokensEstimated": 3557,
+      "compactionAfterTokensEstimated": 3253,
+      "compressionRatioEstimated": 0.08546527973010964,
+      "summaryFactChecks": {},
+      "status": "passed",
+      "judgement": "passed",
+      "errorCategory": null,
+      "modelCalls": 8,
+      "modelFailedCalls": 0,
+      "modelUsageMissingCalls": 0,
+      "inputTokens": 28058,
+      "uncachedInputTokens": 2714,
+      "outputTokens": 2173,
+      "cachedInputTokens": 25344,
+      "tokenUsageSource": "provider_response",
+      "usageSamples": [
+        {
+          "output": 240,
+          "inputUncached": 206,
+          "inputCached": 3328,
+          "inputTotal": 3534
+        },
+        {
+          "output": 135,
+          "inputUncached": 187,
+          "inputCached": 3456,
+          "inputTotal": 3643
+        },
+        {
+          "output": 155,
+          "inputUncached": 192,
+          "inputCached": 3584,
+          "inputTotal": 3776
+        },
+        {
+          "output": 104,
+          "inputUncached": 214,
+          "inputCached": 3712,
+          "inputTotal": 3926
+        },
+        {
+          "output": 173,
+          "inputUncached": 229,
+          "inputCached": 3840,
+          "inputTotal": 4069
+        },
+        {
+          "output": 157,
+          "inputUncached": 229,
+          "inputCached": 3968,
+          "inputTotal": 4197
+        },
+        {
+          "output": 1203,
+          "inputUncached": 923,
+          "inputCached": 0,
+          "inputTotal": 923
+        },
+        {
+          "output": 6,
+          "inputUncached": 534,
+          "inputCached": 3456,
+          "inputTotal": 3990
+        }
+      ],
+      "estimatedCostUsd": null,
+      "costBasis": "unavailable",
+      "toolCalls": 0,
+      "tools": [],
+      "durationMillis": 17952,
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "configuration": {
+        "hardMaxIterations": 0,
+        "allowedTools": [
+          "read_file"
+        ]
+      }
+    },
+    "afterSummaryChars": 626,
+    "afterRepeat": {
+      "caseId": "L08",
+      "taskId": "3bd31dfb-f40c-417d-9d95-eede9a730c40",
+      "category": "compaction",
+      "startedUtc": "2026-10-27T06:01:57.532499500Z",
+      "traceId": "bcf0efd062971887e4260936bb19486c",
+      "answer": "ZETA-4826",
+      "compacted": true,
+      "memorySeeded": false,
+      "compactionBeforeTokensEstimated": 3479,
+      "compactionAfterTokensEstimated": 3205,
+      "compressionRatioEstimated": 0.07875826386892781,
+      "summaryFactChecks": {},
+      "status": "passed",
+      "judgement": "passed",
+      "errorCategory": null,
+      "modelCalls": 8,
+      "modelFailedCalls": 0,
+      "modelUsageMissingCalls": 0,
+      "inputTokens": 27671,
+      "uncachedInputTokens": 2327,
+      "outputTokens": 1994,
+      "cachedInputTokens": 25344,
+      "tokenUsageSource": "provider_response",
+      "usageSamples": [
+        {
+          "output": 114,
+          "inputTotal": 3534,
+          "inputCached": 3328,
+          "inputUncached": 206
+        },
+        {
+          "output": 151,
+          "inputTotal": 3626,
+          "inputCached": 3456,
+          "inputUncached": 170
+        },
+        {
+          "output": 138,
+          "inputTotal": 3744,
+          "inputCached": 3584,
+          "inputUncached": 160
+        },
+        {
+          "output": 187,
+          "inputTotal": 3874,
+          "inputCached": 3712,
+          "inputUncached": 162
+        },
+        {
+          "output": 134,
+          "inputTotal": 4005,
+          "inputCached": 3840,
+          "inputUncached": 165
+        },
+        {
+          "output": 230,
+          "inputTotal": 4115,
+          "inputCached": 3968,
+          "inputUncached": 147
+        },
+        {
+          "output": 963,
+          "inputTotal": 841,
+          "inputCached": 0,
+          "inputUncached": 841
+        },
+        {
+          "output": 77,
+          "inputTotal": 3932,
+          "inputCached": 3456,
+          "inputUncached": 476
+        }
+      ],
+      "estimatedCostUsd": null,
+      "costBasis": "unavailable",
+      "toolCalls": 0,
+      "tools": [],
+      "durationMillis": 22447,
+      "provider": "deepseek",
+      "model": "deepseek-v4-flash",
+      "configuration": {
+        "hardMaxIterations": 0,
+        "allowedTools": [
+          "read_file"
+        ]
+      }
+    },
+    "afterRepeatSummaryChars": 532,
+    "repeatPolicy": "One baseline and two post-change L08 executions; every attempt retained, none selected as best."
+  },
+  "offline35": {
+    "before": {
+      "kind": "offline-deterministic-regression",
+      "runId": "79b37640-d7de-4b2b-8562-6a3661c7e36d",
+      "harnessVersion": "37b09ee+working-tree",
+      "sourceFingerprint": "5ac27f8f276893a0a254bafe7a7947f8157c4e5fcedb708f07a16c0666f58bb2",
+      "timestampUtc": "2026-10-27T05:44:45.6516145Z",
+      "mavenExitCode": 0,
+      "cases": 35,
+      "passed": 35,
+      "successRate": 1,
+      "metrics": {
+        "modelCalls": "unavailable",
+        "toolCalls": "unavailable",
+        "tokenUsage": "unavailable",
+        "costPerTask": "unavailable",
+        "recoveryRate": "unavailable",
+        "latencyP50": "unavailable",
+        "latencyP95": "unavailable"
+      },
+      "results": [
+        {
+          "id": "H01",
+          "goal": "初始循环允许执行",
+          "expected": "预算未耗尽",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.0,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#initiallyWithinBudget"
+        },
+        {
+          "id": "H02",
+          "goal": "累计 Token 后停止",
+          "expected": "返回 Token 预算退出原因",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.001,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#tokenBudgetExceededAfterAccumulation"
+        },
+        {
+          "id": "H03",
+          "goal": "重复工具调用终止",
+          "expected": "检测停滞",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.006,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#stagnationDetectedAfterRepeatedToolCalls"
+        },
+        {
+          "id": "H04",
+          "goal": "不同工具调用继续",
+          "expected": "不误报停滞",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.004,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#stagnationResetsWhenToolCallsDiffer"
+        },
+        {
+          "id": "H05",
+          "goal": "硬轮数生效",
+          "expected": "达到上限终止",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.001,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#hardIterationLimitTriggersAfterEnoughIterations"
+        },
+        {
+          "id": "H06",
+          "goal": "预算退出时收尾",
+          "expected": "只额外调用一次模型且不再开放工具",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.09,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetFinalizationTest#explicitIterationLimitUsesOneToolFreeFinalizationCall"
+        },
+        {
+          "id": "H07",
+          "goal": "重复工具调用先提醒",
+          "expected": "只提醒一次并继续",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.034,
+          "error": "",
+          "test": "com.paicli.agent.AgentRunawayReminderTest#repeatedToolCallGetsOneReminderAndTheLoopKeepsGoing"
+        },
+        {
+          "id": "H08",
+          "goal": "工具结果和最终回答入会话记录",
+          "expected": "调用与结果配对且保留最终回答",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.077,
+          "error": "",
+          "test": "com.paicli.agent.AgentConversationLedgerTest#reactLedgerPreservesToolProtocolAndFinalReasoning"
+        },
+        {
+          "id": "H09",
+          "goal": "压缩后恢复会话",
+          "expected": "恢复视图与模型收到的历史一致",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.078,
+          "error": "",
+          "test": "com.paicli.agent.AgentSessionResumeTest#restoredConversationMatchesWhatTheModelSawAfterCompaction"
+        },
+        {
+          "id": "H10",
+          "goal": "恢复外部内容会话",
+          "expected": "暂停自动记忆写入",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.014,
+          "error": "",
+          "test": "com.paicli.agent.AgentSessionResumeTest#resumingWebResultsPausesAutomaticMemory"
+        },
+        {
+          "id": "H11",
+          "goal": "阻断模型虚构网址",
+          "expected": "禁止未授权 web_fetch",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.047,
+          "error": "",
+          "test": "com.paicli.agent.AgentWebSearchDecisionTest#blocksHallucinatedWebFetchWhenUserOnlyProvidesBareTitle"
+        },
+        {
+          "id": "H12",
+          "goal": "用户要求搜索",
+          "expected": "允许 web_search",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.021,
+          "error": "",
+          "test": "com.paicli.agent.AgentWebSearchDecisionTest#allowsWebSearchWhenUserExplicitlyRequestsIt"
+        },
+        {
+          "id": "H13",
+          "goal": "缺少工具必填参数",
+          "expected": "返回字段级错误",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.009,
+          "error": "",
+          "test": "com.paicli.tool.ToolArgumentValidationTest#missingRequiredParameterIsReportedByName"
+        },
+        {
+          "id": "H14",
+          "goal": "无效 JSON 工具参数",
+          "expected": "明确报告解析错误",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.005,
+          "error": "",
+          "test": "com.paicli.tool.ToolArgumentValidationTest#invalidJsonIsReportedSeparatelyWithSnippet"
+        },
+        {
+          "id": "H15",
+          "goal": "MCP 参数校验",
+          "expected": "按原始 schema 拦截",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.003,
+          "error": "",
+          "test": "com.paicli.tool.ToolArgumentValidationTest#mcpToolIsValidatedAgainstRawSchemaNotTheSanitizedOne"
+        },
+        {
+          "id": "H16",
+          "goal": "计划任务失败隔离",
+          "expected": "跳过下游并保留已完成结果",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.014,
+          "error": "",
+          "test": "com.paicli.agent.PlanExecuteAgentTest#failedTaskShouldSkipDependentsAndKeepCompletedResults"
+        },
+        {
+          "id": "H17",
+          "goal": "重新规划达到上限",
+          "expected": "停止再次规划",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.037,
+          "error": "",
+          "test": "com.paicli.agent.PlanExecuteAgentTest#replanningShouldStopAtConfiguredLimit"
+        },
+        {
+          "id": "H18",
+          "goal": "独立 Worker 并行",
+          "expected": "任务并发且结果汇总",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.035,
+          "error": "",
+          "test": "com.paicli.agent.AgentOrchestratorTest#shouldRunIndependentStepsInParallel"
+        },
+        {
+          "id": "H19",
+          "goal": "Reviewer 拒绝后重试",
+          "expected": "修复后通过复核",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.226,
+          "error": "",
+          "test": "com.paicli.agent.AgentOrchestratorTest#shouldRetryRejectedStepUntilApproval"
+        },
+        {
+          "id": "H20",
+          "goal": "OTLP Trace 脱敏和导出",
+          "expected": "发送模型与工具元数据且不含敏感正文",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.774,
+          "error": "",
+          "test": "com.paicli.observability.LangfuseTelemetryTest#sendsOneTraceWithModelAndToolMetricsButNoContent"
+        },
+        {
+          "id": "H21",
+          "goal": "模型请求失败",
+          "expected": "明确终止并返回失败消息",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.542,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetFinalizationTest#modelIoFailureStopsTheTurnWithAnExplicitFailure"
+        },
+        {
+          "id": "H22",
+          "goal": "命令执行超时",
+          "expected": "在时限内返回超时结果",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 1.052,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#shouldTimeoutLongRunningCommandWithoutHanging"
+        },
+        {
+          "id": "H23",
+          "goal": "批量工具超时隔离",
+          "expected": "超时调用被标记且其他结果保留",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 1.008,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#shouldCancelToolInvocationWhenBatchTimeoutIsReached"
+        },
+        {
+          "id": "H24",
+          "goal": "一个 MCP 服务不可用",
+          "expected": "故障服务报错且健康服务继续运行",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 5.095,
+          "error": "",
+          "test": "com.paicli.mcp.McpServerManagerTest#singleServerFailureDoesNotBlockOthers"
+        },
+        {
+          "id": "H25",
+          "goal": "用户拒绝危险工具",
+          "expected": "工具不执行且返回拒绝结果",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.012,
+          "error": "",
+          "test": "com.paicli.hitl.HitlToolRegistryTest#rejectedDecisionBlocksExecutionAndReturnsRejectMessage"
+        },
+        {
+          "id": "H26",
+          "goal": "超长工具结果",
+          "expected": "卸载正文并在上下文中保留摘要",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.013,
+          "error": "",
+          "test": "com.paicli.tool.ToolResultOffloaderTest#oversizedResultIsWrittenToSessionFileAndSummarized"
+        },
+        {
+          "id": "H27",
+          "goal": "写入项目外路径",
+          "expected": "路径被拒绝",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.01,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#editFileRejectsPathOutsideProject"
+        },
+        {
+          "id": "H28",
+          "goal": "上下文压缩后恢复",
+          "expected": "原始记录保留且视图检查点一致",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.071,
+          "error": "",
+          "test": "com.paicli.agent.AgentConversationLedgerTest#clearAndCompactionOnlyMutateDeliveryView"
+        },
+        {
+          "id": "H29",
+          "goal": "最终回答含未执行工具文本",
+          "expected": "明确提示工具未执行",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.016,
+          "error": "",
+          "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#agentAppendsNoticeWhenFinalAnswerContainsUnexecutedCall"
+        },
+        {
+          "id": "H30",
+          "goal": "工具执行失败",
+          "expected": "返回可分类的失败状态",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.0,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#executionResultCarriesTypedFailureStatus"
+        },
+        {
+          "id": "H31",
+          "goal": "简单问题直接回答",
+          "expected": "无工具时正常返回且不误报未执行工具",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.017,
+          "error": "",
+          "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#ordinaryAnswerHasNoNotice"
+        },
+        {
+          "id": "H32",
+          "goal": "长对话分段摘要",
+          "expected": "早期和中间历史都进入摘要流程",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.003,
+          "error": "",
+          "test": "com.paicli.memory.ConversationHistoryCompactorTest#longHistorySummarizesEveryChunkBeforeMerging"
+        },
+        {
+          "id": "H33",
+          "goal": "检索不同项目的长期记忆",
+          "expected": "项目级记忆不会跨项目注入",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.019,
+          "error": "",
+          "test": "com.paicli.memory.LongTermMemoryTest#shouldFilterProjectScopedMemories"
+        },
+        {
+          "id": "H34",
+          "goal": "摘要边界包含工具调用",
+          "expected": "工具调用与结果保持配对",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.001,
+          "error": "",
+          "test": "com.paicli.memory.ConversationHistoryCompactorTest#preservesToolCallPairAtSplitBoundary"
+        },
+        {
+          "id": "H35",
+          "goal": "模型返回无结构摘要",
+          "expected": "拒绝摘要并保持原对话",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.001,
+          "error": "",
+          "test": "com.paicli.memory.ConversationHistoryCompactorTest#rejectsUnstructuredSummaryWithoutChangingHistory"
+        }
+      ]
+    },
+    "after": {
+      "kind": "offline-deterministic-regression",
+      "runId": "a44575ee-2482-4367-994b-7f46c233d01c",
+      "harnessVersion": "37b09ee+working-tree",
+      "sourceFingerprint": "5ac27f8f276893a0a254bafe7a7947f8157c4e5fcedb708f07a16c0666f58bb2",
+      "timestampUtc": "2026-10-27T05:59:52.3273366Z",
+      "mavenExitCode": 0,
+      "cases": 35,
+      "passed": 35,
+      "successRate": 1,
+      "metrics": {
+        "modelCalls": "unavailable",
+        "toolCalls": "unavailable",
+        "tokenUsage": "unavailable",
+        "costPerTask": "unavailable",
+        "recoveryRate": "unavailable",
+        "latencyP50": "unavailable",
+        "latencyP95": "unavailable"
+      },
+      "results": [
+        {
+          "id": "H01",
+          "goal": "初始循环允许执行",
+          "expected": "预算未耗尽",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.0,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#initiallyWithinBudget"
+        },
+        {
+          "id": "H02",
+          "goal": "累计 Token 后停止",
+          "expected": "返回 Token 预算退出原因",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.0,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#tokenBudgetExceededAfterAccumulation"
+        },
+        {
+          "id": "H03",
+          "goal": "重复工具调用终止",
+          "expected": "检测停滞",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.006,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#stagnationDetectedAfterRepeatedToolCalls"
+        },
+        {
+          "id": "H04",
+          "goal": "不同工具调用继续",
+          "expected": "不误报停滞",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.005,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#stagnationResetsWhenToolCallsDiffer"
+        },
+        {
+          "id": "H05",
+          "goal": "硬轮数生效",
+          "expected": "达到上限终止",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.001,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetTest#hardIterationLimitTriggersAfterEnoughIterations"
+        },
+        {
+          "id": "H06",
+          "goal": "预算退出时收尾",
+          "expected": "只额外调用一次模型且不再开放工具",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.085,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetFinalizationTest#explicitIterationLimitUsesOneToolFreeFinalizationCall"
+        },
+        {
+          "id": "H07",
+          "goal": "重复工具调用先提醒",
+          "expected": "只提醒一次并继续",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.038,
+          "error": "",
+          "test": "com.paicli.agent.AgentRunawayReminderTest#repeatedToolCallGetsOneReminderAndTheLoopKeepsGoing"
+        },
+        {
+          "id": "H08",
+          "goal": "工具结果和最终回答入会话记录",
+          "expected": "调用与结果配对且保留最终回答",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.077,
+          "error": "",
+          "test": "com.paicli.agent.AgentConversationLedgerTest#reactLedgerPreservesToolProtocolAndFinalReasoning"
+        },
+        {
+          "id": "H09",
+          "goal": "压缩后恢复会话",
+          "expected": "恢复视图与模型收到的历史一致",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.096,
+          "error": "",
+          "test": "com.paicli.agent.AgentSessionResumeTest#restoredConversationMatchesWhatTheModelSawAfterCompaction"
+        },
+        {
+          "id": "H10",
+          "goal": "恢复外部内容会话",
+          "expected": "暂停自动记忆写入",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.014,
+          "error": "",
+          "test": "com.paicli.agent.AgentSessionResumeTest#resumingWebResultsPausesAutomaticMemory"
+        },
+        {
+          "id": "H11",
+          "goal": "阻断模型虚构网址",
+          "expected": "禁止未授权 web_fetch",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.023,
+          "error": "",
+          "test": "com.paicli.agent.AgentWebSearchDecisionTest#blocksHallucinatedWebFetchWhenUserOnlyProvidesBareTitle"
+        },
+        {
+          "id": "H12",
+          "goal": "用户要求搜索",
+          "expected": "允许 web_search",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.021,
+          "error": "",
+          "test": "com.paicli.agent.AgentWebSearchDecisionTest#allowsWebSearchWhenUserExplicitlyRequestsIt"
+        },
+        {
+          "id": "H13",
+          "goal": "缺少工具必填参数",
+          "expected": "返回字段级错误",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.008,
+          "error": "",
+          "test": "com.paicli.tool.ToolArgumentValidationTest#missingRequiredParameterIsReportedByName"
+        },
+        {
+          "id": "H14",
+          "goal": "无效 JSON 工具参数",
+          "expected": "明确报告解析错误",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.005,
+          "error": "",
+          "test": "com.paicli.tool.ToolArgumentValidationTest#invalidJsonIsReportedSeparatelyWithSnippet"
+        },
+        {
+          "id": "H15",
+          "goal": "MCP 参数校验",
+          "expected": "按原始 schema 拦截",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.002,
+          "error": "",
+          "test": "com.paicli.tool.ToolArgumentValidationTest#mcpToolIsValidatedAgainstRawSchemaNotTheSanitizedOne"
+        },
+        {
+          "id": "H16",
+          "goal": "计划任务失败隔离",
+          "expected": "跳过下游并保留已完成结果",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.015,
+          "error": "",
+          "test": "com.paicli.agent.PlanExecuteAgentTest#failedTaskShouldSkipDependentsAndKeepCompletedResults"
+        },
+        {
+          "id": "H17",
+          "goal": "重新规划达到上限",
+          "expected": "停止再次规划",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.036,
+          "error": "",
+          "test": "com.paicli.agent.PlanExecuteAgentTest#replanningShouldStopAtConfiguredLimit"
+        },
+        {
+          "id": "H18",
+          "goal": "独立 Worker 并行",
+          "expected": "任务并发且结果汇总",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.037,
+          "error": "",
+          "test": "com.paicli.agent.AgentOrchestratorTest#shouldRunIndependentStepsInParallel"
+        },
+        {
+          "id": "H19",
+          "goal": "Reviewer 拒绝后重试",
+          "expected": "修复后通过复核",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.186,
+          "error": "",
+          "test": "com.paicli.agent.AgentOrchestratorTest#shouldRetryRejectedStepUntilApproval"
+        },
+        {
+          "id": "H20",
+          "goal": "OTLP Trace 脱敏和导出",
+          "expected": "发送模型与工具元数据且不含敏感正文",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.892,
+          "error": "",
+          "test": "com.paicli.observability.LangfuseTelemetryTest#sendsOneTraceWithModelAndToolMetricsButNoContent"
+        },
+        {
+          "id": "H21",
+          "goal": "模型请求失败",
+          "expected": "明确终止并返回失败消息",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.475,
+          "error": "",
+          "test": "com.paicli.agent.AgentBudgetFinalizationTest#modelIoFailureStopsTheTurnWithAnExplicitFailure"
+        },
+        {
+          "id": "H22",
+          "goal": "命令执行超时",
+          "expected": "在时限内返回超时结果",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 1.063,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#shouldTimeoutLongRunningCommandWithoutHanging"
+        },
+        {
+          "id": "H23",
+          "goal": "批量工具超时隔离",
+          "expected": "超时调用被标记且其他结果保留",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 1.005,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#shouldCancelToolInvocationWhenBatchTimeoutIsReached"
+        },
+        {
+          "id": "H24",
+          "goal": "一个 MCP 服务不可用",
+          "expected": "故障服务报错且健康服务继续运行",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 5.092,
+          "error": "",
+          "test": "com.paicli.mcp.McpServerManagerTest#singleServerFailureDoesNotBlockOthers"
+        },
+        {
+          "id": "H25",
+          "goal": "用户拒绝危险工具",
+          "expected": "工具不执行且返回拒绝结果",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.013,
+          "error": "",
+          "test": "com.paicli.hitl.HitlToolRegistryTest#rejectedDecisionBlocksExecutionAndReturnsRejectMessage"
+        },
+        {
+          "id": "H26",
+          "goal": "超长工具结果",
+          "expected": "卸载正文并在上下文中保留摘要",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.014,
+          "error": "",
+          "test": "com.paicli.tool.ToolResultOffloaderTest#oversizedResultIsWrittenToSessionFileAndSummarized"
+        },
+        {
+          "id": "H27",
+          "goal": "写入项目外路径",
+          "expected": "路径被拒绝",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.011,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#editFileRejectsPathOutsideProject"
+        },
+        {
+          "id": "H28",
+          "goal": "上下文压缩后恢复",
+          "expected": "原始记录保留且视图检查点一致",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.074,
+          "error": "",
+          "test": "com.paicli.agent.AgentConversationLedgerTest#clearAndCompactionOnlyMutateDeliveryView"
+        },
+        {
+          "id": "H29",
+          "goal": "最终回答含未执行工具文本",
+          "expected": "明确提示工具未执行",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.017,
+          "error": "",
+          "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#agentAppendsNoticeWhenFinalAnswerContainsUnexecutedCall"
+        },
+        {
+          "id": "H30",
+          "goal": "工具执行失败",
+          "expected": "返回可分类的失败状态",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.001,
+          "error": "",
+          "test": "com.paicli.tool.ToolRegistryTest#executionResultCarriesTypedFailureStatus"
+        },
+        {
+          "id": "H31",
+          "goal": "简单问题直接回答",
+          "expected": "无工具时正常返回且不误报未执行工具",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.017,
+          "error": "",
+          "test": "com.paicli.agent.UnexecutedToolCallNoticeTest#ordinaryAnswerHasNoNotice"
+        },
+        {
+          "id": "H32",
+          "goal": "长对话分段摘要",
+          "expected": "早期和中间历史都进入摘要流程",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.003,
+          "error": "",
+          "test": "com.paicli.memory.ConversationHistoryCompactorTest#longHistorySummarizesEveryChunkBeforeMerging"
+        },
+        {
+          "id": "H33",
+          "goal": "检索不同项目的长期记忆",
+          "expected": "项目级记忆不会跨项目注入",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.027,
+          "error": "",
+          "test": "com.paicli.memory.LongTermMemoryTest#shouldFilterProjectScopedMemories"
+        },
+        {
+          "id": "H34",
+          "goal": "摘要边界包含工具调用",
+          "expected": "工具调用与结果保持配对",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.0,
+          "error": "",
+          "test": "com.paicli.memory.ConversationHistoryCompactorTest#preservesToolCallPairAtSplitBoundary"
+        },
+        {
+          "id": "H35",
+          "goal": "模型返回无结构摘要",
+          "expected": "拒绝摘要并保持原对话",
+          "passed": true,
+          "failureCategory": null,
+          "elapsedSeconds": 0.001,
+          "error": "",
+          "test": "com.paicli.memory.ConversationHistoryCompactorTest#rejectsUnstructuredSummaryWithoutChangingHistory"
+        }
+      ]
+    }
+  },
+  "targetedTests": {
+    "classes": [
+      "ConversationHistoryCompactorTest",
+      "AutoCompactionManagerTest"
+    ],
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "cloud": {
+    "fixedBefore": {
+      "traces": 12,
+      "valid": 11,
+      "invalid": [
+        {
+          "caseId": "L06",
+          "traceId": "83ba06c7be4668baec49bc33c44d7fe0"
+        }
+      ]
+    },
+    "fixedAfter": {
+      "traces": 12,
+      "valid": 12,
+      "invalid": []
+    },
+    "diagnosticBefore": {
+      "traces": 3,
+      "valid": 3,
+      "invalid": []
+    },
+    "diagnosticAfter": {
+      "traces": 3,
+      "valid": 3,
+      "invalid": []
+    },
+    "repeat": {
+      "traces": 1,
+      "valid": 1,
+      "invalid": []
+    }
+  },
+  "telemetryIssue": {
+    "caseId": "L06",
+    "traceId": "83ba06c7be4668baec49bc33c44d7fe0",
+    "expectedGenerations": 3,
+    "observedGenerations": 2,
+    "expectedTools": 2,
+    "observedTools": 1,
+    "exportFailure": "Failed to export 3 spans: HttpTimeoutException",
+    "recheckStillIncomplete": true,
+    "productionTelemetryModified": false
+  },
+  "conclusion": "Shorter retained context observed; no task success gain and no proven overall token/cost/latency improvement. Full-set input/output tokens increased. L05 order compliance worsened without entering the changed compactor path.",
+  "limitations": [
+    "Small paired samples; temperature=1 and no seed; independently generated priming replies are not byte-identical.",
+    "L05/L07 never invoke the changed summary code in this dataset; differences are observed but not attributed to the optimization.",
+    "Cached input and network/model latency vary; lower summed duration is not causal evidence of speedup.",
+    "Required fact checks are finite deterministic checks, not proof that all semantics and hallucinations are covered.",
+    "Existing full-suite failures were not rerun or repaired; no Docker or large Benchmark.",
+    "One optional detailed cloud request failed with a transport reset; its unverified artifact was excluded. Baseline L06 primary trace remains incomplete after an OTLP export timeout."
+  ]
+}

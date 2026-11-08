@@ -1,0 +1,1573 @@
+{
+  "recordedUtc": "2026-10-27T06:02:06.3169750+00:00",
+  "head": "37b09ee9d3212eb2ef85f5aea7d7f34c550800ed",
+  "dirty": true,
+  "files": [
+    {
+      "path": "src\\main\\java\\com\\example\\Demo.java",
+      "sha256": "6a46045915b91586e37099b46e0cd7a77b14aad70cae950d270d5101f9cdf14d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\Agent.java",
+      "sha256": "babc8d2caf510234e49b8b1a9b4da6b444f3701674a8d6fc33e14894962ed82c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\AgentBudget.java",
+      "sha256": "61855ed41c305295d38fbcf2328b45008e43bd492a6d4885eb38cf04839faed5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\AgentExecutionKernel.java",
+      "sha256": "deacbea4d37cf33d4c84f34bbc4c3c880fc9505aabb006708c7d6aef24d8d2af"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\AgentMessage.java",
+      "sha256": "95ab195ad04cf47204a1e2546b945dba6096514e03143b284b2693cddad762c3"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\AgentOrchestrator.java",
+      "sha256": "4b3a0a7f43178fdb5186523745f0ae793d062d931af2dbadbc6a530b9a1a74dc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\AgentRole.java",
+      "sha256": "099eadfe1dc70f16226c4dd78260839d6549dd761d8decd3ecf0891bdea734a1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\ExecutionOutcome.java",
+      "sha256": "ce9bc651df522d4886d2e3f81cf5b87b40e8829b6787917dde5896da36e2a490"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\FailureRecoveryPolicy.java",
+      "sha256": "73774c882254502993616c653c3fc09ff0bc00c1e53abb29ad6f49bd5d3cc873"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\PlanExecuteAgent.java",
+      "sha256": "77596444e48dcabf60d969550b248df4213d027fe6fb56e5008554bb53a9c3dd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\RunawayGuard.java",
+      "sha256": "1bb73d86de4d78569ac0ec6f5b14f96704f796a5e4ad89ab4194dfaba81dd2bf"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\SubAgent.java",
+      "sha256": "9904a9c0491fa4aadec01c5d0ff638f7c91efdf1be1f5aebe6ad7478b8239c57"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\TeamExecutionObserver.java",
+      "sha256": "37dbe86adc70e344e2a8602510d13544c810c40ada4bd1a3f55e89e1240142ac"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\TeamPlanParser.java",
+      "sha256": "64e6fcd05e482c868b487c048506c501804ae4ab2704c052f3472abad2da7103"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\TeamReviewVerdict.java",
+      "sha256": "48ca2a3548616667eb33c8d67a4dc5882249f48694479956f516086af436613a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\agent\\TeamStructuredReply.java",
+      "sha256": "e60026be6e23020b3a521704f023247c4f62535dc7410623f77aa1ff6ebdd1dc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\BrowserAuditMetadata.java",
+      "sha256": "f5f64775c46956675400e91d82bab37eef6f3ff6dd98dd483dc1ea10f48e4fae"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\BrowserCheckResult.java",
+      "sha256": "28ba227dfdc957807665a76dd13da565358311e5075306d775720ec6f3fa764c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\BrowserConnectivityCheck.java",
+      "sha256": "466bceda78726bdf19a4bdc24ee2e3375be412200647165b5b4a31c80497150f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\BrowserConnector.java",
+      "sha256": "ac232d89be0993b0217dd7eaced67a186b1ac599e906daece2abd17504a59fe8"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\BrowserGuard.java",
+      "sha256": "6062523e61fddf54e5554484412a6add103907e637d9287b7a06fe38b8a093ae"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\BrowserMode.java",
+      "sha256": "0d4376c29fdf9d9efdd24db1c87b45f0decfbd1129145ed10bb6bfb7a5852644"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\BrowserSession.java",
+      "sha256": "ad36f5ddbd66b85dbad4d03e37e5d17d2ba1999c306f03f7622b08efcab21e69"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\browser\\SensitivePagePolicy.java",
+      "sha256": "4769cbae7f0275ee2659379b7c64618d1daa716b8b8cb2b65bf23ca69865e009"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\CliCommandParser.java",
+      "sha256": "5ca7d12a5218f301b7524a8c2a10411d7cd24f4085e8201d9eb8af9da35f2aa6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\LocalPathMentionExpander.java",
+      "sha256": "59c4e855455f5ba98ff2a3c2dfd899e20590c4bd72bcf54c76ae862fd984b2dd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\Main.java",
+      "sha256": "216d343a448fd69576321cb0573c269d8c33cd7d945cf5cf893a0741aaee46c0"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\ModelCommands.java",
+      "sha256": "5666f684af432100895cb30ee09d70c861deba5162fde3433089a8e4e6a8fdb7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\PaiCliCompleter.java",
+      "sha256": "74ffb803e809477ad0a11d31f5cdb9ecc8a5af3727a2df95b803819f6e18a90f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\PaiCliHighlighter.java",
+      "sha256": "7f13fa7635a5608e3b9659ef132ae5926ea33d2bad1e560ebb8c4d5256ba34f6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\PaiCliHistory.java",
+      "sha256": "9ba6062a2fbff73ba46a9b00a067971b993dfc2bf3a3f9c22f1557587879ab62"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\PlanReviewInputParser.java",
+      "sha256": "0494a9fb3a47ef7d60a763b91f07dd8db1e284468d769254f820e7559fa997e9"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\ProjectMemoryInitializer.java",
+      "sha256": "d8236c2942e63baccf98220bdbe2b37c509cf401025bd368cfaf87fd961d820a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\ResumeCommandHandler.java",
+      "sha256": "1d89c19c1f5fc1bef0e7a538df3846bee4fad2c7deb7d96d3ce3c586ade44829"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\SessionMode.java",
+      "sha256": "8d5720215bec7618b33310ca113f094a9ceea758fe3cc8027e683508b4c45c1d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\SessionModeController.java",
+      "sha256": "d6b62f16f79214af45a63f7b6ec4072038baf7487ed2491ed895caf212e42c2c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\cli\\SkillCommandHandler.java",
+      "sha256": "529b06f06a464a094e070a502cd82f3aab10b01b7361383502a1bb0de7c1aecd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\config\\PaiCliConfig.java",
+      "sha256": "1cf415c3376793bfeadd083c3c1c26ba59eb4c53bd04000078ff5c7d297c7b51"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\context\\ContextProfile.java",
+      "sha256": "13a8062f34fd150d1ac5a0614366d175ed0308bb355ed0abd5b95fd7c86d4f40"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\context\\TokenUsageFormatter.java",
+      "sha256": "617c1e34367eea955b440e9ca57883e45006474098574af3655221f6c202d0be"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\LlmJudge.java",
+      "sha256": "6e37eeeeba33798d04a479c4067b105b9d1223f22f91cc796ee0952116a6ee5b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\PositionBalancedPairwiseJudge.java",
+      "sha256": "90d3a4edfa46b14df9f2558bedd558a8a35b25f063a615fb2978d88ca77f6b0f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkArtifactStore.java",
+      "sha256": "b91c8c1ffb9b564e56f8d16d40731c69b6abb062a574478a008047e7915101cd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkCoordinatorMain.java",
+      "sha256": "d839ab541adbd64e44ddc54faa5fd80e8180775bf00f1ac8d79c9b188d6bf7eb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkEvidenceEnvelope.java",
+      "sha256": "638524f68245e3718bff784ca7076d4568cb1f837c71bbf3cfbc6ccab30d4e54"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkFailureClassifier.java",
+      "sha256": "5d4de1352339a15a8384d4faa10068404f18b1ec427ce70a14037ca781eb49d2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkFixtureCopier.java",
+      "sha256": "bca682d6f9ccacba61a3c1a66254aca2e9b3f9648baf3f50de2add728a362350"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkProcessEnvironment.java",
+      "sha256": "8534f9c29dce83593f22e38fa0af0d60f3f18567259b35f3d67e40df91305d7f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkProtocol.java",
+      "sha256": "8902a78ed197399f1165752798c7564fb874dde9b80a02569a6b6ec96b74066d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkProviderEvidenceGate.java",
+      "sha256": "f5716d0f44d334696053a34a6651a9f4ac64988f66d5ba95850de28f1bd4065d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkProviderFailureClassifier.java",
+      "sha256": "280ed81d6f73aa77dcdcb065a6cacfd14a2490e03f906846d6e999592a5ea59a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkRelayWorkerMain.java",
+      "sha256": "0173ca4c7d711eee4b3312f07fc2876083d567f4a33c119bb3a43267d29ab2b2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkRunnerArtifactPolicy.java",
+      "sha256": "7e3fc004cf99d5d5b5bf511bb3c67e1c021972a1938eddcd443ae7ca3cb3b253"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkSecretCanary.java",
+      "sha256": "4f2d1c00cf64b164f37f79e8efa5c5fa07c502d2c2ada78071d989e8e1ab83ce"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkSubprocess.java",
+      "sha256": "19e1d7e917e362efb1cef2b7ba3908e7aaad52d4d82817b46a21226c4199100d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkToolExecutionEvidence.java",
+      "sha256": "ca9e29443537605603d0dd036229622cc9f8894386631b7332df534bb5d2aeb1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkToolProfile.java",
+      "sha256": "2b52392bd6e85a8ab92d231222b4cb30c9054a8cdab26b798a299986b5e6f4ee"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkToolRegistry.java",
+      "sha256": "a82cc429ff0c96046e4dba945e89adc6e769b80e6a9e95c9772ecfbcad7f7141"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkVerifier.java",
+      "sha256": "e2ce222021d1a82055f8625d339624dabeb5ab7d2fa98111b53d3be285b5f0f8"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkVerifierBundle.java",
+      "sha256": "9bb88ed04d7cb799bcc097f515ebd8592cf7265cab18e542f524c66d47715b22"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkVerifierSandbox.java",
+      "sha256": "418a33b3e689ef5a6ef516f8b0e2b5bc45bb26c5dbd75ff95fa691294299be32"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkVerifierWorkspaceSnapshot.java",
+      "sha256": "e8759a98b3690e7fe82aaa7418a42c519f91ae8c760119c292562d6ceea254c4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkWorkerMain.java",
+      "sha256": "6a94b7e16b0a26235ddf4de4cb38ad237b54e960b188d7986638b6278de9e33b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\BenchmarkWorkerProcess.java",
+      "sha256": "75fb9eea21c7a7ee5f6e352f5bbe81252b21845099baa8ba0b8f1336fdb9c0ac"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\CaseDefinition.java",
+      "sha256": "af002f608dc8c8c425a273800e43fa58e53878addf1ddbc0dae85a89f5792f3e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\ContextWindowCappedLlmClient.java",
+      "sha256": "189d0ac3eaea3d376f29bd5608600b163573ba46d7132e90c74932db0ced97a4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\DockerBenchmarkVerifier.java",
+      "sha256": "fd1f631c5d21467eae2f46f5cb6518bbe24fff8a3cc56479638b56ff1fbc8616"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\DockerBenchmarkWorkerProcess.java",
+      "sha256": "0eec0eaa51f8c4385963f84ff3f0fc77c3254f0a2019fbeef22ed42bcdde816d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\F1BoundarySession.java",
+      "sha256": "17c7ed8875877abb8200dda19e76e7d9d4d8802fd323daf75874d3ff2068f850"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\F3DevelopmentSession.java",
+      "sha256": "49713877e8f4222e44c6287ad449f3a01c9d090c690c772952c7233b8417d9ee"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalBatchPreparation.java",
+      "sha256": "0a2cb1d49fc0b3670d71fb9f02843007a4028752445fa812d3b7df9614d3433c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalBatchRunner.java",
+      "sha256": "c5bbe01c2ebc2dc7110666235d38ffb886f3440e26608fa569f8a2d00cdbe441"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalBenchmarkCoordinatorMain.java",
+      "sha256": "3196e6ecd51ab994f712b9881a4840cbcdaf6a7fed8a00b8a4f90998fca4d869"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalBoundaryBinding.java",
+      "sha256": "e5c48f9d5fe20b1c7cce54ab60ca498f831ac6910945cd9c4347df56e1427e60"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalCommandBinding.java",
+      "sha256": "daa6f373570f64ccaf1c700fc48121b51750aaac6fa0541db70e7fe3fa4fa0f6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalEpisodeRequestFactory.java",
+      "sha256": "bd34615476edc8d6505d61115e8f551620b2ee4c271aeb463cfb280ca21cbe9a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalInjectionBinding.java",
+      "sha256": "41193339fdd011227a5206b946f0d85deae2d120ff6cbbe1dc23b44cde3e23bc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalMockMcpBinding.java",
+      "sha256": "a91987cecf8f25a7e548117bf3087384d3027b8b4241c3a717ae7d306d20f641"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalMockWebBinding.java",
+      "sha256": "9ff42f04599174e211cf5060237a9703e518e94511af5e4c56a085233cad27ba"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\FormalPlanBinding.java",
+      "sha256": "61eeb8403930c7b425c3fdf43dbac2329b994a9147b9a950914ef6f969077f26"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\ScopedRequestFingerprints.java",
+      "sha256": "f63dffa2b61c238e4c7c6c26de92f53987a5b0788003487ac183af72eb4b9a1a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\ScoreAggregator.java",
+      "sha256": "5853c74f42bf09d22f82e5238b0d6e415eddd90af4a3530c59fe99b93368b2f4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\SecretRedactor.java",
+      "sha256": "f26be78e6d4ec23313256b86f32aeb514e6d54608dadbc352809279c6eae4357"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\SuiteDefinition.java",
+      "sha256": "081e183fb73e31074ce348a038d67663e4218236957e9db14760b831d6319bb6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\TracingLlmClient.java",
+      "sha256": "7c493daba81e258bc73cb6f02335a4dbbcca453e521fa754594bdfbc97cc5a7e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\FinalDatasetFreezeMain.java",
+      "sha256": "dda4d2a000e37528ae34e7a4a69dbb65f752da00c237276f5574a9b9bc0fa5f8"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\FinalDatasetFreezeManifest.java",
+      "sha256": "b0530a6cfe76b0fb01d5413d2687b7af8df38ebcd404448edfedb9e6a0804590"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\FinalDatasetFreezer.java",
+      "sha256": "a1f8f6f06df3805e1d11585d04f475127ff41a6de931746eb94a542d261d96f3"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\D1CaseMaterializer.java",
+      "sha256": "334bf2da00614b42096de6e14f19cb3aceaf71589da7e7235728b37521e4e777"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\D2CaseMaterializer.java",
+      "sha256": "d35673c8f3aa165884794d7de97691120c45ce0d68934b0df8d3eed13800c31f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\D3CaseMaterializer.java",
+      "sha256": "060efb139d6fbdbd9829cf285e7f540e770fc8b45383587636d57d6fdb78e4c7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\D4CaseMaterializer.java",
+      "sha256": "c9c9570bbe71b481ddc0f80562c1eb06b2f1795be83774061ac90b5462e7d6b4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\E1CaseMaterializer.java",
+      "sha256": "caf14263e82956e434a5ceab044d81614a779380c7c0aace11aae1d6b1db40bb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\E2CaseMaterializer.java",
+      "sha256": "ba8b1ebc6b4e0c7248f3316eb8be29e1e9a872120f7cd213813a2d6f31ca415d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\F1CaseMaterializer.java",
+      "sha256": "09f06cdfff79794d1862d3e3ab4f05df0eee2c5335ed32833062813b454c1723"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\F2CaseMaterializer.java",
+      "sha256": "96369a690d97643191903fcd2eb717d7a99655c9bc767e47c2994996990babe6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\F3CaseMaterializer.java",
+      "sha256": "dc44fef414df1ea77033ae10bf80841e63a21910894658ce7736845d322f883f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\F3ReferenceEvidence.java",
+      "sha256": "3a11c83c892d2ca61d94f50cbd0841c0d2aca6c2144160dedbed605c70d41536"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\F4CaseMaterializer.java",
+      "sha256": "dc91e7b55e1bfb32cbc3e6272358c34b0102fce75d14318dafecd8906ad7b0aa"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\FinalCaseContractCompiler.java",
+      "sha256": "13d1c3caed7c7759bf19e8b5f30743c1ec0060444c305784c0327807c1248979"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\FinalSourceGenerationManifest.java",
+      "sha256": "adbbdf9583355fb8629f3bef17c182946f1d95660f50083d37e7291193da9ea5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\FinalSourceGenerator.java",
+      "sha256": "df1a24cf01bd991242e6ecf7671eb8047569496fb6d2be6379010bf18e2b130c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\FinalSourceGeneratorMain.java",
+      "sha256": "a8b943bd49f0acb3e4e61311f5684dfc6093ec5897363f8f11b2caff1ef4fedc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\FinalSourceRecipeCatalog.java",
+      "sha256": "77d9afa60f9e9862b1b39cd75330406dcbc9a7e5935d0d3ae38e1d229221de80"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\ImplementedCaseMaterializers.java",
+      "sha256": "ccdc2d9073d5cd7e675cd00bd4e62309ed8f488098fe155092815c6171b088c6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\PrivateSourceWriter.java",
+      "sha256": "69a7119d36b2d2986ba536d02b540fb39052b214b9b00974d5dbf494fe762b4f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\SeededVariant.java",
+      "sha256": "1d69a3ec419b62c9900bd601fc2a02ac3428e94c917a756a9300b841518f2303"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\finalset\\generator\\TerminalCaseMaterializers.java",
+      "sha256": "e8821585d018b6e632f802263e6f00530086f437d0ce6c588c4633717398b5e5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\AttemptKey.java",
+      "sha256": "f85eff7df16c7e1ca6c6fef4c6605acd342e5c8a747b61787d1cabad48931206"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FinalExecutableSuiteContract.java",
+      "sha256": "1375a9840fe48b39ee2099d27c998c85600feef6f1af5bac4a26a27c2924dece"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalBatchContract.java",
+      "sha256": "bba736ffed6e6a9bf290b6de73d0cf07422e5aa2de2c6652bcc6e101867104ae"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalBenchmarkAdmission.java",
+      "sha256": "249eab5d3a0000031d42b50d1870d6743581371f60beafdfa00c3cb0c66c596c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalBenchmarkPreflight.java",
+      "sha256": "77a43a1b4e50bc0f980f6e53db878877f5ee9bfc1d1f1b4877cd6aec75684741"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalContractSupport.java",
+      "sha256": "a372ae4904b187f60340d92716d75cb69e893550bb2977abe6a83baa35270205"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalEpisodeOutcome.java",
+      "sha256": "5458e8f6ae9949e8044ed91dbd85c6aeb16594c3792e90ebf47f37554f045c45"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalExecutionPlan.java",
+      "sha256": "a18c872f15846b9d63224f7d326774a2894f05e27eb37878b8fe559f0ab10e81"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalFixtureMaterializer.java",
+      "sha256": "532a26a4ccbe1f610e9ef106f27c0dfc0674ee42ea8ff11e75f531ca97f78521"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalScoringAdapter.java",
+      "sha256": "71b5aa0d60e1d8f0a3b1f0f2de9abda1175adb521dbedc242f67640c2233c301"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\FormalVerifierBundleMaterializer.java",
+      "sha256": "603607b07d2373aa92845d0fe57da34cac465c4c8fab847648ca6369cb0aacca"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\formal\\VerifierBundleIdentity.java",
+      "sha256": "dd76ca057026581368bb9880b093fca32d94ec2ebbbef3e8fada1e3fbbef4c1c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\AuditedMockMcp.java",
+      "sha256": "c39243bce158fe962252f5508a43500b8e5f0b9b39afde0f21d4a5ce95bd91ad"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D1FrozenOracle.java",
+      "sha256": "d7b564f4794100111e6c5963270f07a6a99b40d3dfe474f5d8d428c649359a32"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D1ToolSelectionMock.java",
+      "sha256": "e0620168c1224e3e7b5427403eb5c12b87d4d32dcbefbe1b7afa391b8178cfb2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D2FrozenOracle.java",
+      "sha256": "6c47aee4f90e7800693fced74c904a9d6e7ef94d1d48b38099ec1814ef8a9393"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D2ReadOnlyJoinMock.java",
+      "sha256": "a70ff71767f0c75bafbfd1f99381282c021b1ac4ea4f0b4b7bac6cb0ea363946"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D3ApprovalCalendarMock.java",
+      "sha256": "70fbe2f378a49e39ff163345cb791e29f1f414420a6187ffe2e792a0fd459065"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D3FrozenOracle.java",
+      "sha256": "8c901161041922684b7391f6a59a2a05a29c5d6c7c7ce998d7ac30ca58d24d35"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D4FrozenOracle.java",
+      "sha256": "72988d1d417e79d963a029a878cb7ef146555c56e72a228bc9c26f56e57a3cba"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\D4WebMock.java",
+      "sha256": "4acd5333fa2a1c1bb410d258c06644403501a7082779e7d18c7112e373766d89"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\F3SupportBundleMock.java",
+      "sha256": "193c21951563361ec2f4023ebf051823368c55c03203a5ab855e930607887e5a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\F4FrozenOracle.java",
+      "sha256": "4fcec326a8342d02008fd857d6cf3d99a140b9dada4f00027161138213c001f0"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\F4PendingDeletionMock.java",
+      "sha256": "999af342ae5f14069883c9eb9d44e529fba5ff3e2850909082e0359c1aa63cd2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\mock\\FrozenMcpOracle.java",
+      "sha256": "36ca7dfc6cc1a9e4352227f7adb628f843cea45ae27496d2bcc905e75704a230"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\plan\\E1FrozenOracle.java",
+      "sha256": "6b1a8d89eea5dc10b25505c647df5fc5be21a90deeaba903c4c5713a623daed2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\rag\\FrozenCodeSearch.java",
+      "sha256": "51a612636714fb2db9317ac16af64d194d2fd637f76c2568846093ba5c4f9baf"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\rag\\FrozenCodeSearchIndex.java",
+      "sha256": "48f654291f03286a0aafd9152c31013fe28addf1f41ba8713c37d157666c3e25"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\BenchmarkFramedChannel.java",
+      "sha256": "5ddc00fe18f1be21226b1f349a3a496bd92ecfba1b27eecb64c74ddbc38a7050"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\BenchmarkProviderRelay.java",
+      "sha256": "5009dc1fab827221ba6b2bfb1532ac6dc0c209121e290cefec63af1dba167336"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\BenchmarkRelayProtocol.java",
+      "sha256": "819b75002d1b13723c8da9794687c93c649158b0947c81b0541f938a6b571ccf"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\F2CommandAudit.java",
+      "sha256": "d3cf1ea94ab2116c3d59abb123c119fa018c7cd76fdc25773baf1fb29e388a48"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\F3ToolResultAudit.java",
+      "sha256": "3119a5b00faeba9a3450f22a7c4273f15954a01d03e70a9588b4d4c8efa87185"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\PlanObservationWire.java",
+      "sha256": "5f934d524684cc4d7c77a1aa24ab35ee8bd355d7ad75ebb760fa77c64d37a846"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\PlanRequestAudit.java",
+      "sha256": "bc7a267b35172f6a8316b6236072db4d02763b4f161ad86c4993c4ef196aef66"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\RelayHitlHandler.java",
+      "sha256": "2f856f0a2e7c9f8a5dab4a3b6923250c2359bf148c5633bf3c35e06eadb38348"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\RelayLlmClient.java",
+      "sha256": "e0328a1e936a49c45fdea7a863dd4273409f0a7d2ca5ec4bfa1827488c758298"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\RelayMcpTransport.java",
+      "sha256": "59f8232c5d36b64a46913257fbc4607f68f21b25705b411b90c9ee73a5f9b0cd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\RelayWebDependencies.java",
+      "sha256": "6668a5cb900361d59577afab3e018078a5f299fc2b6481171b6c1c4affe7f17b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\RelayWireConversions.java",
+      "sha256": "39d71374b8c4425104ed069efa983274ff6470086861487cce897d19240de240"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\ScriptedInteraction.java",
+      "sha256": "aacf699bd0c95df8a0faf365e99341ed2739e05cd9d3b09a9f9d558166eef3b9"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\TeamObservationWire.java",
+      "sha256": "83dbd8df75fa881d32e5f9d4b6ef7e8c3a6bab16035286ce7222ea0c3eb8ec08"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\relay\\TeamRequestAudit.java",
+      "sha256": "e8c0964a7abeed4d6103125d7e2e9cf2a532bcb8831907bd8cddbcd8dc043db6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\safety\\F1Definition.java",
+      "sha256": "64e1013c3ee8e2060eee0a6dfbe12f316acd0202f60e25128d3a92ec8dd1101e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\safety\\F1FrozenOracle.java",
+      "sha256": "18b8c5e1f55906b621d324b49eaabbd78ccaed23599726ae6a9568f972dcfe1a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\safety\\F2Definition.java",
+      "sha256": "8dd97550f9ff30184d6ba2615b885bbd485560f2f35bba557051fa313edadd8b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\safety\\F2FrozenOracle.java",
+      "sha256": "0d8d4e310d674efe8df2ab0417cab88741f668b896eec4c0be5b785cfd8dd441"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\safety\\F3Definition.java",
+      "sha256": "062e3a9dc2038f37632e0b96ee4ddc20b1bfd289e95663f08a4b02e6958f0470"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\safety\\F3FrozenOracle.java",
+      "sha256": "575afebb32c2107ac6905a1e4351c9e916bcde5a5d3b4220f52bc290c5416949"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\scoring\\ScoreCalculator.java",
+      "sha256": "acad4f831ff7ba093c7bac3acf7b111899754db4de32608e93c84c0b9f66f1d1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\scoring\\ScoreSource.java",
+      "sha256": "981ecbe87b743a6da9a59e38ceea51629850ebf735681dc91254425cb3f91ad4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\scoring\\ScoringContract.java",
+      "sha256": "2f0ffeab92a2d5a819294c1545ed8e7df3f356f4dee81f6da541334c444b7bbc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\scoring\\ScoringJson.java",
+      "sha256": "01fd0c4f2fc1bc347c8b7098a14f807d552e22bb42fc68dde536f9cfa6cb230e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\scoring\\ScoringValidation.java",
+      "sha256": "e7d1201383709437b8523f28be9ca1c4cf4b2353ef888fdad6801b8ec85d7f90"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\scoring\\VerifierScoringReport.java",
+      "sha256": "6e0d43a695d4a37b728028c593977e738be75da54a3d775227dac3f86eeb2365"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\benchmark\\team\\E2FrozenOracle.java",
+      "sha256": "b661288eef8b4e4e5d66a4a281c942695b65f40177a6b9cc41b757861efb6e8e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\eval\\live\\LiveHarnessMain.java",
+      "sha256": "f7fcf55dc9edbd390be45698e2d98aeba8263422728e6c4e829dadb94dde7994"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\harness\\BetterHarnessEvidenceCollector.java",
+      "sha256": "4dccd167799164883b38ceb14e30a1b71c93b1e59b3920c34122d4acef1dcc60"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\harness\\BetterHarnessOptions.java",
+      "sha256": "da29378c51ce52f2f2b2a8f9c436320dd52eecaf149a5909fd6be654e660481b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\harness\\BetterHarnessRunner.java",
+      "sha256": "9f6ec63200548d525661090e35d7951aa8feb388ef56925612ecf3b40a8567f9"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\history\\ConversationLedger.java",
+      "sha256": "e20ceaf5fcdbafda54a255ae69cafa4f44747b67ec0e1c59899d29ce17e1c08b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\history\\SessionResume.java",
+      "sha256": "23adf9df087004edc86f055d8cf0937300544adda527396a5ea4288747ab6d2b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\ApprovalPolicy.java",
+      "sha256": "b3ca459423188619c81d209e87733dbaeb1a31cf4432102a508a7d076024a530"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\ApprovalRequest.java",
+      "sha256": "85efa0dc0580f089bc49cb4cf74a2fa338e908554647c2b2e508e768de0f4b0a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\ApprovalResult.java",
+      "sha256": "92a7ced088e5ba5bd57fd074bd9b514ac9f5f8bf03d6f6d639975db181e34a64"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\AutoApprovalReviewer.java",
+      "sha256": "54ce7aefb266dc0f977a919237249cf2ce9e42b78789f3818c2cfa68864a749a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\HitlHandler.java",
+      "sha256": "ba4443c12b8f90f7887398d6bdb58f9b73b8ce7a2693922d9db1f3b49956f0ae"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\HitlToolRegistry.java",
+      "sha256": "dfe30ae86592b5445a603c3421d028a49bb276e08238fcfbdadb337663a56bac"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\LlmApprovalClassifier.java",
+      "sha256": "efd76a69f1926a862b25007a17394683c7200a8ef0ac85b8512d192c6bcef840"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\RendererHitlHandler.java",
+      "sha256": "c927b9eaa02c77c4e6b54d35bf9eb738cbb66b5a178dabec6458991cba6671d7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\SwitchableHitlHandler.java",
+      "sha256": "0904ca1c274829a08d9763ada27f0120ea7cfc28efff77b15a283e7438b5831f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\hitl\\TerminalHitlHandler.java",
+      "sha256": "c42c7bece7def35339b4fdc65ab806c37359311d79e48566ef28c8b492def653"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\image\\ClipboardImage.java",
+      "sha256": "4cafb3b8d5b5231a3f666991e6297b9948184bc8754a3e35403654cdb1293ae1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\image\\ImageProcessor.java",
+      "sha256": "2777bad7626f021344a38ea7e3b0a352ab38adfb65c36b1c04abd3967333236c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\image\\ImageReferenceParser.java",
+      "sha256": "8ee486a7bee7fdeeec1592e467479f8f7159c208669562cf8cf493218ec45627"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\AbstractOpenAiCompatibleClient.java",
+      "sha256": "885b997a1db86c2955dad143e3f58b9b247b553832e4a70e5dd40640169ddfbc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\AgnesClient.java",
+      "sha256": "920f383d39ddb1b00fc0c5c7d1deae626eb2fa1a15eb1bb11d6566f5d7489de8"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\DeepSeekClient.java",
+      "sha256": "3d1208c4157283454f43326d5631b948641bd01653be868dccc0527c8f326725"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\FreeLlmApiClient.java",
+      "sha256": "3e4025c22459920304f9696ac28929541e0d2bdbdeee6282368bae6c87c1f11b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\GLMClient.java",
+      "sha256": "5a379677f246bfaf600e6b7fc2d5c7fa4f94501fb532a434421f952cd97d281a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\HunyuanClient.java",
+      "sha256": "5cf1361cafe4992476b2bb37d96ca04beb209cdefb463068c66af0c3f656091f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\JsonRequestBody.java",
+      "sha256": "81abaa94a3f534f2e4dcc40f6b5318e35aa1f9e8a00a6d9ccf4fb463d860058f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\KimiClient.java",
+      "sha256": "10c1750097e4129dc19fd6bf4248c40e358884cea46a00bfb22b269411a14247"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\LlmClient.java",
+      "sha256": "46b74e50489ea4efb5b6183cb3b46fabd3b68fe9ece8fa643824e0a950c2c596"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\LlmClientFactory.java",
+      "sha256": "7f8f6b9d7acf5fe602c5ed6bdc49d730736fda1e4929f247b5d645cf65471e54"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\LlmFailureClassifier.java",
+      "sha256": "870e80c66bb74558eddd40fa96532fc878f1a2248c3341bbddb965201b5a3a2a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\LlmRetryPolicy.java",
+      "sha256": "f47bb8f88ea50fc557f0a0a8ee262c40590338f170b9533c80fccedc3ecda529"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\LlmTraceLogger.java",
+      "sha256": "4700746796cb3ff38e8a21a445682a8c9d4adc317681e215f92bd89afa66c1a7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\ModelCatalog.java",
+      "sha256": "535dd8c9c5d7efc8d49e325184e73ee2a067ea549d51ba9e0a1c39486adb5d2f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\ModelDiscovery.java",
+      "sha256": "37cf57ab8748ffe741214f0db094d2051795f46ab370333f57ad3f5982671809"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\ModelProfile.java",
+      "sha256": "b814bab52a156f8c9908ab84338fafac74935d27aa7dab4ce1d942b265309ae7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\ProfiledLlmClient.java",
+      "sha256": "09e1c73bd22fca6630066f0d30e9028de37d3d8fc6a14ccd652277c358ad6cd2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\StepClient.java",
+      "sha256": "bf78bd86b4fb3537ca403c000591f168b4a4478215b1b2044e54b169e3750da5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\llm\\XfyunMaaSClient.java",
+      "sha256": "932eecbcf3c937f43d13419e0b7af1e2675a6adcdb257070cf7e0577ceec7adc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\lsp\\LspDiagnostic.java",
+      "sha256": "e5f73937749fbe26d41a7f7a434f46ad56c2734c5e953cf6ab5513bcbc8ea966"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\lsp\\LspDiagnosticFormatter.java",
+      "sha256": "bf14cfab37e302aca4189b62526da5c2a9c6b882f7073b04711c57e99ee79dbe"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\lsp\\LspDiagnosticReport.java",
+      "sha256": "5f164daa68ddf1180a6153bb62b31723075341b7498cf332b74a73c6acfa8ffd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\lsp\\LspManager.java",
+      "sha256": "0e80b1378c16d3010f2e467dd6bfcad30f30c9df723a5c033708593abc655b66"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\lsp\\LspSeverity.java",
+      "sha256": "86dd24035b32382dabe119c174e5eeecdffac8f9638b066de306c3f6e0e06675"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\McpClient.java",
+      "sha256": "0f569efc7b375afde51a9e900c4a2d3d16fd6413a77eff79579ba2caeac2c23f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\McpServer.java",
+      "sha256": "fb31481c9bb1ca28e8da44f8483c1fc5d30c86c74f78ba16f5d5fa42e8e6543a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\McpServerManager.java",
+      "sha256": "219b1e1e7015db580d85a0d95310492ae11deeccff2b212c6e568b3e4c834f22"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\McpServerStatus.java",
+      "sha256": "cf9174a6cee14946d822cb57a1d1326a8da6f1902e3a3c7b71e854e87885e46d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\config\\McpConfigFile.java",
+      "sha256": "9da71715eb58ea8e27b971e5ff8e103c9e2d7954440235804cb7efa60a8b66e4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\config\\McpConfigLoader.java",
+      "sha256": "9c8ebbdf57fb0476a21fc36094ca7f12b056a97004e403a2440e631319b413b5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\config\\McpServerConfig.java",
+      "sha256": "09eee643fcc681d4ce661abf88dbb5e3f350e93012bf217f819c4fb1b3c75e6f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\config\\McpTrustStore.java",
+      "sha256": "73854b8b767eae8f195485bf6b74f2ce93912ea433e25a81ecc4809edd19a4e8"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\jsonrpc\\JsonRpcClient.java",
+      "sha256": "902e6bf6de76f0b9a7b78bb9b4b9dacc83ad53461954b6367a2dd558433e0a8c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\jsonrpc\\JsonRpcException.java",
+      "sha256": "7c2fd939eb1e17ea7e60181f8de821fb1d7f5fad6a2ac07b8bc7deb540e67476"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\jsonrpc\\JsonRpcMessage.java",
+      "sha256": "193c0e1ec50a4210e62f472848e4c64aaed28f8fa9810f472f3098f01cf6287e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\mention\\AtMentionCompleter.java",
+      "sha256": "3213842fbca590dfe87a324945221ac10894e409f6a0677a349b7616bd6c56dd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\mention\\AtMentionExpander.java",
+      "sha256": "0faca4aa9fea2e749c2964e5eed320baba05a7a763d9780f25f5b33801799a69"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\mention\\AtMentionParser.java",
+      "sha256": "3568b9f9c665ea5b1f621f20f6aa5b7e670700739c38c7fc5572f7c1ff88f0b1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\notifications\\NotificationRouter.java",
+      "sha256": "99e7dcc64fffb064d75a93442f8a74e669b197e5d094fbd9bfa608d4c7d1670d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpCallToolRequest.java",
+      "sha256": "a1ca939c9dd10a8d572e971b20bf9697a6080401dd16a56bc7f928a6eb112f8a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpCallToolResult.java",
+      "sha256": "1f4ae24547cbc0cb92ffc411af91882d392988670e67abc8ba4343c3f5a77168"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpCapabilities.java",
+      "sha256": "932b7ded5a66fd4af458471a99f86ec00cb61509f8904efcc0a0d0bafbcb757c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpContent.java",
+      "sha256": "bde59e4a99cbf1de1b9f5b929c25e2c2cede4bdab93bb22b6035a2ab6c078f98"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpInitializeRequest.java",
+      "sha256": "231d7de09970c7a6ff075674db47a4efb7980caafc98cac0ac4ff4887d85c6a3"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpInitializeResult.java",
+      "sha256": "e60191664833486b66dcaded5a43b127666b80bd223847e5ba7449ab40fe6fa2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpSchemaSanitizer.java",
+      "sha256": "daa35afd7244aaa2ddacefc725c7274c118ce3bceae72fbe11459a79195d95a0"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\protocol\\McpToolDescriptor.java",
+      "sha256": "df66b33b3509cbc316a4a07724993e4e175fc508c9ba1b3e1a0367fa6aae2edb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\resources\\McpResourceCache.java",
+      "sha256": "4226c7a38e8761ab9235424cec54d005cab82f0ebf7e2ccb2046daa9895b2a51"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\resources\\McpResourceContent.java",
+      "sha256": "932dba1074bd4dbe540ec90adf8ca96267a9cfb7b9bcd8640c7f9c0fdcb3e659"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\resources\\McpResourceDescriptor.java",
+      "sha256": "81ce2608972c1aec44688b02c2f88745c858509c6d00415fa55d237e3327ef1c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\resources\\McpResourceTool.java",
+      "sha256": "a67ca48e52e0325362a1467bd8645d19a8bdc7607c27fc11925eb1d32d82f435"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\transport\\McpChildEnvironment.java",
+      "sha256": "4e8ab73a4f5c47731a12a288ac7644c2c99588cd8a53da60ca3dbd2d8108d2e6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\transport\\McpPidFile.java",
+      "sha256": "024ce8b1ff6d5333b35b712ec6ef51bf7a37e6c82e48b16cff6e0b5bd805b474"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\transport\\McpTransport.java",
+      "sha256": "774b0426339d8159679abd328970a8d107950d02349512c937b5a994969c49bd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\transport\\StdioTransport.java",
+      "sha256": "8d40012712b690025bd75c17725671f3d8321a74d10fcb49bacf583021ec7ba5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\mcp\\transport\\StreamableHttpTransport.java",
+      "sha256": "1130bf39b5022d1db814c293e82801c29ded958201c70356a2d292aed30a0d64"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\AutoCompactionManager.java",
+      "sha256": "8fa82b79a6b5f3930225dfd33bcd371f7692d24c710367da10e9859ab480d798"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\AutoFactExtractor.java",
+      "sha256": "2f0ad4269678fdb5d204d055281a5287be6396d81e1e96693c8ee51e84d1b24b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\ConversationHistoryCompactor.java",
+      "sha256": "4eaf1226cf975e2944d33c1f19016103ffa3dbf7a81e1b4041466c74ef4b8ea1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\ExplicitMemoryHints.java",
+      "sha256": "4f049f4b1c2c77cf2270ae36b6ffcde6d4075c53e5fa0faece34c042046c6092"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\ExternalContextTracker.java",
+      "sha256": "06b5aa53002852a736a7f7850b287d29ad36b22b00967facd6c21df8f58b753e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\InternalUserMessages.java",
+      "sha256": "63f8844fade079bcaa318663fe1807d4faba24b09d4454973a64fe843be99f87"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\LongTermMemory.java",
+      "sha256": "703942ec75384a4914f736d83fb58d27c9bb1d6bdf7836f7243afc01ce4ae0c1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\LongTermMemoryFile.java",
+      "sha256": "38ad54d5c96ba57d92df0a2be8f306eefef8ef2ffae060e144988b2e3f198762"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\Memory.java",
+      "sha256": "59de8efb614c910e4df896ec89291d6b1d320c7333d5d798680d2be44f38fa28"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryCommandArgs.java",
+      "sha256": "9a97b37ef802cf0ff72e2667429ea397667db59c46933dbaa479b6b93dc2b644"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryConflictDetector.java",
+      "sha256": "ac4b6240a9b38120418c578435e3916a992c52e8b00d150679f1d9df4272a8d5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryDeduplicator.java",
+      "sha256": "7263154419ed40315ab3b023def75dd8ef37d6dd1b741bcda1a8e73f4fa26657"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryEntry.java",
+      "sha256": "e9506a97ca0ef1ad5899b521b93576610c5a8e4ec1f5db9ee11ad8039eb1de35"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryManager.java",
+      "sha256": "28ae63c1614153d202d1eaf2fce78fabec0a40e5ed5165db2cf990a8829b6add"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryQueryTokenizer.java",
+      "sha256": "aec03d0f6d79b8e8826ec6d5c219e79f37a1692b8680f0e99ecdcfcf78609acb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryRetriever.java",
+      "sha256": "53c98e41a1bd53d661880d71da3f4105c475378e5b43778a39b692ce56b9b59c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\MemoryWriteResult.java",
+      "sha256": "03f02438223b7d9cdbad464dbe7803ceb3d933bcd2acfc946a69e19742e8c4a9"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\SessionMemoryCompactor.java",
+      "sha256": "ceb8dba7543cfaf7ff2c5a5b27de58a60fab8dc88ae7024b5290c83d835a5cf4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\TokenBudget.java",
+      "sha256": "e84d0be842fba330c8545c7f09a204a83085154335a0f169664002c736c385c3"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\memory\\ToolResultClearer.java",
+      "sha256": "3c1a765d0819620ee5f7e438f85fe530f72a5a2331ee8c1772584da9696aafe0"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\observability\\LangfuseTelemetry.java",
+      "sha256": "4b45df01e00a7d03cee38c8e547a8c882f3811f4ee6005580fe1fa71582bf5b1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\plan\\ExecutionPlan.java",
+      "sha256": "84980ea27343c7c235f142161a5a704e5c27f1b897c847dc51776c36a35a3b69"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\plan\\PlanExecutionObserver.java",
+      "sha256": "09afbb34f14f231b7963c8785bbf7548e0919dace1d2bae25aef9096d4598ddf"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\plan\\Planner.java",
+      "sha256": "c9dcbfb6f2e59cbe8523419753758e2a532caeb4271d435e257d03f093407ead"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\plan\\Task.java",
+      "sha256": "2983331c6578906d91073e699b39d56981edc024bd3eed14b69452469519ef7a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\policy\\AuditLog.java",
+      "sha256": "a30898405521526ea8f94ebc62473a1bef26df52e7639057c4c287d64af43e76"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\policy\\CommandGuard.java",
+      "sha256": "be553598473f0a453ed4a5158892746c72a1b93b338618926437a91dde97ff43"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\policy\\PathGuard.java",
+      "sha256": "b9a92ef0849275a317a2a4fb2244a8227b65f0d5539c8e55ad250e7238c5fce2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\policy\\PolicyException.java",
+      "sha256": "1202c0071ed9fbb36793078fdea1a43e19a82750171e1d6c14f56f88f5911e74"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\prompt\\ProjectMemoryLoader.java",
+      "sha256": "2f243fcb58b534f51552bad73d211f619c7afb78e3e74da323e6a9fff8f389e8"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\prompt\\PromptAssembler.java",
+      "sha256": "29579f9524e24457c0ebdc9550876a3d7cacdbb6ed3a53d95d5b6406497f3f75"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\prompt\\PromptContext.java",
+      "sha256": "0de4c91718d3a259982ed6ef279b779ae40b5511aa6c1a93a79104976e7856bb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\prompt\\PromptMode.java",
+      "sha256": "39cf5bf9545f026c8d1c24d1e11fe893e585974706fec51a6b3d4a3cb71dfe85"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\prompt\\PromptRepository.java",
+      "sha256": "888baa402ea28c208349ee9318a0afb26f4c80ba65e67d5bb56cb7adce5cf284"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\CodeAnalyzer.java",
+      "sha256": "8da2ebf9ef420cfcef36bf370f65b20899b09333b585c8dd4ad1bc555f605efc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\CodeChunk.java",
+      "sha256": "0662b77f77df79aa57ea7a8da462aa734adcf424d7e518d04fde53ed4e0bcdca"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\CodeChunker.java",
+      "sha256": "b312e75ab1c59153d988dbde84c776dd11b3676eabb21eb3bdd148cc75991cb7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\CodeIndex.java",
+      "sha256": "43b467dec689a36eaa0da362a0f49d995863a007b4454bf1242777d93c7bd3f1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\CodeRelation.java",
+      "sha256": "b2e068c7104665170f0cbac1c5aea02934b5df4322fec8a44e07d9c992cbb560"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\CodeRetriever.java",
+      "sha256": "b2cdd3ead6cca38fd767dd9f1a2b1b8a6d8bb0893469c3a8f1c15e32dcd2ad1b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\EmbeddingClient.java",
+      "sha256": "949589c453d1c124671ccba1e47825d2d42b973dbd61dbd593b8d13e6eea5a99"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\JavaSourceParser.java",
+      "sha256": "eaff4136d8a9615d9f887f40c2fa492befdba0128ff60b8f026a9e2ed407ece2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\RagQueryTokenizer.java",
+      "sha256": "1ec0d71a08d15b7432e48995e674be6456ad311b5dd9626b9cb8b8358ec88c3f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\SearchResultFormatter.java",
+      "sha256": "2881102d2509150669874de0f868a3a6db9293663776b6c3a6ba2fa82e5b7553"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\rag\\VectorStore.java",
+      "sha256": "80faf8740992f34f0ad87e2040297dd916e8a5a13fedb2f8d71d37637e1a3394"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\PlainRenderer.java",
+      "sha256": "f5eba9feb892d0a2aa3175b1a7f9c828d3d664d3b555f13685d73fc07d0e354c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\Renderer.java",
+      "sha256": "288e238d45a024fcb03cad5c9841709175bf9c70525282c3b81fc28b5c280d5c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\RendererFactory.java",
+      "sha256": "d1c6f6ac7a3f64f1a48068a32ac94ec2d8405344191fd7d97ee64560bb238e4b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\StatusInfo.java",
+      "sha256": "579a48a45e43a87cbacd83c75f7ebaadf3dad1db6d914fb9d91d01f9256feb08"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\AnsiSeq.java",
+      "sha256": "058c00695e934d597618e2323f20def432b171b7f920199730789a272510ec3b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\BlockRegistry.java",
+      "sha256": "e2698fb26ceac726b2ca152f14072e5b496fe9aee587da212a56fa25b8142609"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\BottomStatusBar.java",
+      "sha256": "14c7b5db1d1d12436823d86197570cc4b50c82f26e7bac34f3ec44eba6408d4b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\FoldableBlock.java",
+      "sha256": "57f010ab9ab1d6ae249e9ab905d2ee89ec54eda21e8b72f5264fe26d31143f55"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\InlineActivityDisplay.java",
+      "sha256": "5f94b92bc0fd5c343a25900b0e76846fc5a9886c7e60a990ecae05dab52f3519"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\InlineApprovalPrompter.java",
+      "sha256": "7c08f9ce977e497c8ca8909d368cd6bebd19d3d23f4d1300034c188ecfc62bac"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\InlineDiffRenderer.java",
+      "sha256": "3381bd56086d73ed1960d7cedba200c3b060bca69e96702d402bef30f37e00d7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\InlineRenderer.java",
+      "sha256": "b32aa7922b7d91aea5e0500e5703363f9fcb44ce6fe62c28ef14990878ca9478"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\SlashPalette.java",
+      "sha256": "ccdfcd13330bb27f6dd577055d9ab611b177d090e8451f224513b26b4b2c054b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\TerminalCapabilities.java",
+      "sha256": "d7614415d92b321531a92030b81028e69633d3e746f9486fb16fb7966542a80f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\render\\inline\\ToolCallRenderer.java",
+      "sha256": "410c79c2d026860883ccb4d96cd0b5f623e64d7b6c065e1531238ef6286df4e1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\CancellationContext.java",
+      "sha256": "74a6ca3d9f2e07df9f29b699ec0a34bce802ef5025d00154c6f83ea4e7ae397d"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\CancellationToken.java",
+      "sha256": "a988e4ba69d19414a63304544d3e30893276918d16d0977891d7f8a5d2942ebd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\api\\RuntimeApiServer.java",
+      "sha256": "f2907859522a070e54c8252c0af5a5ab45df775ffbfa719547f4ce39db5829b6"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\api\\RuntimeEvent.java",
+      "sha256": "1854cbd5cb47dad94755faaf90fead16df3094ac45bf2f145a6fe8b7bfc3974f"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\api\\RuntimeThreadStore.java",
+      "sha256": "2d7a456c569bf5f9980e13946ab03ee8d1db8d82a955afe63ae1bc0004307cfb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\task\\DurableTask.java",
+      "sha256": "5e1140a0b097a2edf27a37b81d4e1087e9e491798e18c4af053342a33ddce089"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\task\\DurableTaskManager.java",
+      "sha256": "d4ed8d006940e3228faa4d091b6e02780be1bc9e293e21f84c46b5e5203df81e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\task\\TaskCommandFormatter.java",
+      "sha256": "5898c40af68916ef5cdc9bc22e49e13f917d75301284a4b92f2cd7c0fc926b13"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\task\\TaskRunner.java",
+      "sha256": "674a512ccc7a5940f4f2bbb91157fc4b703cf96ac82840dd0d0bddf3a7a4a1e2"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\runtime\\task\\TaskStatus.java",
+      "sha256": "7441e89dd33ad2cc1fb1db73e505a434d2bb9e31a906a8f448bbe187fc3fbea4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\skill\\Skill.java",
+      "sha256": "e391aee4e3746a10f875c993f26700edb33ab262cdcc60170e222b5fe0ca9ad9"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\skill\\SkillBuiltinExtractor.java",
+      "sha256": "90d741fa83eaed175d83879df1c83d3dc221bec3fac734e1e3f6ad48a6d151f9"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\skill\\SkillFrontmatterParser.java",
+      "sha256": "fdcb4b003d1f564767aba6f227e99d198dce33ee6a4e37b50b6d0a29fc3e2667"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\skill\\SkillIndexFormatter.java",
+      "sha256": "040015b01bbad82b0945137d6aebefc1a0a327670fb5a39342dfbd9faa4dd0fb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\skill\\SkillReferences.java",
+      "sha256": "10dec246717cffb9f0a75c2c1cb086e337bb71931d4b14e8c74a01a2e0f5f428"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\skill\\SkillRegistry.java",
+      "sha256": "2a37a580f20b437662c3811ab37fd4d7c88199fcef9ed7bfee28d19e47db152c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\skill\\SkillStateStore.java",
+      "sha256": "5672f25609d4153504cd2b00b2d5c28294d2dbe90dd9edea6959c04df9d79244"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\snapshot\\RestoreResult.java",
+      "sha256": "c7b57e2f1e1865d661c438cf051b36955e5991fd22a3dfb07cb7002eb4a2db57"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\snapshot\\SideGitManager.java",
+      "sha256": "301780caa0d6cfc989872fea74fa20a74d634607d79bd219c8242fd4cdc735be"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\snapshot\\SnapshotConfig.java",
+      "sha256": "e2a9551532f41e03a243d1c91baf55ee1be5e61718433501fb65e3ad02dca80a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\snapshot\\SnapshotPhase.java",
+      "sha256": "6cb348cfcca79e1d5f89f0aeaa4eaf961972f6e2f085a8f5458c1335efc7a698"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\snapshot\\SnapshotService.java",
+      "sha256": "4696fcfd45a7d818ba8620f3535847610f4473e86731a1ec0014dfee92591634"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\snapshot\\TurnSnapshot.java",
+      "sha256": "6e938752dc9d58980b7eb717630f682653fc498b9109614a40a493b09f82527e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\BubblewrapArguments.java",
+      "sha256": "872edda3295d80e430e66e7f9b458dbd1122ffcb9d0bf7da2603e4dc1159d8c4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\CodeSearchEngine.java",
+      "sha256": "85cc01f70b6106ff594607dc8d949c1b12c207a9b489650a91654efe4c794bfa"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\CommandExecutionObserver.java",
+      "sha256": "c91e5a24432bc4096370e87c7cd791736bf677fb7f680c0f27e2246140d83ce0"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\CommandSandbox.java",
+      "sha256": "cab534f0b59775cd1134e817e26950f8f6f4d9a8d59da785931ed6424a1ffe66"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\CommandSandboxDetector.java",
+      "sha256": "421dbd7334b912c747c241a7274691061853297ab21397a47c23ca688853bead"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\CommandSandboxMode.java",
+      "sha256": "ff964dcb5f4052a2cb57bf04dc540b81e93a69aca57ffccf137bad8e9fce7b37"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\CommandSandboxStatus.java",
+      "sha256": "71bd0299f1aeb7a949f0ba2dcbf3214384c4e2f6a8a7e719d6cf08c61c326827"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\JavaCodeSearchEngine.java",
+      "sha256": "b0953942843d0d76cdd49d4a1e9bbd110387539ddcb567dc56db95c844704e19"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\LoadedSkillMessages.java",
+      "sha256": "76a23ebf5ab12addb9235d5dd7d0066033fff2637b12abfed78a20cc1e8b24de"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\RipgrepCodeSearchEngine.java",
+      "sha256": "d2a0c7e54340a12f561041aea59522032c8ed6da28becc43c75ad152aaab6094"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\SeatbeltProfile.java",
+      "sha256": "07874fd4fd6ccb63efff176409aab8099329b6ffcd230ee65ca574cc0b9672a5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\TextEditMatcher.java",
+      "sha256": "dc0916e376df89f823bc6fa61ee7c142ab8ac9e3024b8dc5f144936b7ebb6061"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\ToolArgumentValidator.java",
+      "sha256": "261c4c935731981d76255b87e9f65f6e2092d5609daaa62a393ba01775f0e02e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\ToolOutput.java",
+      "sha256": "5a53af2bf5321ef47849196e43346f72e5b49abfc2559f5b681753216b7f8902"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\ToolRegistry.java",
+      "sha256": "af9ac9f6853868ca2335bf035cb3d1f6e0f490a6ca9b38f473b647c3dddd81bc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\ToolResultBoundary.java",
+      "sha256": "88c92412c5c5ed479e0b2009218948e9357621a59794e4b5f24df347bbcb9590"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\ToolResultOffloader.java",
+      "sha256": "3fa6a95c023a6919bf17dbbfe6188c2d20d99b8d162e11049b323eedd39afdbe"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tool\\TurnToolPolicy.java",
+      "sha256": "2af153b682e9a6bbaaebea18795a87fa0e33abfe32c5f26424afcbff3afea06e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\LanternaRenderer.java",
+      "sha256": "c4851dff7579d16f36803513aea94ec09c91407a97d39d5558064327932ca1fb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\LanternaWindow.java",
+      "sha256": "c122fd288e68888fe17aaede0f7654d501057b1c30d7816e5d24b29c95b4b6db"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\RootPane.java",
+      "sha256": "7fb748871788a4c718110e769ad69f5bcafd88b51f453d92f09bff58decafecb"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\TuiBootstrap.java",
+      "sha256": "af7fb45c129305f5e307f6d4f86ccf629a9e4fa8f191c5841c816b87424eff5c"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\TuiSessionController.java",
+      "sha256": "1216cf909ae0a8ad5f77610078bd72d2acde005e44f3822b9586243475af3966"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\config\\TuiConfigPanel.java",
+      "sha256": "6ae07bb9cc59c2e8afe7328cb4569afd1cfdd12b2b7c54d5f5246c2ac5446a19"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\highlight\\CodeHighlighter.java",
+      "sha256": "b8f6e38e36c867bb4774d1453b8b483fcd3a34978dadd2cc52a895d3df26ba93"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\history\\ConversationSnapshot.java",
+      "sha256": "841e477740513610f85889207d6c06569aced94411f53086e53c3fe57335e9e7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\hitl\\TuiHitlHandler.java",
+      "sha256": "8910b704d8fb08d85edf66ca8d603ce69e588937a93548bfa607ff6a80b78110"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\pane\\CenterPane.java",
+      "sha256": "456d359ab819a964a103df3da1fad60bb9d2901c091206cbe009374c62ce914e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\pane\\FileTreePane.java",
+      "sha256": "d91cab5493c37c6e9b007ba0fea2aeaa31d34d1f00fed72e391044acb2074ebe"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\pane\\InputBar.java",
+      "sha256": "a103d707e99a0b61511d68c85f9a023f9d69bcc5bcfb8383a133d59b0ae830af"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\tui\\pane\\StatusPane.java",
+      "sha256": "f3636f2fd0b2f6cbab9ff1af27f0f54a12dfb4c84e7e46d5da9a91d6398533d1"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\util\\AnsiStyle.java",
+      "sha256": "e5aaccba267c8df20492e12e3b13d6ad109f66b834469c6044cd0215b61fd891"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\util\\JiebaSegmenterFactory.java",
+      "sha256": "8331dd9db8208dd03cc7719d8728e0594ed476a085d99ecd1be6db8dc235c3bf"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\util\\TerminalInputLock.java",
+      "sha256": "dd5b6773231f162199c7248f0705ad79193ab6c3a6fd20758d2f768dca3a6d60"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\util\\TerminalMarkdownRenderer.java",
+      "sha256": "14eeff671e2267f606a4a7b532875fc8bd188b5092d7333c4c0c0b113668b795"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\util\\TerminalTable.java",
+      "sha256": "bc1ff20ac5ecea91adb51257b050861674c196c6620cd85144fbd1c541d1eead"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\DeepSeekSearchProvider.java",
+      "sha256": "5d508c3e50ee5fdc48eba38527d819d7c76370dd0565d67036ef3d74283a11a5"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\FetchResult.java",
+      "sha256": "166f3c434b8933d24b1dcd6754bfbfa02a8206d37224cfaf1baeff0b83e16c33"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\HtmlExtractor.java",
+      "sha256": "5bd58dd8491ccd95035f8385cd85b579ee2e80b9fa3cc827686eeaf41cf6cc02"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\NetworkPolicy.java",
+      "sha256": "05a04eab03ba686a6da0f56b000b8fdb46be336ae5dceb6ca97abed4e9f01912"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\SearchProvider.java",
+      "sha256": "261daa6faebc060b7394c056525bea29443156edae3fad731bb725a1b09fe8b0"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\SearchProviderFactory.java",
+      "sha256": "35fccfd155934a132ff664d05e4182bc39408c9d4dbb6ce0778acd0fe76a085e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\SearchResult.java",
+      "sha256": "a3726e59c122257a64d12a45d4a5ca8a6e51e58d90dfbe6752476c7f10b97703"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\SearxngSearchProvider.java",
+      "sha256": "044acdae14ee08778173f99e0e2ccac9c4456be979af40e5f73f056c47154007"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\SerpApiSearchProvider.java",
+      "sha256": "b486ecf83ed4243d37a298507f9b741226f1846c6bd677fab9e16f2f638d8d82"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\WebFetcher.java",
+      "sha256": "f859527f5f2e9c286b4861a390fcb7af1a76db0750607a3cfa3a2899b04951a7"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\web\\ZhipuSearchProvider.java",
+      "sha256": "1722428e69a64c11a8c4abfbd656beef145f27a8480c11482d07509da94b2556"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\IlinkClient.java",
+      "sha256": "40276b2af250dbb3fe4ca215fd9cc98c085e4dd7ee20dd12bac57de57d7b574e"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\TerminalQrRenderer.java",
+      "sha256": "0f7150d0dfa27120f361a8adbbd6febc4cc7c1a8b951fcdbc31a683540973709"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatAccount.java",
+      "sha256": "73cd0fa7f06f636c29cc9eda1fb27db8b010de4213a4dd4f5378394e0e32f859"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatAccountStore.java",
+      "sha256": "353321a4106c371ffb465a258624e61d91b2c0c817ff337654b514159e2cb04b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatAgentSession.java",
+      "sha256": "267234e0fa9dff211a0f334643b0dd37e32818d23b4d558b5b8bd928eb7e5297"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatCommandMain.java",
+      "sha256": "1a113cb91060998a5eb6f563edd2896b332af2bc2f0b76aa9e5e03028e1af112"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatCommandParser.java",
+      "sha256": "0ab68f5da77f41f4a3b3a53e6d620139e55b76156ad8ac30e55e2948791d56cf"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatLoginResult.java",
+      "sha256": "dbddc084a2a53fcb4733250247a55dee5a60b4b95c9b4a3268ba1cbf0ff5bb34"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatMediaItem.java",
+      "sha256": "43778e12534b8e4c3b6db85c58b86f4605b9d09b1b733eab4d35d347b6e038e0"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatMessage.java",
+      "sha256": "f703aee88addba83ba7f8bdca68e7c6bc6f3e56dd2cab64ead0d1ca734691dcc"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatMessageLoop.java",
+      "sha256": "8417ebd2293ad2f5bbd827221e2fe41a7cdf637da053421513ac34706c4a5f20"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatMessageSender.java",
+      "sha256": "bf0b07fef26f32552843f52b47456aca6cf338b13718d59e73b50ac46cd255db"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatPaths.java",
+      "sha256": "bbcfaa0a70e8494568eafb86a20897909cc4d0afe85fef2d524a64e45af1b2f4"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatPolicyConfig.java",
+      "sha256": "8451e31b94c85abee167a9bc4467415c6b6c43616859b7d528776c4fd2c0571b"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatPolicyDecider.java",
+      "sha256": "ab2af2155b5bdd8d556efc1b4ea17824f050741be17d20fdc75605abc924f42a"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatPolicyDecision.java",
+      "sha256": "7354fa51feb04f50626f3bd3198ab9c1ccf63a2a7d14ef6e091210d7cf474a37"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatQrLogin.java",
+      "sha256": "58f93968eafe908bf6eb14810a20d677dd5876e610781df011c8b7bde2b8ec67"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatRenderer.java",
+      "sha256": "ff9c5594aa4fe1bf747362600bfaeead5e2b2c1feb763d044a80fe1cb5c99731"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatTerminalRenderer.java",
+      "sha256": "c8bfd7c888e2dba7dff1136332cc47a5429fd058edc53ba05719c2ffb488e5c9"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatTextFormatter.java",
+      "sha256": "e2cac1fa95df29bfe84ec6e5a93d04587d67763de3663f9a98e3da7a7662c2bd"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatToolRegistry.java",
+      "sha256": "6ff8d6bea56f2b846c0e4bcd735eb3af167a3099dbbbde11b697409393e15993"
+    },
+    {
+      "path": "src\\main\\java\\com\\paicli\\wechat\\WechatUpdate.java",
+      "sha256": "cd74890bd83e182cf921d96cdd50c8e46456409c7f5f5884013016184ab06207"
+    }
+  ],
+  "datasetSha256": "f58399cd59efadca5fbafeb6715f78b09dbc87e9dc47817185a23f3272cb5a28",
+  "diagnosticDatasetSha256": "1e783cdf3fbfb6dbfff398f5b372cec16a53f34be991064d5e3bbc98bbad03fe"
+}
