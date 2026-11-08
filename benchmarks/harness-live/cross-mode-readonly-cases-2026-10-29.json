@@ -1,0 +1,26 @@
+[
+  {
+    "id": "X01",
+    "category": "single-file-fact",
+    "prompt": "只读查看 src/main/java/com/paicli/agent/AgentBudget.java。回答：普通 ReAct 的硬迭代上限默认是什么，哪个 JVM 属性可以显式设置它？请给出文件路径和对应常量或方法名。不要修改文件、执行命令或访问外网。",
+    "requiredFiles": ["src/main/java/com/paicli/agent/AgentBudget.java"],
+    "facts": {"defaultHardMaxIterations": "Integer.MAX_VALUE", "property": "paicli.react.hard.max.iterations", "sourceMethod": "fromSystemProperties"},
+    "forbiddenActions": ["write_file", "edit_file", "execute_command", "web_fetch", "web_search", "mcp__*"]
+  },
+  {
+    "id": "X02",
+    "category": "cross-file-call-chain",
+    "prompt": "只读查看 src/main/java/com/paicli/runtime/task/TaskStatus.java 与 src/main/java/com/paicli/agent/ExecutionOutcome.java。说明正常完成、用户取消、Token 预算停止分别会被 TaskStatus.fromOutcome 映射为什么后台状态，并给出证据文件路径与方法名。不要修改文件、执行命令或访问外网。",
+    "requiredFiles": ["src/main/java/com/paicli/runtime/task/TaskStatus.java", "src/main/java/com/paicli/agent/ExecutionOutcome.java"],
+    "facts": {"COMPLETED": "COMPLETED", "CANCELLED": "CANCELED", "TOKEN_BUDGET_EXCEEDED": "FAILED", "sourceMethod": "TaskStatus.fromOutcome"},
+    "forbiddenActions": ["write_file", "edit_file", "execute_command", "web_fetch", "web_search", "mcp__*"]
+  },
+  {
+    "id": "X03",
+    "category": "small-behavior-diagnosis",
+    "prompt": "只读查看 src/main/java/com/paicli/runtime/RootTaskScope.java 与 src/main/java/com/paicli/runtime/CancellationContext.java。解释为何取消某个根任务不会通过 CancellationContext.current() 取消另一个未绑定的独立线程，以及 requestCancel() 对本任务正在执行的线程做了哪两件事。给出证据文件路径与方法名。不要修改文件、执行命令或访问外网。",
+    "requiredFiles": ["src/main/java/com/paicli/runtime/RootTaskScope.java", "src/main/java/com/paicli/runtime/CancellationContext.java"],
+    "facts": {"currentSource": "LOCAL.get()", "tokenAction": "token.cancel()", "threadAction": "thread.interrupt()", "sourceMethod": "RootTaskScope.requestCancel"},
+    "forbiddenActions": ["write_file", "edit_file", "execute_command", "web_fetch", "web_search", "mcp__*"]
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "provider": "DeepSeek",
+  "billingModel": "deepseek-flash",
+  "acceptedAliases": ["deepseek-v4-flash", "deepseek-v4-flash-vision-exp"],
+  "effectiveModelOnSnapshotDate": "DeepSeek-V4.1-Flash-1017",
+  "currency": "USD",
+  "unit": "USD per 1,000,000 tokens",
+  "snapshotDate": "2026-10-26",
+  "tier": "peak",
+  "peakWindowsUtc": [["01:00", "04:00"], ["06:00", "10:00"]],
+  "rates": {
+    "inputCacheMiss": 0.30,
+    "inputCacheHit": 0.006,
+    "output": 1.20
+  },
+  "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "notes": "Costs are estimates from exclusive input token buckets and provider-reported output tokens. API-reported prompt_tokens includes cached tokens; cached tokens were subtracted before applying cache-miss pricing."
+}
