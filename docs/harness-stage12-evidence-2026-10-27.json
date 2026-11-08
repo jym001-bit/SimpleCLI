@@ -1,0 +1,628 @@
+{
+  "kind": "stage12-source-architecture-audit",
+  "auditedAtUtc": "2026-10-27T11:57:20.7481696+00:00",
+  "head": "37b09ee9d3212eb2ef85f5aea7d7f34c550800ed",
+  "workspace": "D:/pailcli/paicli-main",
+  "basis": "Current working-tree sources, including existing uncommitted changes",
+  "productionChangedByThisStage": false,
+  "testsRun": 0,
+  "realModelRequests": 0,
+  "cloudQueries": 0,
+  "evidenceLevels": {
+    "R": "Source-supported risk, not reproduced this stage",
+    "H": "Existing saved historical execution",
+    "S": "Direct source control flow"
+  },
+  "priorities": [
+    {
+      "level": "S",
+      "nextPhase": 13,
+      "id": "P1",
+      "problem": "Typed termination is lost at root String return boundaries"
+    },
+    {
+      "level": "S/R",
+      "nextPhase": 14,
+      "id": "P2",
+      "problem": "Run ownership and cancellation scope vary across entries"
+    },
+    {
+      "level": "S",
+      "nextPhase": 15,
+      "id": "P3",
+      "problem": "Request preparation, helper model usage and budget ownership are distributed"
+    },
+    {
+      "level": "S",
+      "nextPhase": 16,
+      "id": "P4",
+      "problem": "Team execution completion can stand in for review approval"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "path": "src/main/java/com/paicli/agent/Agent.java",
+      "sha256": "31D10BEEB0984DA0A7062E1F0EA388A1A2437514B9BB6EFA7A14D64344189B6C"
+    },
+    {
+      "path": "src/main/java/com/paicli/agent/AgentExecutionKernel.java",
+      "sha256": "DEACBEA4D37CF33D4C84F34BBC4C3C880FC9505AABB006708C7D6AEF24D8D2AF"
+    },
+    {
+      "path": "src/main/java/com/paicli/agent/AgentOrchestrator.java",
+      "sha256": "4B3A0A7F43178FDB5186523745F0AE793D062D931AF2DBADBC6A530B9A1A74DC"
+    },
+    {
+      "path": "src/main/java/com/paicli/agent/ExecutionOutcome.java",
+      "sha256": "CE9BC651DF522D4886D2E3F81CF5B87B40E8829B6787917DDE5896DA36E2A490"
+    },
+    {
+      "path": "src/main/java/com/paicli/agent/PlanExecuteAgent.java",
+      "sha256": "77596444E48DCABF60D969550B248DF4213D027FE6FB56E5008554BB53A9C3DD"
+    },
+    {
+      "path": "src/main/java/com/paicli/agent/SubAgent.java",
+      "sha256": "9904A9C0491FA4AADEC01C5D0FF638F7C91EFDF1BE1F5AEBE6AD7478B8239C57"
+    },
+    {
+      "path": "src/main/java/com/paicli/cli/Main.java",
+      "sha256": "216D343A448FD69576321CB0573C269D8C33CD7D945CF5CF893A0741AAEE46C0"
+    },
+    {
+      "path": "src/main/java/com/paicli/eval/live/LiveHarnessMain.java",
+      "sha256": "A56E11003D0C96B086CE74F3DE8CBF8FEDFF2A6094FA187388CE0E35C7D4BED8"
+    },
+    {
+      "path": "src/main/java/com/paicli/history/ConversationLedger.java",
+      "sha256": "E20CEAF5FCDBAFDA54A255AE69CAFA4F44747B67EC0E1C59899D29CE17E1C08B"
+    },
+    {
+      "path": "src/main/java/com/paicli/hitl/HitlToolRegistry.java",
+      "sha256": "DFE30AE86592B5445A603C3421D028A49BB276E08238FCFBDADB337663A56BAC"
+    },
+    {
+      "path": "src/main/java/com/paicli/hitl/LlmApprovalClassifier.java",
+      "sha256": "EFD76A69F1926A862B25007A17394683C7200A8EF0AC85B8512D192C6BCEF840"
+    },
+    {
+      "path": "src/main/java/com/paicli/llm/AbstractOpenAiCompatibleClient.java",
+      "sha256": "885B997A1DB86C2955DAD143E3F58B9B247B553832E4A70E5DD40640169DDFBC"
+    },
+    {
+      "path": "src/main/java/com/paicli/memory/AutoCompactionManager.java",
+      "sha256": "8FA82B79A6B5F3930225DFD33BCD371F7692D24C710367DA10E9859AB480D798"
+    },
+    {
+      "path": "src/main/java/com/paicli/memory/AutoFactExtractor.java",
+      "sha256": "2F0AD4269678FDB5D204D055281A5287BE6396D81E1E96693C8EE51E84D1B24B"
+    },
+    {
+      "path": "src/main/java/com/paicli/memory/ConversationHistoryCompactor.java",
+      "sha256": "4EAF1226CF975E2944D33C1F19016103FFA3DBF7A81E1B4041466C74EF4B8EA1"
+    },
+    {
+      "path": "src/main/java/com/paicli/memory/MemoryManager.java",
+      "sha256": "28AE63C1614153D202D1EAF2FCE78FABEC0A40E5ED5165DB2CF990A8829B6ADD"
+    },
+    {
+      "path": "src/main/java/com/paicli/memory/SessionMemoryCompactor.java",
+      "sha256": "CEB8DBA7543CFAF7FF2C5A5B27DE58A60FAB8DC88AE7024B5290C83D835A5CF4"
+    },
+    {
+      "path": "src/main/java/com/paicli/observability/LangfuseTelemetry.java",
+      "sha256": "4B45DF01E00A7D03CEE38C8E547A8C882F3811F4EE6005580FE1FA71582BF5B1"
+    },
+    {
+      "path": "src/main/java/com/paicli/plan/Planner.java",
+      "sha256": "C9DCBFB6F2E59CBE8523419753758E2A532CAEB4271D435E257D03F093407EAD"
+    },
+    {
+      "path": "src/main/java/com/paicli/runtime/api/RuntimeApiServer.java",
+      "sha256": "F2907859522A070E54C8252C0AF5A5AB45DF775FFBFA719547F4CE39DB5829B6"
+    },
+    {
+      "path": "src/main/java/com/paicli/runtime/CancellationContext.java",
+      "sha256": "74A6CA3D9F2E07DF9F29B699EC0A34BCE802EF5025D00154C6F83EA4E7AE397D"
+    },
+    {
+      "path": "src/main/java/com/paicli/runtime/task/DurableTaskManager.java",
+      "sha256": "D4ED8D006940E3228FAA4D091B6E02780BE1BC9E293E21F84C46B5E5203DF81E"
+    },
+    {
+      "path": "src/main/java/com/paicli/runtime/task/TaskRunner.java",
+      "sha256": "674A512CCC7A5940F4F2BBB91157FC4B703CF96AC82840DD0D0BDDF3A7A4A1E2"
+    },
+    {
+      "path": "src/main/java/com/paicli/tool/ToolRegistry.java",
+      "sha256": "AF9AC9F6853868CA2335BF035CB3D1F6E0F490A6CA9B38F473B647C3DDDD81BC"
+    },
+    {
+      "path": "src/main/java/com/paicli/tool/TurnToolPolicy.java",
+      "sha256": "2AF153B682E9A6BBAAEBEA18795A87FA0E33ABFE32C5F26424AFCBFF3AFEA06E"
+    },
+    {
+      "path": "src/main/java/com/paicli/tui/TuiSessionController.java",
+      "sha256": "1216CF909AE0A8AD5F77610078BD72D2ACDE005E44F3822B9586243475AF3966"
+    },
+    {
+      "path": "src/main/java/com/paicli/wechat/WechatAgentSession.java",
+      "sha256": "267234E0FA9DFF211A0F334643B0DD37E32818D23B4D558B5B8BD928EB7E5297"
+    },
+    {
+      "path": "tools/run-harness-offline-eval.ps1",
+      "sha256": "BDC1B7832E8A2060A97EEE81651BB5AEE0517B21061C9DB07A347B7624EEEC69"
+    }
+  ],
+  "anchors": [
+    {
+      "id": "ENTRY",
+      "path": "src/main/java/com/paicli/cli/Main.java",
+      "matches": [
+        {
+          "line": 994,
+          "text": "Callable<String> runTask;"
+        }
+      ]
+    },
+    {
+      "id": "HEADLESS",
+      "path": "src/main/java/com/paicli/cli/Main.java",
+      "matches": [
+        {
+          "line": 1101,
+          "text": "private static String runHeadlessTask(String prompt, LlmClient llmClient) {"
+        }
+      ]
+    },
+    {
+      "id": "MAIN_CANCEL",
+      "path": "src/main/java/com/paicli/cli/Main.java",
+      "matches": [
+        {
+          "line": 1331,
+          "text": "private static String runWithCancelSupport(Terminal terminal, PrintStream out, Callable<String> task) {"
+        }
+      ]
+    },
+    {
+      "id": "KERNEL",
+      "path": "src/main/java/com/paicli/agent/AgentExecutionKernel.java",
+      "matches": [
+        {
+          "line": 40,
+          "text": "public static ModelTurn requestModelTurn("
+        }
+      ]
+    },
+    {
+      "id": "FINALIZER",
+      "path": "src/main/java/com/paicli/agent/AgentExecutionKernel.java",
+      "matches": [
+        {
+          "line": 78,
+          "text": "public static LlmClient.ChatResponse requestFinalizationTurn("
+        }
+      ]
+    },
+    {
+      "id": "OUTCOME",
+      "path": "src/main/java/com/paicli/agent/ExecutionOutcome.java",
+      "matches": [
+        {
+          "line": 6,
+          "text": "public record ExecutionOutcome(Reason reason, String content) {"
+        }
+      ]
+    },
+    {
+      "id": "REACT_ERROR",
+      "path": "src/main/java/com/paicli/agent/Agent.java",
+      "matches": [
+        {
+          "line": 361,
+          "text": "return \"❌ 调用 LLM 失败: \" + e.getMessage();"
+        }
+      ]
+    },
+    {
+      "id": "REACT_TOOLS",
+      "path": "src/main/java/com/paicli/agent/Agent.java",
+      "matches": [
+        {
+          "line": 258,
+          "text": "updateSystemPromptForTools(turnSystemPrompt, toolExposure.definitions());"
+        }
+      ]
+    },
+    {
+      "id": "PLAN_ROOT",
+      "path": "src/main/java/com/paicli/agent/PlanExecuteAgent.java",
+      "matches": [
+        {
+          "line": 54,
+          "text": "private record PlanRunOutcome(String result, boolean persistAssistantMessage,"
+        }
+      ]
+    },
+    {
+      "id": "PLAN_TEXT",
+      "path": "src/main/java/com/paicli/agent/PlanExecuteAgent.java",
+      "matches": [
+        {
+          "line": 57,
+          "text": "return new PlanRunOutcome(result, true, result != null && result.startsWith(\"✅\"));"
+        }
+      ]
+    },
+    {
+      "id": "PLAN_LOCAL",
+      "path": "src/main/java/com/paicli/agent/PlanExecuteAgent.java",
+      "matches": [
+        {
+          "line": 777,
+          "text": "AgentBudget budget = AgentBudget.fromSystemProperties();"
+        }
+      ]
+    },
+    {
+      "id": "PLANNER_DIRECT",
+      "path": "src/main/java/com/paicli/plan/Planner.java",
+      "matches": [
+        {
+          "line": 102,
+          "text": "LlmClient.ChatResponse response = llmClient.chat(messages, null, streamRenderer);"
+        }
+      ]
+    },
+    {
+      "id": "TEAM_ROOT",
+      "path": "src/main/java/com/paicli/agent/AgentOrchestrator.java",
+      "matches": [
+        {
+          "line": 192,
+          "text": "CancellationToken callerToken = CancellationContext.currentThreadToken();"
+        }
+      ]
+    },
+    {
+      "id": "TEAM_BIND",
+      "path": "src/main/java/com/paicli/agent/AgentOrchestrator.java",
+      "matches": [
+        {
+          "line": 364,
+          "text": "try (CancellationContext.Scope ignored = CancellationContext.bind(token)) {"
+        },
+        {
+          "line": 492,
+          "text": "try (CancellationContext.Scope ignored = CancellationContext.bind(token)) {"
+        }
+      ]
+    },
+    {
+      "id": "TEAM_REVIEW_ERROR",
+      "path": "src/main/java/com/paicli/agent/AgentOrchestrator.java",
+      "matches": [
+        {
+          "line": 653,
+          "text": "if (reviewResult.type() == AgentMessage.Type.ERROR) {"
+        }
+      ]
+    },
+    {
+      "id": "TEAM_RETRY_REVIEW",
+      "path": "src/main/java/com/paicli/agent/AgentOrchestrator.java",
+      "matches": [
+        {
+          "line": 720,
+          "text": "if (retryReview.type() == AgentMessage.Type.ERROR) {"
+        }
+      ]
+    },
+    {
+      "id": "TEAM_COMPLETED",
+      "path": "src/main/java/com/paicli/agent/AgentOrchestrator.java",
+      "matches": [
+        {
+          "line": 669,
+          "text": "markStepCompleted(steps, step, acceptedResult, stepPolicy, stepTrustedUrls);"
+        },
+        {
+          "line": 738,
+          "text": "markStepCompleted(steps, step, acceptedResult, stepPolicy, stepTrustedUrls);"
+        }
+      ]
+    },
+    {
+      "id": "WORKER_LOCAL",
+      "path": "src/main/java/com/paicli/agent/SubAgent.java",
+      "matches": [
+        {
+          "line": 292,
+          "text": "AgentBudget budget = AgentBudget.fromSystemProperties();"
+        }
+      ]
+    },
+    {
+      "id": "TASK_RUNNER",
+      "path": "src/main/java/com/paicli/runtime/task/TaskRunner.java",
+      "matches": [
+        {
+          "line": 5,
+          "text": "String run(String prompt) throws Exception;"
+        }
+      ]
+    },
+    {
+      "id": "BACKGROUND_RESULT",
+      "path": "src/main/java/com/paicli/runtime/task/DurableTaskManager.java",
+      "matches": [
+        {
+          "line": 179,
+          "text": "markTerminal(taskId, TaskStatus.COMPLETED, result, null, startedAt);"
+        }
+      ]
+    },
+    {
+      "id": "BACKGROUND_CANCEL",
+      "path": "src/main/java/com/paicli/runtime/task/DurableTaskManager.java",
+      "matches": [
+        {
+          "line": 149,
+          "text": "thread.interrupt();"
+        }
+      ]
+    },
+    {
+      "id": "BACKGROUND_RECOVER",
+      "path": "src/main/java/com/paicli/runtime/task/DurableTaskManager.java",
+      "matches": [
+        {
+          "line": 295,
+          "text": "private synchronized void recoverRunningTasks() throws SQLException {"
+        }
+      ]
+    },
+    {
+      "id": "API_RESULT",
+      "path": "src/main/java/com/paicli/runtime/api/RuntimeApiServer.java",
+      "matches": [
+        {
+          "line": 107,
+          "text": "store.appendEvent(threadId, \"turn.completed\","
+        }
+      ]
+    },
+    {
+      "id": "API_RUNNER",
+      "path": "src/main/java/com/paicli/runtime/api/RuntimeApiServer.java",
+      "matches": [
+        {
+          "line": 104,
+          "text": "String result = runner.run(input);"
+        }
+      ]
+    },
+    {
+      "id": "FALLBACK",
+      "path": "src/main/java/com/paicli/runtime/CancellationContext.java",
+      "matches": [
+        {
+          "line": 21,
+          "text": "return token == null ? CURRENT.get() : token;"
+        }
+      ]
+    },
+    {
+      "id": "WECHAT",
+      "path": "src/main/java/com/paicli/wechat/WechatAgentSession.java",
+      "matches": [
+        {
+          "line": 76,
+          "text": "runningToken = CancellationContext.startRun();"
+        }
+      ]
+    },
+    {
+      "id": "TUI",
+      "path": "src/main/java/com/paicli/tui/TuiSessionController.java",
+      "matches": [
+        {
+          "line": 257,
+          "text": "private void runAgentTask(String input, RunMode mode) {"
+        }
+      ]
+    },
+    {
+      "id": "HTTP_CANCEL",
+      "path": "src/main/java/com/paicli/llm/AbstractOpenAiCompatibleClient.java",
+      "matches": [
+        {
+          "line": 199,
+          "text": "try (CancellationToken.Registration cancellation = token == null ? null : token.onCancel(call::cancel);"
+        }
+      ]
+    },
+    {
+      "id": "HTTP_RETRY",
+      "path": "src/main/java/com/paicli/llm/AbstractOpenAiCompatibleClient.java",
+      "matches": [
+        {
+          "line": 149,
+          "text": "boolean canRetry = attempt < retryPolicy.maxAttempts()"
+        }
+      ]
+    },
+    {
+      "id": "TOOLS",
+      "path": "src/main/java/com/paicli/tool/TurnToolPolicy.java",
+      "matches": [
+        {
+          "line": 349,
+          "text": "registry.onPolicyToolResults(completed);"
+        }
+      ]
+    },
+    {
+      "id": "VALIDATION",
+      "path": "src/main/java/com/paicli/tool/ToolRegistry.java",
+      "matches": [
+        {
+          "line": 1441,
+          "text": "ToolArgumentValidator.Outcome checked = argumentValidator.check(name, validationSchema(tool, mcpTool), argumentsJson, mcpTool == null);"
+        },
+        {
+          "line": 1522,
+          "text": "return argumentValidator.check(name, validationSchema(tool, mcpTool), argumentsJson, mcpTool == null).error();"
+        }
+      ]
+    },
+    {
+      "id": "TOOL_PARALLEL",
+      "path": "src/main/java/com/paicli/tool/ToolRegistry.java",
+      "matches": [
+        {
+          "line": 1692,
+          "text": "executor.invokeAll(tasks, toolBatchTimeoutSeconds, TimeUnit.SECONDS);"
+        }
+      ]
+    },
+    {
+      "id": "COMMAND_CANCEL",
+      "path": "src/main/java/com/paicli/tool/ToolRegistry.java",
+      "matches": [
+        {
+          "line": 1837,
+          "text": "if (token != null) cancellation = token.onCancel(activeCommand::cancel);"
+        }
+      ]
+    },
+    {
+      "id": "HITL",
+      "path": "src/main/java/com/paicli/hitl/HitlToolRegistry.java",
+      "matches": [
+        {
+          "line": 51,
+          "text": "public ToolOutput executeToolOutput(String name, String argumentsJson) {"
+        }
+      ]
+    },
+    {
+      "id": "CONTEXT",
+      "path": "src/main/java/com/paicli/memory/AutoCompactionManager.java",
+      "matches": [
+        {
+          "line": 64,
+          "text": "public Result compactIfNeeded(List<LlmClient.Message> history, int triggerTokens) {"
+        }
+      ]
+    },
+    {
+      "id": "FULL_SUMMARY",
+      "path": "src/main/java/com/paicli/memory/ConversationHistoryCompactor.java",
+      "matches": [
+        {
+          "line": 265,
+          "text": "LlmClient.ChatResponse response = llmClient.chat(req, null);"
+        }
+      ]
+    },
+    {
+      "id": "SESSION_SUMMARY",
+      "path": "src/main/java/com/paicli/memory/SessionMemoryCompactor.java",
+      "matches": [
+        {
+          "line": 229,
+          "text": "LlmClient.ChatResponse response = client.chat(List.of("
+        }
+      ]
+    },
+    {
+      "id": "FACT_MODEL",
+      "path": "src/main/java/com/paicli/memory/AutoFactExtractor.java",
+      "matches": [
+        {
+          "line": 70,
+          "text": "LlmClient.ChatResponse response = llmClient.chat(List.of("
+        }
+      ]
+    },
+    {
+      "id": "APPROVAL_MODEL",
+      "path": "src/main/java/com/paicli/hitl/LlmApprovalClassifier.java",
+      "matches": [
+        {
+          "line": 119,
+          "text": "Future<LlmClient.ChatResponse> call = executor.submit(() -> client.chat(messages, null));"
+        }
+      ]
+    },
+    {
+      "id": "MEMORY_USAGE",
+      "path": "src/main/java/com/paicli/memory/MemoryManager.java",
+      "matches": [
+        {
+          "line": 88,
+          "text": "tokenBudget.recordUsage(extraction.inputTokens(), extraction.outputTokens(),"
+        },
+        {
+          "line": 233,
+          "text": "tokenBudget.recordUsage(inputTokens, outputTokens);"
+        },
+        {
+          "line": 237,
+          "text": "tokenBudget.recordUsage(inputTokens, outputTokens, cachedInputTokens);"
+        }
+      ]
+    },
+    {
+      "id": "TRACE_ID",
+      "path": "src/main/java/com/paicli/observability/LangfuseTelemetry.java",
+      "matches": [
+        {
+          "line": 78,
+          "text": "String taskId = capture == null ? UUID.randomUUID().toString() : capture.taskId;"
+        }
+      ]
+    },
+    {
+      "id": "TRACE_TOOLS",
+      "path": "src/main/java/com/paicli/observability/LangfuseTelemetry.java",
+      "matches": [
+        {
+          "line": 160,
+          "text": "public static void recordTools(List<ToolExecutionResult> results) {"
+        }
+      ]
+    },
+    {
+      "id": "LIVE_PATH",
+      "path": "src/main/java/com/paicli/eval/live/LiveHarnessMain.java",
+      "matches": [
+        {
+          "line": 190,
+          "text": "String answer = agent.run(test.path(\"prompt\").asText());"
+        }
+      ]
+    },
+    {
+      "id": "OFFLINE",
+      "path": "tools/run-harness-offline-eval.ps1",
+      "matches": [
+        {
+          "line": 15,
+          "text": "$selectors = ($cases | ForEach-Object { ([string]$_.class) + '#' + ([string]$_.method) }) -join ','"
+        }
+      ]
+    },
+    {
+      "id": "LEDGER",
+      "path": "src/main/java/com/paicli/history/ConversationLedger.java",
+      "matches": [
+        {
+          "line": 61,
+          "text": "public record Entry("
+        }
+      ]
+    }
+  ]
+}

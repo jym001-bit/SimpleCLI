@@ -84,6 +84,9 @@ src/main/java/com/paicli/
 
 ### 工具执行
 
+- ReAct/Plan/Team 的机器入口用 `runWithOutcome` / `runExplicitTaskWithOutcome` 传递现有 `ExecutionOutcome`，不能用正常返回或正文关键词推断完成。`content` 保留完整结果，`displayContent` 是尚需显示的文字，旧字符串 `run` 保留展示兼容。后台/API 的 `TaskRunner` 继续只接既有 ReAct 路径，预算停止保留内容但不映射 COMPLETED。
+- 取消信号只从当前线程绑定的根任务继承，线程池执行任务时显式绑定；不能从全局变量借用另一个任务的 Token。后台任务的 canceled 表示已请求取消，`cleanup_state` 另记执行线程是否确认退出；不能把状态变化当成资源已经停止。
+
 - `execute_command` 在 Windows 宿主机用 Windows PowerShell，在 Linux/macOS 用 Bash；命令沙箱启用时仍由对应沙箱构造命令。`glob_files` / `grep_code` 输出统一用 `/` 分隔相对路径
 - 三种执行方式都通过 `executeTools()` 执行工具，不要自己写循环挨个调用
 - 只有 `ToolRegistry.PARALLEL_SAFE_TOOLS` 里的只读工具可以并行（最多同时 4 个）；写文件、执行命令、MCP、`save_memory`、`revert_turn` 和不认识的工具都按原顺序一个一个执行。新增只读工具要加进这个名单。一批调用里只要有浏览器工具，整批都一个一个执行。结果按原来的顺序返回
@@ -177,5 +180,7 @@ src/main/java/com/paicli/
 - 不要把 `ROADMAP.md` 里“将来要做”的内容当成“现在已经有”
 
 ## 维护约定
+
+用户将 Simple CLI 作为长期维护项目（2026-11-08）：后续完成有意义的功能或修复后，主动检查是否适合整理更新，按功能及依赖划分 Git 提交，并写中文更新说明（改了什么、验证结果、已知限制）。每次推送 GitHub 前，把具体提交清单和目标仓库/分支给用户确认，确认后才推送；不能把本次确认当成以后自动推送的许可。不承诺在会话之外自动监控。整理提交时保留原有改动，不伪造历史日期或把当前差异声称为逐轮原始记录。
 
 形成稳定的协作规则时补进本文件，但保持精简；实现细节写进 `docs/agents-reference.md`，评测进展写进 benchmark 目录下的 RUNBOOK 或 ARCHIVE。

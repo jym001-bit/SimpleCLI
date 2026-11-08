@@ -10,7 +10,7 @@
 
 预算收尾仍通过现有 Kernel 的一次无工具请求执行。Plan 将部分内容保存在 Task，使用原有 FAILED 状态阻止依赖放行，同时保留具体终止原因；预算停止不触发现有异常重规划分支。Team 保留 Worker 部分内容，但不启动后续审查、重试或依赖步骤，观察事件记为 WORKER_INCOMPLETE。AgentMessage 原有四参数构造及 RESULT/ERROR 类型仍兼容，新增 outcome 提供明确原因，调用方不能仅凭 RESULT 判断完全完成。
 
-ReAct 当前返回字符串，预算出口本来就明确显示部分完成，没有相同的依赖放行问题，因此本阶段不改其公共返回类型。各模式继续负责会话记录、Memory 汇总和 renderer 清理；没有统一 Planner/Reviewer 的策略，也没有新增故障恢复系统。
+阶段五保留 ReAct 的字符串返回接口；阶段十三新增 `runWithOutcome` 用于后台/API，字符串 `run` 继续兼容 CLI/TUI 展示。各模式继续负责会话记录、Memory 汇总和 renderer 清理；没有统一 Planner/Reviewer 的策略，也没有新增故障恢复系统。
 
 ## Plan 失败恢复准入（阶段六）
 
@@ -368,6 +368,11 @@ stdio 的 stdout 按行处理：不是 JSON 的行（server 往 stdout 打的日
 - DurableTaskManager(SQLite) / CLI: /task, /task list, /task add, /task cancel, /task log
 - Runtime API：`serve --http --port 8080`，只监听 127.0.0.1，需要 API Key
 - 接口：POST /v1/threads / POST /v1/threads/{id}/turns / GET /v1/threads/{id}/events
+- 阶段十三的真实链路为 `Main.runHeadlessTask → Agent.runWithOutcome → TaskRunner → DurableTaskManager / RuntimeApiServer`，复用 ExecutionOutcome。正常完成映射 completed，取消映射 canceled，Token/硬轮数/停滞预算停止及异常映射 failed，分别保存精确 reason 和内容，不解析正文。
+- SQLite 旧表自动添加可空 reason，旧记录不推测原因；终态提交后不再被迟到返回覆盖。已取消任务返回 CANCELLED 时可以补存此前尚未保存的实际部分输出，但不改状态、原因、结束时间。API 保留原路由及字段，终止事件补 reason，取消为 turn.canceled；message.delta 仍是返回内容回放，并非新建实时流式协议。
+- 阶段十四：后台 TaskRunner 和 API turn 在执行线程内绑定独立的 `RootTaskScope`；`CancellationContext.current()` 只读取线程绑定值，不借用其他任务的全局 Token。后台取消按 id 找到作用域，发信号并中断执行线程，最多等待 2 秒；SQLite 的 `cleanup_state` 分开记录未启动、运行中、请求取消、退出未确认、已退出。`canceled` 是终止决定，不代表退出确认；迟到输出仅按阶段十三约定补存。该确认只覆盖根执行线程及其等待的操作，不能证明任意自定义线程或脱离进程树的进程已停止。详见 [阶段十四](harness-stage14-2026-10-29.md)。
+- 阶段十三首轮完成 ReAct 后台链；补完阶段已将 Plan/Team 根入口迁移为 runWithOutcome/runExplicitTaskWithOutcome，旧 String run 仅返回 displayContent。ExecutionOutcome 的 content 是完整交付结果，displayContent 是保留原流式抑制/预览后的剩余展示文字，原两参数构造保留。CLI取消包装和TUI读取结构化结果，TUI保留getLastOutcome；既有Benchmark Worker读取typed结果再映射原协议，未新增评测任务或后台Plan/Team路由。具体见 `docs/harness-stage13-completion-2026-10-28.md`。
+- 根原因汇总优先级：取消→执行错误→模型错误→Token/硬轮数/停滞预算→完成；子任务保留各自原因。Team的Worker修复异常耗尽不再把旧结果标为完成，仍保留旧结果来源及错误；Reviewer异常/拒绝的既有接受策略未重写，不等于客观验证通过。跨入口Token、资源归属和API取消端点仍未统一。
 
 ### 图片输入（第 21 期）
 

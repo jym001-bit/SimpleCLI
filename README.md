@@ -223,6 +223,8 @@ L05 定向调查发现：历史顺序违规并非上下文压缩触发。ReAct �
 
 [阶段十二总体架构蓝图](docs/harness-stage12-architecture-2026-10-27.md)按当前源码给出执行链、目标边界和四阶段迁移路线：先贯通结构化任务结果，再处理运行作用域、请求准备与用量、验证和恢复。它是后续实施设计，本阶段未修改生产行为。
 
+[阶段十三补完](docs/harness-stage13-completion-2026-10-28.md)已将 Plan/Team 根结果汇总为现有 `ExecutionOutcome`，CLI/TUI 和既有 Worker 入口接收明确原因；完整内容与终端剩余展示内容分开，保留旧字符串接口。后台/API 仍为 ReAct 路由，没有新增 Plan/Team 模式。
+
 ### Better Harness 原生审计
 
 PaiCLI 内置 `better-harness` Skill 和 `/better-harness` 命令，用于审查编码 Agent 外层工作流，而不只是最终代码 diff。实现基于 QoderAI Better Harness 的 Agent Work Loop 方法，并针对 PaiCLI 的 Java 运行时、`ConversationLedger`、`PAI.md`、Skill、MCP 与 HITL 资产做了原生适配，不依赖 Node。
@@ -334,6 +336,7 @@ v16.1 抽出 `Renderer` 接口 + 三个实现：
 
 - `DurableTaskManager` 使用 SQLite 持久化后台任务队列，默认位置 `~/.paicli/tasks/tasks.db`
 - 任务生命周期：`enqueued -> running -> completed / failed / canceled`
+- Headless ReAct 经 `Agent.runWithOutcome`、`TaskRunner` 传递现有 `ExecutionOutcome`：只有正常完成记 `completed`，预算停止/异常记 `failed`，取消记 `canceled`；部分结果保留，SQLite 保存 `reason` 和独立的执行线程清理状态，`/task log` 可查看。取消请求最长等待 2 秒确认执行线程退出；等待超时会显示“退出未确认”，迟到的结果不能覆盖取消终态。API 终止事件仍携带 `reason`。见[阶段十三记录](docs/harness-stage13-2026-10-28.md)和[阶段十四记录](docs/harness-stage14-2026-10-29.md)。
 - `/task`、`/task add <任务内容>`、`/task cancel <task_id>`、`/task log <task_id>` 这几个命令，在 CLI 里就能完整管理后台任务
 - Worker Pool 默认 2 个后台 worker，可通过 `PAICLI_TASK_WORKERS` 调整
 - `java -jar target/paicli-1.0-SNAPSHOT.jar serve --http --port 8080` 启动 localhost Runtime API

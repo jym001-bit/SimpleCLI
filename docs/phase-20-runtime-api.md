@@ -54,6 +54,21 @@ java -jar target/paicli-1.0-SNAPSHOT.jar serve --http --port 8080
 - `message.delta`
 - `turn.completed`
 - `turn.failed`
+- `turn.canceled`
+
+### 阶段十三：明确的终止原因
+
+Headless 通过 `Agent.runWithOutcome` 返回现有 `ExecutionOutcome`，`TaskRunner` 不再只返回 String。只有 `COMPLETED` 映射 completed；`CANCELLED` 映射 canceled；预算停止和模型/执行错误映射 failed，已有正文和部分结果仍然保留。
+
+SQLite 任务记录新增可空 `reason` 字段，旧表自动增列，旧行保留 null，不根据历史文字推断状态。`/task log` 显示已知原因。API 保留原端点、提交响应及 message.delta 的 content；终止事件包含 `turn_id`、`status`、`reason`，失败/取消保留 error。预算停止例：
+
+```json
+{"turn_id":"turn_example","status":"failed","reason":"HARD_ITERATION_LIMIT","error":"部分完成内容"}
+```
+
+取消后的迟到结果不能覆盖终态；返回 CANCELLED 的同一操作可补存实际部分输出而不改变终态时间。没有增加 API cancel 端点，也没有把事件回放改成实时流式接口。验证与未迁移范围见 [阶段十三记录](harness-stage13-2026-10-28.md)。
+
+阶段十四为后台任务和 API turn 绑定独立根任务取消信号，避免线程池复用时借用其他任务的 Token。后台 `/task cancel` 最多等待 2 秒确认执行线程退出，并通过 SQLite `cleanup_state` 和 `/task log` 显示结果；`canceled` 仍表示取消决定，不等于清理完成。API 没有取消端点，作用域只提供隔离。详见 [阶段十四记录](harness-stage14-2026-10-29.md)。
 
 ## 当前边界
 
