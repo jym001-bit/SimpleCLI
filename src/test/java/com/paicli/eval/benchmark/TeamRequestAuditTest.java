@@ -131,13 +131,13 @@ class TeamRequestAuditTest {
     }
 
     @ParameterizedTest @ValueSource(strings = {"REVIEW_ERROR_FIRST", "REVIEW_ERROR_RETRY", "REJECT_ALL"})
-    void productCompletedNeverTurnsFailedOrRejectedReviewIntoApproval(String control) throws Exception {
+    void failedOrRejectedReviewCannotCompleteProduct(String control) throws Exception {
         var scenario = Scenario.valueOf(control);
         var harness = new NativeHarness(temp, scenario, Mutation.NONE, false);
-        assertTrue(harness.run().startsWith("✅")); harness.assertHealthy();
+        assertFalse(harness.run().startsWith("✅")); harness.assertHealthy();
         var decisions = select(harness.events, ReviewEvaluated.class).stream().map(ReviewEvaluated::decision).toList();
         assertFalse(decisions.contains(ReviewDecision.APPROVED));
-        assertEquals(ProductStatus.COMPLETED, only(harness.events, StepExited.class).productStatus());
+        assertEquals(ProductStatus.FAILED, only(harness.events, StepExited.class).productStatus());
         if (scenario == Scenario.REJECT_ALL) {
             assertEquals(List.of(ReviewDecision.REJECTED, ReviewDecision.REJECTED, ReviewDecision.REJECTED), decisions);
             assertEquals(StepExitReason.RETRIES_EXHAUSTED_RETAINED, only(harness.events, StepExited.class).reason());

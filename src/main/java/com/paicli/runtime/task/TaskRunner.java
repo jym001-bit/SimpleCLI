@@ -1,6 +1,8 @@
 package com.paicli.runtime.task;
 
+import com.paicli.agent.ExecutionOutcome;
+
 @FunctionalInterface
 public interface TaskRunner {
-    String run(String prompt) throws Exception;
+    ExecutionOutcome run(String prompt) throws Exception;
 }

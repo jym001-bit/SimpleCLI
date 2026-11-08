@@ -1,6 +1,7 @@
 package com.paicli.eval.benchmark;
 
 import com.paicli.agent.Agent;
+import com.paicli.agent.ExecutionOutcome;
 import com.paicli.agent.AgentOrchestrator;
 import com.paicli.agent.PlanExecuteAgent;
 import com.paicli.history.ConversationLedger;
@@ -121,7 +122,8 @@ public final class BenchmarkWorkerMain {
 
             ConversationLedger ledger = ConversationLedger.open(
                     paths.episode().resolve("conversation"), "benchmark-episode");
-            String answer = executeMode(request, tracing, tools, ledger);
+            ExecutionOutcome outcome = executeMode(request, tracing, tools, ledger);
+            String answer = outcome.content();
             TracingLlmClient.Metrics metrics = tracing.metrics();
             String invalidEvidenceType = tracing.evaluationInvalidFailureType();
             if (invalidEvidenceType.isBlank()) {
@@ -153,6 +155,8 @@ public final class BenchmarkWorkerMain {
                         "provider identity, usage, context cap, or request fingerprint evidence is incomplete",
                         metrics);
             }
+            if (!outcome.completed()) return BenchmarkProtocol.WorkerResponse.failure(
+                    "CANDIDATE_WORKER_ERROR", outcome.reason().name() + ": " + answer, metrics);
             return BenchmarkProtocol.WorkerResponse.success(answer, metrics);
         } catch (Exception e) {
             TracingLlmClient.Metrics metrics = tracing == null ? null : tracing.metrics();
@@ -161,7 +165,7 @@ public final class BenchmarkWorkerMain {
         }
     }
 
-    private static String executeMode(BenchmarkProtocol.WorkerRequest request,
+    private static ExecutionOutcome executeMode(BenchmarkProtocol.WorkerRequest request,
                                       TracingLlmClient tracing,
                                       BenchmarkToolRegistry tools,
                                       ConversationLedger ledger) {
@@ -172,7 +176,7 @@ public final class BenchmarkWorkerMain {
                 agent.setRenderer(new SilentRenderer());
                 agent.setReturnFinalResponseWhenStreamed(true);
                 agent.setExternalContextSupplier(tools::promptPolicy);
-                yield agent.runExplicitTask(request.prompt(), request.prompt());
+                yield agent.runExplicitTaskWithOutcome(request.prompt(), request.prompt());
             }
             case "plan" -> {
                 PlanExecuteAgent agent = new PlanExecuteAgent(
@@ -183,7 +187,7 @@ public final class BenchmarkWorkerMain {
                         silentPrintStream());
                 agent.setConversationLedger(ledger);
                 agent.setExternalContextSupplier(tools::promptPolicy);
-                yield agent.runExplicitTask(request.prompt(), request.prompt());
+                yield agent.runExplicitTaskWithOutcome(request.prompt(), request.prompt());
             }
             case "team" -> {
                 AgentOrchestrator agent = new AgentOrchestrator(
@@ -193,7 +197,7 @@ public final class BenchmarkWorkerMain {
                         silentPrintStream());
                 agent.setConversationLedger(ledger);
                 agent.setExternalContextSupplier(tools::promptPolicy);
-                yield agent.runExplicitTask(request.prompt(), request.prompt());
+                yield agent.runExplicitTaskWithOutcome(request.prompt(), request.prompt());
             }
             default -> throw new IllegalArgumentException(
                     "unsupported benchmark mode: " + request.mode());

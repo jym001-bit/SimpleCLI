@@ -1,9 +1,6 @@
 package com.paicli.runtime;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 public final class CancellationContext {
-    private static final AtomicReference<CancellationToken> CURRENT = new AtomicReference<>();
     private static final InheritableThreadLocal<CancellationToken> LOCAL = new InheritableThreadLocal<>();
 
     private CancellationContext() {
@@ -11,17 +8,15 @@ public final class CancellationContext {
 
     public static CancellationToken startRun() {
         CancellationToken token = new CancellationToken();
-        CURRENT.set(token);
         LOCAL.set(token);
         return token;
     }
 
     public static CancellationToken current() {
-        CancellationToken token = LOCAL.get();
-        return token == null ? CURRENT.get() : token;
+        return LOCAL.get();
     }
 
-    /** The caller's run only; unlike current(), never borrows another run's global fallback. */
+    /** The caller's run only; a pool thread never borrows another run's token. */
     public static CancellationToken currentThreadToken() {
         return LOCAL.get();
     }
@@ -48,6 +43,5 @@ public final class CancellationContext {
         if (LOCAL.get() == token) {
             LOCAL.remove();
         }
-        CURRENT.compareAndSet(token, null);
     }
 }

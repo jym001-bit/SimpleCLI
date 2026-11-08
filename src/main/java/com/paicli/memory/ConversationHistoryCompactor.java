@@ -154,7 +154,7 @@ public class ConversationHistoryCompactor {
 
         String summary;
         try {
-            summary = summarize(oldMsgs);
+            summary = summarize(oldMsgs);//调用总结
         } catch (IOException e) {
             log.warn("conversation summary LLM call failed; skip compaction", e);
             return false;

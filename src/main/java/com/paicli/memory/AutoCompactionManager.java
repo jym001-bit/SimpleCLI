@@ -63,11 +63,14 @@ public class AutoCompactionManager {
      */
     public Result compactIfNeeded(List<LlmClient.Message> history, int triggerTokens) {
         if (triggerTokens <= 0) return Result.none();
+        // 1. 先尝试清理旧工具结果，直接修改 history
         int cleared = toolResultClearer.clearIfNeeded(history, triggerTokens).clearedCount();
         sessionMemoryCompactor.prepareIfNeeded(history, triggerTokens);
+        // 2. 用清理后的 history 重新估算
         if (TokenBudget.estimateMessagesTokens(history) < triggerTokens) {
             return cleared > 0 ? new Result(false, Strategy.TOOL_RESULT_CLEARING, cleared) : Result.none();
         }
+        // 3. 清理后仍达到摘要阈值，尝试会话摘要
         if (sessionMemoryCompactor.compactIfReady(history, triggerTokens)) {
             return new Result(true, Strategy.SESSION_MEMORY, cleared);
         }

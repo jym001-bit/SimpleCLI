@@ -191,46 +191,85 @@ class TeamExecutionObservationTest {
     }
 
     @ParameterizedTest @ValueSource(ints = {1, 2})
-    void reviewerIoErrorIsNotApprovalEvenWhenNativeProductRetainsCompletedResult(int attempt) throws Exception {
+    void reviewerIoErrorRetainsWorkerEvidenceWithoutCompletingTask(int attempt) throws Exception {
         var failure = new IOException("REVIEW_ERROR_PRIVATE_DETAIL");
         ScriptClient client = attempt == 1 ? new ScriptClient(text(singlePlan()), text("retained-one"), failure)
                 : new ScriptClient(text(singlePlan()), text("rejected-one"), review(false), text("retained-two"), failure);
         var events = new CopyOnWriteArrayList<Event>();
-        String result = observed(client, new ToolRegistry(), events::add).runExplicitTask(GOAL, GOAL);
-        assertTrue(result.startsWith("✅ 多 Agent 协作任务完成")); assertTrue(result.contains(attempt == 1 ? "retained-one" : "retained-two"));
+        ExecutionOutcome root = observed(client, new ToolRegistry(), events::add).runExplicitTaskWithOutcome(GOAL, GOAL);
+        String result = root.displayContent();
+        assertEquals(ExecutionOutcome.Reason.MODEL_ERROR, root.reason());
+        assertFalse(result.startsWith("✅ 多 Agent 协作任务完成")); assertTrue(result.contains(attempt == 1 ? "retained-one" : "retained-two"));
         var reviews = select(events, ReviewEvaluated.class);
         assertEquals(attempt, reviews.size()); assertEquals(ReviewDecision.ERROR, reviews.get(attempt - 1).decision());
         assertTrue(reviews.stream().noneMatch(event -> event.decision() == ReviewDecision.APPROVED));
         StepExited exit = only(events, StepExited.class);
-        assertEquals(ProductStatus.COMPLETED, exit.productStatus()); assertEquals(StepExitReason.REVIEW_ERROR_RETAINED, exit.reason());
-        assertEquals(RunExitReason.COMPLETED, only(events, RunExited.class).reason());
+        assertEquals(ProductStatus.FAILED, exit.productStatus()); assertEquals(StepExitReason.REVIEW_ERROR_RETAINED, exit.reason());
+        assertEquals(RunExitReason.INCOMPLETE, only(events, RunExited.class).reason());
         assertTrue(select(events, ActivationExited.class).stream().anyMatch(event -> event.activation().role() == AgentRole.REVIEWER && event.kind() == ExitKind.ERROR));
         assertNoRaw(events, "REVIEW_ERROR_PRIVATE_DETAIL");
     }
 
-    @Test void finalReviewerRejectionRemainsSeparateFromProductCompletion() throws Exception {
+    @Test void finalReviewerRejectionRetainsEvidenceWithoutCompletingTask() throws Exception {
         var client = new ScriptClient(text(singlePlan()), text("first"), review(false), text("second"), review(false), text("third"), review(false));
         var events = new CopyOnWriteArrayList<Event>();
-        assertTrue(observed(client, new ToolRegistry(), events::add).runExplicitTask(GOAL, GOAL).startsWith("✅"));
+        ExecutionOutcome root = observed(client, new ToolRegistry(), events::add).runExplicitTaskWithOutcome(GOAL, GOAL);
+        assertEquals(ExecutionOutcome.Reason.EXECUTION_ERROR, root.reason());
+        assertFalse(root.displayContent().startsWith("✅")); assertTrue(root.displayContent().contains("third"));
         assertEquals(3, activations(events, AgentRole.WORKER).size());
         assertTrue(select(events, ReviewEvaluated.class).stream().allMatch(event -> event.decision() == ReviewDecision.REJECTED));
         assertEquals(3, select(events, ReviewEvaluated.class).size());
-        assertEquals(ProductStatus.COMPLETED, only(events, StepExited.class).productStatus());
+        assertEquals(ProductStatus.FAILED, only(events, StepExited.class).productStatus());
         assertEquals(StepExitReason.RETRIES_EXHAUSTED_RETAINED, only(events, StepExited.class).reason());
         assertEquals(TextFingerprint.of("third"), only(events, StepExited.class).result());
+        assertEquals(RunExitReason.INCOMPLETE, only(events, RunExited.class).reason());
+    }
+
+    @Test void unverifiedPrerequisiteCannotStartDependentWorker() throws Exception {
+        String plan = "{\"steps\":[{\"id\":\"a\",\"description\":\"SOURCE\",\"type\":\"ANALYSIS\",\"dependencies\":[]},"
+                + "{\"id\":\"b\",\"description\":\"CONSUMER\",\"type\":\"ANALYSIS\",\"dependencies\":[\"a\"]}]}";
+        var client = new ScriptClient(text(plan), text("first"), review(false),
+                text("second"), review(false), text("third"), review(false));
+        var events = new CopyOnWriteArrayList<Event>();
+        ExecutionOutcome root = observed(client, new ToolRegistry(), events::add).runExplicitTaskWithOutcome(GOAL, GOAL);
+        assertEquals(ExecutionOutcome.Reason.EXECUTION_ERROR, root.reason());
+        assertEquals(7, client.requests.size(), "dependent step must not make a model request");
+        assertEquals(1, select(events, StepEntered.class).size());
+        assertEquals(ProductStatus.FAILED, exited(events, "step_1").productStatus());
+        assertEquals(ProductStatus.PENDING, exited(events, "step_2").productStatus());
+        assertEquals(StepExitReason.BLOCKED_DEPENDENCY, exited(events, "step_2").reason());
+        assertTrue(root.displayContent().contains("third"));
+    }
+
+    @Test void successfulReadToolDoesNotOverrideRejectedCompletionReview() throws Exception {
+        var client = new ScriptClient(text(singlePlan()),
+                tools(call("read-1", "read_file", "{\"path\":\"input.txt\"}")),
+                text("worker claims complete"), review(false),
+                text("retry one"), review(false), text("retry two"), review(false));
+        var events = new CopyOnWriteArrayList<Event>();
+        ExecutionOutcome root = observed(client, new ToolRegistry(), events::add).runExplicitTaskWithOutcome(GOAL, GOAL);
+        assertEquals(ExecutionOutcome.Reason.EXECUTION_ERROR, root.reason());
+        assertFalse(root.completed());
+        var batch = only(events, ToolBatchReturned.class);
+        assertTrue(batch.results().get(0).successful(), "read_file actually succeeded");
+        assertEquals(3, select(events, ReviewEvaluated.class).size());
+        assertEquals(ProductStatus.FAILED, only(events, StepExited.class).productStatus());
+        assertTrue(root.displayContent().contains("retry two"));
     }
 
     @Test void failedWorkerRetriesDoNotReplaceTheIdentityOfTheRetainedEarlierResult() throws Exception {
         var client = new ScriptClient(text(singlePlan()), text("retained-original-worker"), review(false),
                 new IOException("PRIVATE_RETRY_ERROR_ONE"), new IOException("PRIVATE_RETRY_ERROR_TWO"));
         var events = new CopyOnWriteArrayList<Event>();
-        String result = observed(client, new ToolRegistry(), events::add).runExplicitTask(GOAL, GOAL);
-        assertTrue(result.startsWith("✅")); assertTrue(result.contains("retained-original-worker"));
+        ExecutionOutcome root = observed(client, new ToolRegistry(), events::add).runExplicitTaskWithOutcome(GOAL, GOAL);
+        String result = root.displayContent();
+        assertEquals(ExecutionOutcome.Reason.MODEL_ERROR, root.reason());
+        assertFalse(result.startsWith("✅")); assertTrue(result.contains("retained-original-worker"));
         var workers = activations(events, AgentRole.WORKER); assertEquals(3, workers.size());
         assertEquals(1, select(events, ReviewEvaluated.class).size());
         var exit = only(events, StepExited.class);
-        assertEquals(ProductStatus.COMPLETED, exit.productStatus());
-        assertEquals(StepExitReason.RETRIES_EXHAUSTED_RETAINED, exit.reason());
+        assertEquals(ProductStatus.FAILED, exit.productStatus());
+        assertEquals(StepExitReason.WORKER_ERROR, exit.reason());
         assertEquals(workers.get(0).activation().activationId(), exit.acceptedWorkerActivationId());
         assertEquals(TextFingerprint.of("retained-original-worker"), exit.result());
         assertEquals(List.of(ExitKind.NORMAL, ExitKind.ERROR, ExitKind.ERROR), select(events, ActivationExited.class).stream()

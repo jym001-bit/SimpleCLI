@@ -3,6 +3,9 @@ package com.paicli.runtime.api;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paicli.runtime.task.TaskRunner;
+import com.paicli.runtime.task.TaskStatus;
+import com.paicli.agent.ExecutionOutcome;
+import com.paicli.runtime.RootTaskScope;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
@@ -100,16 +103,24 @@ public class RuntimeApiServer implements AutoCloseable {
     }
 
     private void runTurn(String threadId, String turnId, String input) {
+        ExecutionOutcome outcome;
+        RootTaskScope scope = new RootTaskScope();
         try {
-            String result = runner.run(input);
-            store.appendEvent(threadId, "message.delta",
-                    "{\"turn_id\":\"" + turnId + "\",\"content\":\"" + escape(result) + "\"}");
-            store.appendEvent(threadId, "turn.completed",
-                    "{\"turn_id\":\"" + turnId + "\",\"status\":\"completed\"}");
+            outcome = scope.run(() -> java.util.Objects.requireNonNull(runner.run(input), "task outcome"));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            outcome = new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED, "任务线程被中断");
         } catch (Exception e) {
-            store.appendEvent(threadId, "turn.failed",
-                    "{\"turn_id\":\"" + turnId + "\",\"error\":\"" + escape(e.getMessage()) + "\"}");
+            outcome = new ExecutionOutcome(ExecutionOutcome.Reason.EXECUTION_ERROR, e.getMessage());
         }
+        // One terminal event, derived from the result rather than rendered content or normal return.
+        store.appendEvent(threadId, "message.delta", MAPPER.createObjectNode()
+                .put("turn_id", turnId).put("content", outcome.content() == null ? "" : outcome.content()).toString());
+        TaskStatus status = TaskStatus.fromOutcome(outcome);
+        var terminal = MAPPER.createObjectNode().put("turn_id", turnId)
+                .put("status", status.value()).put("reason", outcome.reason().name());
+        if (!outcome.completed()) terminal.put("error", outcome.content());
+        store.appendEvent(threadId, "turn." + status.value(), terminal.toString());
     }
 
     private void handleEvents(HttpExchange exchange, String threadId) throws IOException {

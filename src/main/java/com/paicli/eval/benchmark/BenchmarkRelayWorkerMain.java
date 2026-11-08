@@ -1,6 +1,7 @@
 package com.paicli.eval.benchmark;
 
 import com.paicli.agent.Agent;
+import com.paicli.agent.ExecutionOutcome;
 import com.paicli.agent.AgentOrchestrator;
 import com.paicli.agent.PlanExecuteAgent;
 import com.paicli.eval.benchmark.relay.BenchmarkFramedChannel;
@@ -85,9 +86,10 @@ public final class BenchmarkRelayWorkerMain {
                 }
                 if (scripted) executeScripted(relay, tools, toolEvidence, ignored);
                 else {
-                    String answer = executeMode(relay.session().mode(), relay, tools, relay.session().prompt());
-                    relay.complete(answer, toolEvidence.snapshot(), commandEvidence.snapshot(),
+                    ExecutionOutcome outcome = executeMode(relay.session().mode(), relay, tools, relay.session().prompt());
+                    if (outcome.completed()) relay.complete(outcome.content(), toolEvidence.snapshot(), commandEvidence.snapshot(),
                             tools.getCommandObservationFailures());
+                    else relay.fail("CANDIDATE_WORKER_ERROR", "candidate execution terminated: " + outcome.reason().name());
                 }
             } finally {
                 mocks.values().forEach(McpClient::close);
@@ -110,20 +112,25 @@ public final class BenchmarkRelayWorkerMain {
         agent.setReturnFinalResponseWhenStreamed(true);
         agent.setExternalContextSupplier(tools::promptPolicy);
         String prompt = relay.session().prompt();
-        String proposal = agent.runExplicitTask(prompt, prompt);
+        ExecutionOutcome proposal = agent.runExplicitTaskWithOutcome(prompt, prompt);
+        if (!proposal.completed()) {
+            relay.fail("CANDIDATE_WORKER_ERROR", "candidate execution terminated: " + proposal.reason().name());
+            return;
+        }
         if (relay.remainingTokens() == 0 || relay.remainingCalls() == 0) {
             relay.fail("EPISODE_BUDGET_EXHAUSTED", "episode budget exhausted before second turn");
             return;
         }
-        String next = relay.continueTurn(proposal, evidence.snapshot());
+        String next = relay.continueTurn(proposal.content(), evidence.snapshot());
         runtime.set("paicli.react.token.budget", Long.toString(relay.remainingTokens()));
         runtime.set("paicli.react.hard.max.iterations", Integer.toString(relay.remainingCalls()));
         // Reuse the actual product Agent and its conversationHistory, not a reconstructed transcript.
-        String answer = agent.runExplicitTask(next, next);
-        relay.complete(answer, evidence.snapshot());
+        ExecutionOutcome answer = agent.runExplicitTaskWithOutcome(next, next);
+        if (answer.completed()) relay.complete(answer.content(), evidence.snapshot());
+        else relay.fail("CANDIDATE_WORKER_ERROR", "candidate execution terminated: " + answer.reason().name());
     }
 
-    private static String executeMode(BenchmarkRelayProtocol.AgentMode mode,
+    private static ExecutionOutcome executeMode(BenchmarkRelayProtocol.AgentMode mode,
                                       RelayLlmClient relay,
                                       BenchmarkToolRegistry tools,
                                       String prompt) {
@@ -133,7 +140,7 @@ public final class BenchmarkRelayWorkerMain {
                 agent.setRenderer(new SilentRenderer());
                 agent.setReturnFinalResponseWhenStreamed(true);
                 agent.setExternalContextSupplier(tools::promptPolicy);
-                yield agent.runExplicitTask(prompt, prompt);
+                yield agent.runExplicitTaskWithOutcome(prompt, prompt);
             }
             case PLAN -> {
                 PlanExecuteAgent agent = new PlanExecuteAgent(
@@ -144,7 +151,7 @@ public final class BenchmarkRelayWorkerMain {
                         silentPrintStream());
                 agent.setExternalContextSupplier(tools::promptPolicy);
                 agent.setExecutionObserver(relay::observePlan);
-                yield agent.runExplicitTask(prompt, prompt);
+                yield agent.runExplicitTaskWithOutcome(prompt, prompt);
             }
             case TEAM -> {
                 AgentOrchestrator agent = new AgentOrchestrator(
@@ -153,7 +160,7 @@ public final class BenchmarkRelayWorkerMain {
                 relay.setTeamObservationFailureSupplier(agent::getExecutionObservationFailures);
                 agent.setExecutionObserver(relay::observeTeam);
                 try {
-                    yield agent.runExplicitTask(prompt, prompt);
+                    yield agent.runExplicitTaskWithOutcome(prompt, prompt);
                 } finally {
                     relay.verifyTeamObservationFailures(agent.getExecutionObservationFailures());
                 }

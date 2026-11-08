@@ -9,8 +9,20 @@ import java.util.concurrent.Future;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class CancellationContextTest {
+
+    @Test
+    void preExistingPoolThreadCannotBorrowAnotherTasksToken() throws Exception {
+        ExecutorService pool = Executors.newSingleThreadExecutor();
+        try {
+            assertNull(pool.submit(CancellationContext::current).get());
+            CancellationToken token = CancellationContext.startRun();
+            try { assertNull(pool.submit(CancellationContext::current).get()); }
+            finally { CancellationContext.clear(token); }
+        } finally { pool.shutdownNow(); }
+    }
 
     @Test
     void explicitScopeRestoresPoolThreadAndDoesNotCarryCancelledTokenIntoNextRun() throws Exception {

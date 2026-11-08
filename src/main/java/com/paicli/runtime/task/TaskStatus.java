@@ -1,5 +1,7 @@
 package com.paicli.runtime.task;
 
+import com.paicli.agent.ExecutionOutcome;
+
 public enum TaskStatus {
     ENQUEUED("enqueued"),
     RUNNING("running"),
@@ -15,6 +17,15 @@ public enum TaskStatus {
 
     public String value() {
         return value;
+    }
+
+    /** Keep existing persisted statuses; the precise budget/error cause travels separately. */
+    public static TaskStatus fromOutcome(ExecutionOutcome outcome) {
+        return switch (outcome.reason()) {
+            case COMPLETED -> COMPLETED;
+            case CANCELLED -> CANCELED;
+            default -> FAILED;
+        };
     }
 
     public static TaskStatus from(String value) {

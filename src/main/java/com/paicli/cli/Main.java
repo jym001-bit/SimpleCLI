@@ -2,7 +2,10 @@ package com.paicli.cli;
 
 import com.paicli.agent.Agent;
 import com.paicli.agent.AgentOrchestrator;
+import com.paicli.agent.ExecutionOutcome;
 import com.paicli.agent.PlanExecuteAgent;
+import com.paicli.agent.TaskContract;
+import com.paicli.agent.TaskUnderstandingEngine;
 import com.paicli.browser.BrowserAuditMetadata;
 import com.paicli.browser.BrowserConnectivityCheck;
 import com.paicli.browser.BrowserGuard;
@@ -45,6 +48,9 @@ import com.paicli.rag.CodeRelation;
 import com.paicli.rag.SearchResultFormatter;
 import com.paicli.runtime.CancellationContext;
 import com.paicli.runtime.CancellationToken;
+import com.paicli.runtime.RootTaskScope;
+import com.paicli.runtime.RootTaskLlmClient;
+import com.paicli.observability.LangfuseTelemetry;
 import com.paicli.runtime.api.RuntimeApiServer;
 import com.paicli.runtime.api.RuntimeThreadStore;
 import com.paicli.runtime.task.DurableTaskManager;
@@ -238,6 +244,7 @@ public class Main {
             System.err.println("请在 .env 文件中添加 DEEPSEEK_API_KEY、GLM_API_KEY、HUNYUAN_API_KEY、STEP_API_KEY、KIMI_API_KEY、FREELLMAPI_API_KEY、XFYUN_MAAS_API_KEY 或 AGNES_API_KEY");
             System.exit(1);
         }
+        llmClient = RootTaskLlmClient.wrap(llmClient);
         AtomicReference<LlmClient> llmClientRef = new AtomicReference<>(llmClient);
 
         try (Terminal terminal = TerminalBuilder.builder().system(true).dumb(true).build()) {
@@ -361,7 +368,7 @@ public class Main {
                     conversationLedger, reactAgent.getToolRegistry().getProjectPath());
             reactAgent.setExternalContextSupplier(mcpServerManager::resourceIndexForPrompt);
             reactAgent.setSkillRegistry(skillRegistry);
-            DurableTaskManager taskManager = openTaskManager(llmClientRef);
+            DurableTaskManager taskManager = openTaskManager(llmClientRef);//创建管理器对象
             taskManager.start();
             Runtime.getRuntime().addShutdownHook(new Thread(taskManager::close, "paicli-task-shutdown"));
             WechatRuntimeController wechatRuntime = new WechatRuntimeController(renderer);
@@ -680,7 +687,7 @@ public class Main {
                         } else {
                             try {
                                 ModelSelection target = resolveModelSelection(selection, config);
-                                LlmClient newClient = ModelCommands.switchModel(config, target);
+                                LlmClient newClient = RootTaskLlmClient.wrap(ModelCommands.switchModel(config, target));
                                 llmClient = newClient;
                                 llmClientRef.set(newClient);
                                 reactAgent.setLlmClient(llmClient);
@@ -978,7 +985,49 @@ public class Main {
                 }
 
                 // 运行 Agent
+                try (RootTaskScope root = new RootTaskScope();
+                     CancellationContext.Scope rootBinding = root.bind();
+                     LangfuseTelemetry.RootTrace trace = LangfuseTelemetry.openRootTask(root.taskId())) {
                 String submittedInput = input;
+                final String understandingInput = submittedInput;
+                final LlmClient understandingClient = llmClient;
+                AtomicReference<TaskContract> understood = new AtomicReference<>();
+                ExecutionOutcome understandingOutcome = runOutcomeWithCancelSupport(terminal, ui, root,
+                        () -> {
+                            understood.set(new TaskUnderstandingEngine(understandingClient).understand(understandingInput));
+                            return ExecutionOutcome.completed("");
+                        });
+                if (understandingOutcome.reason() != ExecutionOutcome.Reason.COMPLETED) {
+                    LangfuseTelemetry.recordFailure(understandingOutcome.reason().name());
+                    ui.println(understandingOutcome.displayContent());
+                    continue;
+                }
+                TaskContract contract = understood.get();
+                if (root.exhausted()) {
+                    ExecutionOutcome stopped = new ExecutionOutcome(root.requestLimitReached()
+                            ? ExecutionOutcome.Reason.MODEL_REQUEST_BUDGET_EXCEEDED
+                            : ExecutionOutcome.Reason.TOKEN_BUDGET_EXCEEDED,
+                            "⚠️ 根任务模型预算已耗尽，执行阶段没有可用请求。");
+                    LangfuseTelemetry.recordFailure(stopped.reason().name());
+                    ui.println(stopped.displayContent());
+                    continue;
+                }
+                if (contract.needsConfirmation()) {
+                    ui.println(contract.confirmationSummary());
+                    String correction = lineReader.readLine("回车按原任务执行；输入完整修改任务；/cancel 取消> ").trim();
+                    if ("/cancel".equalsIgnoreCase(correction)) {
+                        root.token().cancel();
+                        LangfuseTelemetry.recordFailure("CANCELLED");
+                        continue;
+                    }
+                    if (!correction.isEmpty()) {
+                        submittedInput = correction;
+                        input = correction;
+                        contract = TaskContract.understand(correction).withUserConfirmed();
+                    }
+                }
+                final TaskContract confirmedContract = contract;
+                final String confirmedInput = submittedInput;
                 input = mentionExpander.expand(input);
                 input = localPathMentionExpander.expand(input);
                 if (!(renderer instanceof InlineRenderer)) {
@@ -991,7 +1040,7 @@ public class Main {
                 final String taskInput = input;
                 approvalClassifier.setCurrentUserRequest(submittedInput);
                 hitlToolRegistry.startAutoReviewTurn();
-                Callable<String> runTask;
+                Callable<ExecutionOutcome> runTask;
                 String snapshotMode;
                 String runMode = resolveRunMode(command.type(), nextTaskUsePlanMode, nextTaskUseTeamMode,
                         sessionModes.planMode());
@@ -1002,7 +1051,7 @@ public class Main {
                         PlanExecuteAgent planAgent = createPlanAgent(activeClient, reactAgent, terminal, lineReader, ui);
                         planAgent.setExternalContextSupplier(mcpServerManager::resourceIndexForPrompt);
                         planAgent.setSkillRegistry(skillRegistry);
-                        return planAgent.run(taskInput, submittedInput);
+                        return planAgent.runWithOutcome(taskInput, confirmedContract);
                     };
                 } else if ("team".equals(runMode)) {
                     snapshotMode = "team";
@@ -1011,17 +1060,30 @@ public class Main {
                         AgentOrchestrator orchestrator = createTeamAgent(activeClient, reactAgent, ui);
                         orchestrator.setExternalContextSupplier(mcpServerManager::resourceIndexForPrompt);
                         orchestrator.setSkillSystem(skillRegistry);
-                        return orchestrator.run(taskInput, submittedInput);
+                        return orchestrator.runWithOutcome(taskInput, confirmedContract);
                     };
                 } else {
                     snapshotMode = "react";
-                    runTask = () -> reactAgent.run(taskInput, submittedInput);
+                    runTask = () -> reactAgent.runWithOutcome(taskInput, confirmedContract);
                 }
                 SnapshotService snapshotService = reactAgent.getToolRegistry().getSnapshotService();
                 renderer.updateStatus(statusInfo(reactAgent, mcpServerManager, skillRegistry, snapshotMode));
-                String response = runWithCancelSupport(terminal,
+                ExecutionOutcome outcome = runOutcomeWithCancelSupport(terminal,
                         ui,
+                        root,
                         () -> snapshotService.runTurn(snapshotMode, taskInput, runTask::call));
+                if (root.token().isCancelled() && outcome.reason() != ExecutionOutcome.Reason.CANCELLED) {
+                    outcome = new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED,
+                            outcome.content(), outcome.displayContent(), outcome.acceptance());
+                } else if (root.admissionBlocked() && outcome.reason() != ExecutionOutcome.Reason.CANCELLED) {
+                    outcome = new ExecutionOutcome(root.requestLimitReached()
+                            ? ExecutionOutcome.Reason.MODEL_REQUEST_BUDGET_EXCEEDED
+                            : ExecutionOutcome.Reason.TOKEN_BUDGET_EXCEEDED,
+                            outcome.content(), outcome.displayContent(), outcome.acceptance());
+                }
+                if (outcome.reason() != ExecutionOutcome.Reason.COMPLETED)
+                    LangfuseTelemetry.recordFailure(outcome.reason().name());
+                String response = outcome.displayContent();
                 if (!"react".equals(snapshotMode)) {
                     renderer.updateStatus(statusInfo(reactAgent, mcpServerManager, skillRegistry, "idle"));
                 }
@@ -1030,6 +1092,11 @@ public class Main {
                 if (response != null && !response.isBlank()) {
                     ui.println(response);
                     ui.println();
+                }
+                if (outcome.acceptance() != null) {
+                    ui.println(outcome.acceptance().terminalSummary());
+                    ui.println();
+                }
                 }
             }
             ui.println("\n👋 再见!");
@@ -1098,23 +1165,30 @@ public class Main {
         return defaultPort;
     }
 
-    private static String runHeadlessTask(String prompt, LlmClient llmClient) {
+    private static com.paicli.agent.ExecutionOutcome runHeadlessTask(String prompt, LlmClient llmClient) {
         ToolRegistry registry = new ToolRegistry();
         registry.setProjectPath(Path.of(".").toAbsolutePath().normalize().toString());
         com.paicli.tool.CommandSandboxStatus sandboxStatus = registry.configureCommandSandbox(
                 com.paicli.tool.CommandSandboxMode.fromConfiguration(),
-                Path.of(registry.getProjectPath()));
+                Path.of(registry.getProjectPath()));//配置命令沙箱
         if (!sandboxStatus.message().isBlank()) {
             System.err.println(sandboxStatus.message());
         }
-        Agent agent = new Agent(llmClient, registry);
+        Agent agent = new Agent(llmClient, registry);//真正执行任务的Agent 怎样请求模型 怎样执行工具
         try {
             agent.setConversationLedger(ConversationLedger.openDefault(
                     Path.of(System.getProperty("user.home"))));
         } catch (IOException ignored) {
             // A background task should still run if its audit directory is temporarily unavailable.
         }
-        return agent.run(prompt);
+        TaskContract contract = TaskContract.understand(prompt);
+        if (contract.needsConfirmation()) {
+            return new ExecutionOutcome(ExecutionOutcome.Reason.EXECUTION_ERROR,
+                    contract.confirmationSummary() + "\n请提供完整任务后重新提交。",
+                    contract.confirmationSummary() + "\n请提供完整任务后重新提交。",
+                    com.paicli.agent.TaskAcceptance.notEvaluated());
+        }
+        return agent.runWithOutcome(prompt, contract);
     }
 
     private static DurableTaskManager openTaskManager(AtomicReference<LlmClient> llmClientRef) {
@@ -1329,13 +1403,29 @@ public class Main {
     }
 
     private static String runWithCancelSupport(Terminal terminal, PrintStream out, Callable<String> task) {
-        CancellationToken token = CancellationContext.startRun();
+        return runOutcomeWithCancelSupport(terminal, out,
+                () -> ExecutionOutcome.completed(task.call())).displayContent();
+    }
+
+    private static ExecutionOutcome runOutcomeWithCancelSupport(Terminal terminal, PrintStream out,
+                                                                 Callable<ExecutionOutcome> task) {
+        return runOutcomeWithCancelSupport(terminal, out, null, task);
+    }
+
+    private static ExecutionOutcome runOutcomeWithCancelSupport(Terminal terminal, PrintStream out,
+                                                                 RootTaskScope root,
+                                                                 Callable<ExecutionOutcome> task) {
+        CancellationToken token = root == null ? CancellationContext.startRun() : root.token();
         ExecutorService executor = Executors.newSingleThreadExecutor(r -> {
             Thread thread = new Thread(r, "paicli-agent-runner");
             thread.setDaemon(true);
             return thread;
         });
-        Future<String> future = executor.submit(task);
+        Future<ExecutionOutcome> future = executor.submit(LangfuseTelemetry.wrap(() -> {
+            try (CancellationContext.Scope ignored = CancellationContext.bind(token)) {
+                return task.call();
+            }
+        }));
         // 进入 raw mode 监听 ESC：raw mode 关 ICANON / ECHO / IEXTEN 但保留 ISIG，所以 Ctrl+C 仍能终止 PaiCLI。
         Attributes original = null;
         try {
@@ -1351,7 +1441,7 @@ public class Main {
                     token.cancel();
                     future.cancel(true);
                     executor.shutdownNow();
-                    return "⏹️ 已请求取消当前任务。";
+                    return new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED, "⏹️ 已请求取消当前任务。");
                 }
                 try {
                     return future.get(150, TimeUnit.MILLISECONDS);
@@ -1361,16 +1451,23 @@ public class Main {
             }
             return future.get();
         } catch (CancellationException e) {
-            return "⏹️ 已取消当前任务。";
+            return new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED, "⏹️ 已取消当前任务。");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             token.cancel();
             future.cancel(true);
-            return "⏹️ 已取消当前任务。";
+            return new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED, "⏹️ 已取消当前任务。");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
+            if (token.isCancelled() || cause instanceof CancellationException) {
+                return new ExecutionOutcome(ExecutionOutcome.Reason.CANCELLED, "⏹️ 已取消当前任务。");
+            }
+            if (cause instanceof RootTaskScope.RootRequestBudgetExceededException) {
+                return new ExecutionOutcome(ExecutionOutcome.Reason.MODEL_REQUEST_BUDGET_EXCEEDED,
+                        "⚠️ 根任务模型请求预算已耗尽。");
+            }
             String message = cause == null || cause.getMessage() == null ? "未知错误" : cause.getMessage();
-            return "❌ 执行失败: " + message;
+            return new ExecutionOutcome(ExecutionOutcome.Reason.EXECUTION_ERROR, "❌ 执行失败: " + message);
         } finally {
             if (terminal != null && original != null) {
                 try {
@@ -1378,8 +1475,12 @@ public class Main {
                 } catch (Exception ignored) {
                 }
             }
-            CancellationContext.clear(token);
+            if (root == null) CancellationContext.clear(token);
             executor.shutdownNow();
+            if (root != null && token.isCancelled()) {
+                try { executor.awaitTermination(2, TimeUnit.SECONDS); }
+                catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+            }
         }
     }
 

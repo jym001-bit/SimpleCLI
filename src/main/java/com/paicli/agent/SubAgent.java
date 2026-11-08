@@ -392,7 +392,9 @@ public class SubAgent {
                 }
                 log.error("[{}] LLM call failed", name, e);
                 streamRenderer.finish();
-                return AgentMessage.error(name, role, "LLM 调用失败: " + e.getMessage());
+                String partial = (partialToolResults.toString() + streamRenderer.currentContent).trim();
+                return AgentMessage.error(name, role, "LLM 调用失败: " + e.getMessage()
+                        + (partial.isBlank() ? "" : "\n已取得的部分结果（不代表任务完成）：\n" + partial));
             }
         }
     }

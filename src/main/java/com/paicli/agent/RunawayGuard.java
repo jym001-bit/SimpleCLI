@@ -76,7 +76,7 @@ public final class RunawayGuard {
                 continue;
             }
             String actionKey = actionKey(result.name(), result.argumentsJson());
-            actionCounts.merge(actionKey, 1, Integer::sum);
+            actionCounts.merge(actionKey, 1, Integer::sum);//累加计算
             if (!result.successful()) {
                 errorFamily(result.result()).ifPresent(family ->
                         errorCounts.merge(digest(family + "\0" + actionKey), 1, Integer::sum));
@@ -153,7 +153,7 @@ public final class RunawayGuard {
         }
         return Optional.of("text:" + collapsed);
     }
-
+    //工具名 ＋ 统一格式后的参数 → 动作标识
     static String actionKey(String toolName, String argumentsJson) {
         return digest(toolName + "\0" + canonicalArguments(argumentsJson));
     }

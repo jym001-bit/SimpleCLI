@@ -1626,7 +1626,7 @@ public class ToolRegistry {
         List<ToolInvocation> readOnlyRun = new ArrayList<>();
         for (ToolInvocation invocation : invocations) {
             if (isParallelSafeTool(invocation.name())) {
-                readOnlyRun.add(invocation);
+                readOnlyRun.add(invocation);//读任务可以并行
                 continue;
             }
             results.addAll(flushReadOnlyRun(readOnlyRun));
@@ -1644,7 +1644,7 @@ public class ToolRegistry {
     static boolean isParallelSafeTool(String toolName) {
         return toolName != null && PARALLEL_SAFE_TOOLS.contains(toolName);
     }
-
+    //拿出方法数量为1 串行 >1 并行
     private List<ToolExecutionResult> flushReadOnlyRun(List<ToolInvocation> readOnlyRun) {
         if (readOnlyRun.isEmpty()) {
             return List.of();
@@ -1653,7 +1653,7 @@ public class ToolRegistry {
         readOnlyRun.clear();
         return run.size() == 1 ? executeSerially(run) : executeInParallel(run);
     }
-
+    //串行
     private List<ToolExecutionResult> executeSerially(List<ToolInvocation> invocations) {
         List<ToolExecutionResult> results = new ArrayList<>(invocations.size());
         for (ToolInvocation invocation : invocations) {
@@ -1667,8 +1667,9 @@ public class ToolRegistry {
         }
         return results;
     }
-
+    //并行执行
     private List<ToolExecutionResult> executeInParallel(List<ToolInvocation> invocations) {
+        //线程池创建
         int parallelism = Math.min(invocations.size(), MAX_PARALLEL_TOOLS);
         ExecutorService executor = Executors.newFixedThreadPool(parallelism, r -> {
             Thread thread = new Thread(r, "paicli-tool-executor");
@@ -1687,11 +1688,12 @@ public class ToolRegistry {
                         return ToolExecutionResult.completed(invocation, output, elapsedMillis(startedAt));
                     })
                     .toList();
-
+            //带批次提交invokeAll
             List<Future<ToolExecutionResult>> futures =
                     executor.invokeAll(tasks, toolBatchTimeoutSeconds, TimeUnit.SECONDS);
 
             List<ToolExecutionResult> results = new ArrayList<>();
+            //遍历各个future 凭证记录任务状态 在一定时间 全部完成 result返回
             for (int i = 0; i < futures.size(); i++) {
                 ToolInvocation invocation = invocations.get(i);
                 Future<ToolExecutionResult> future = futures.get(i);

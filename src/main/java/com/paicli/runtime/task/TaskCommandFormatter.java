@@ -62,6 +62,14 @@ public final class TaskCommandFormatter {
         StringBuilder sb = new StringBuilder();
         sb.append("📋 后台任务 ").append(task.id()).append('\n');
         sb.append("状态: ").append(task.status().value()).append('\n');
+        if (task.reason() != null) sb.append("结束原因: ").append(task.reason()).append('\n');
+        if (task.cleanupState() != null) sb.append("执行线程: ").append(switch (task.cleanupState()) {
+            case NOT_STARTED -> "尚未启动";
+            case RUNNING -> "运行中";
+            case CANCEL_REQUESTED -> "已请求取消，等待退出";
+            case INCOMPLETE -> "等待超时，退出未确认";
+            case STOPPED -> "已退出";
+        }).append('\n');
         sb.append("创建: ").append(task.createdAt()).append('\n');
         if (task.startedAt() != null) {
             sb.append("开始: ").append(task.startedAt()).append('\n');

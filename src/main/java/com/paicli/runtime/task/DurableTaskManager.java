@@ -1,6 +1,9 @@
 package com.paicli.runtime.task;
 
+import com.paicli.agent.ExecutionOutcome;
+import com.paicli.runtime.RootTaskScope;
 import java.io.Closeable;
+import java.time.Duration;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
@@ -20,7 +23,8 @@ public class DurableTaskManager implements Closeable {
     private final TaskRunner runner;
     private final int workerCount;
     private final Connection connection;
-    private final Map<String, Thread> runningTasks = new ConcurrentHashMap<>();
+    private final Map<String, RootTaskScope> runningTasks = new ConcurrentHashMap<>();
+    private static final Duration CANCEL_CLEANUP_WAIT = Duration.ofSeconds(2);
     private ExecutorService workers;
     private volatile boolean running;
 
@@ -67,7 +71,7 @@ public class DurableTaskManager implements Closeable {
             return 2;
         }
     }
-
+    //创建默认固定线程池 进入workLoop循环
     public synchronized void start() {
         if (running) {
             return;
@@ -82,7 +86,7 @@ public class DurableTaskManager implements Closeable {
             workers.submit(this::workerLoop);
         }
     }
-
+    //把任务存入数据库
     public synchronized DurableTask enqueue(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             throw new IllegalArgumentException("任务内容不能为空");
@@ -90,15 +94,15 @@ public class DurableTaskManager implements Closeable {
         String id = "task_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String now = Instant.now().toString();
         try (PreparedStatement ps = connection.prepareStatement("""
-                INSERT INTO runtime_tasks (id, status, prompt, created_at)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO runtime_tasks (id, status, prompt, created_at, cleanup_state)
+                VALUES (?, ?, ?, ?, 'not_started')
                 """)) {
             ps.setString(1, id);
             ps.setString(2, TaskStatus.ENQUEUED.value());
             ps.setString(3, prompt.trim());
             ps.setString(4, now);
-            ps.executeUpdate();
-            notifyAll();
+            ps.executeUpdate();//插入这条待执行的任务存放到数据库
+            notifyAll();//通知后台进程
             return find(id).orElseThrow();
         } catch (SQLException e) {
             throw new IllegalStateException("提交后台任务失败: " + e.getMessage(), e);
@@ -139,17 +143,26 @@ public class DurableTaskManager implements Closeable {
         }
     }
 
-    public synchronized boolean cancel(String id) {
-        Optional<DurableTask> current = find(id);
-        if (current.isEmpty() || current.get().terminal()) {
-            return false;
+    public boolean cancel(String id) {
+        RootTaskScope scope;
+        synchronized (this) {
+            Optional<DurableTask> current = find(id);
+            if (current.isEmpty() || current.get().terminal()) return false;
+            scope = runningTasks.get(id);
+            if (scope != null) scope.requestCancel();
+            markTerminal(id, TaskStatus.CANCELED, current.get().result(), "用户取消", current.get().startedAt(),
+                    ExecutionOutcome.Reason.CANCELLED);
+            updateCleanupState(id, scope == null ? TaskCleanupState.NOT_STARTED : TaskCleanupState.CANCEL_REQUESTED);
+            notifyAll();
         }
-        Thread thread = runningTasks.remove(id);
-        if (thread != null) {
-            thread.interrupt();
+        if (scope != null) {
+            boolean stopped = false;
+            try { stopped = scope.awaitStopped(CANCEL_CLEANUP_WAIT); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            synchronized (this) {
+                updateCleanupState(id, stopped ? TaskCleanupState.STOPPED : TaskCleanupState.INCOMPLETE);
+            }
         }
-        markTerminal(id, TaskStatus.CANCELED, current.get().result(), "用户取消", current.get().startedAt());
-        notifyAll();
         return true;
     }
 
@@ -161,7 +174,8 @@ public class DurableTaskManager implements Closeable {
         while (running) {
             DurableTask task = null;
             try {
-                task = claimNext();
+                RootTaskScope scope = new RootTaskScope();//任务运行的控制对象
+                task = claimNext(scope);
                 if (task == null) {
                     synchronized (this) {
                         wait(300);
@@ -169,30 +183,41 @@ public class DurableTaskManager implements Closeable {
                     continue;
                 }
                 String taskId = task.id();
-                runningTasks.put(taskId, Thread.currentThread());
                 Instant startedAt = Instant.now();
+                String prompt = task.prompt();
                 try {
-                    String result = runner.run(task.prompt());
+                    //执行任务
+                    ExecutionOutcome outcome = scope.run(() -> java.util.Objects.requireNonNull(
+                            runner.run(prompt), "task outcome"));
+                    //保存结果 查询一遍
                     synchronized (this) {
                         DurableTask latest = find(taskId).orElse(null);
-                        if (latest != null && latest.status() != TaskStatus.CANCELED) {
-                            markTerminal(taskId, TaskStatus.COMPLETED, result, null, startedAt);
+                        if (latest != null && !latest.terminal()) {
+                            markTerminal(taskId, TaskStatus.fromOutcome(outcome), outcome.content(),
+                                    outcome.completed() ? null : outcome.reason().name(), startedAt, outcome.reason());
+                        } else if (latest != null && latest.status() == TaskStatus.CANCELED
+                                && outcome.reason() == ExecutionOutcome.Reason.CANCELLED) {
+                            retainCancelledContent(taskId, outcome.content());
                         }
                     }
                 } catch (InterruptedException e) {
                     Thread.interrupted();
                     synchronized (this) {
-                        markTerminal(taskId, TaskStatus.CANCELED, "", "任务线程被中断", startedAt);
+                        markTerminal(taskId, TaskStatus.CANCELED, "", "任务线程被中断", startedAt,
+                                ExecutionOutcome.Reason.CANCELLED);
                     }
                 } catch (Exception e) {
                     synchronized (this) {
                         DurableTask latest = find(taskId).orElse(null);
-                        if (latest != null && latest.status() != TaskStatus.CANCELED) {
-                            markTerminal(taskId, TaskStatus.FAILED, "", e.getMessage(), startedAt);
+                        if (latest != null && !latest.terminal()) {
+                            markTerminal(taskId, TaskStatus.FAILED, "", e.getMessage(), startedAt,
+                                    ExecutionOutcome.Reason.EXECUTION_ERROR);
                         }
                     }
                 } finally {
-                    runningTasks.remove(taskId);
+                    runningTasks.remove(taskId, scope);
+                    synchronized (this) { updateCleanupState(taskId, TaskCleanupState.STOPPED); }
+                    Thread.interrupted(); // This worker may now process an independent queued task.
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -203,7 +228,8 @@ public class DurableTaskManager implements Closeable {
         }
     }
 
-    private synchronized DurableTask claimNext() throws SQLException {
+    private synchronized DurableTask claimNext(RootTaskScope scope) throws SQLException {
+        if (!running) return null;
         connection.setAutoCommit(false);
         try {
             DurableTask task = null;
@@ -227,7 +253,7 @@ public class DurableTaskManager implements Closeable {
             String now = Instant.now().toString();
             try (PreparedStatement update = connection.prepareStatement("""
                     UPDATE runtime_tasks
-                    SET status = ?, started_at = ?, updated_at = ?
+                    SET status = ?, started_at = ?, updated_at = ?, cleanup_state = 'running'
                     WHERE id = ? AND status = ?
                     """)) {
                 update.setString(1, TaskStatus.RUNNING.value());
@@ -235,12 +261,14 @@ public class DurableTaskManager implements Closeable {
                 update.setString(3, now);
                 update.setString(4, task.id());
                 update.setString(5, TaskStatus.ENQUEUED.value());
+                //变化0行 回滚
                 if (update.executeUpdate() == 0) {
                     connection.rollback();
                     return null;
                 }
             }
             connection.commit();
+            runningTasks.put(task.id(), scope);
             return find(task.id()).orElse(task);
         } catch (SQLException e) {
             connection.rollback();
@@ -250,13 +278,14 @@ public class DurableTaskManager implements Closeable {
         }
     }
 
-    private synchronized void markTerminal(String id, TaskStatus status, String result, String error, Instant startedAt) {
+    private synchronized void markTerminal(String id, TaskStatus status, String result, String error,
+                                           Instant startedAt, ExecutionOutcome.Reason reason) {
         String now = Instant.now().toString();
         long durationMs = startedAt == null ? 0 : Math.max(0, Instant.now().toEpochMilli() - startedAt.toEpochMilli());
         try (PreparedStatement ps = connection.prepareStatement("""
                 UPDATE runtime_tasks
-                SET status = ?, result = ?, error = ?, finished_at = ?, duration_ms = ?, updated_at = ?
-                WHERE id = ?
+                SET status = ?, result = ?, error = ?, finished_at = ?, duration_ms = ?, updated_at = ?, reason = ?
+                WHERE id = ? AND status IN ('enqueued', 'running')
                 """)) {
             ps.setString(1, status.value());
             ps.setString(2, result == null ? "" : result);
@@ -264,10 +293,38 @@ public class DurableTaskManager implements Closeable {
             ps.setString(4, now);
             ps.setLong(5, durationMs);
             ps.setString(6, now);
-            ps.setString(7, id);
+            ps.setString(7, reason.name());
+            ps.setString(8, id);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new IllegalStateException("更新后台任务失败: " + e.getMessage(), e);
+        }
+    }
+
+    private synchronized void updateCleanupState(String id, TaskCleanupState state) {
+        try (PreparedStatement ps = connection.prepareStatement("""
+                UPDATE runtime_tasks SET cleanup_state = ?
+                WHERE id = ? AND (cleanup_state IS NULL OR cleanup_state <> 'stopped')
+                """)) {
+            ps.setString(1, state.name().toLowerCase(java.util.Locale.ROOT));
+            ps.setString(2, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("更新任务清理状态失败: " + e.getMessage(), e);
+        }
+    }
+
+    /** Attach actual cancellation output without changing an already committed terminal state. */
+    private void retainCancelledContent(String id, String content) throws SQLException {
+        if (content == null || content.isBlank()) return;
+        try (PreparedStatement ps = connection.prepareStatement("""
+                UPDATE runtime_tasks SET result = ?
+                WHERE id = ? AND status = 'canceled' AND reason = 'CANCELLED'
+                  AND (result IS NULL OR result = '')
+                """)) {
+            ps.setString(1, content);
+            ps.setString(2, id);
+            ps.executeUpdate();
         }
     }
 
@@ -289,13 +346,23 @@ public class DurableTaskManager implements Closeable {
                     """);
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_runtime_tasks_status ON runtime_tasks(status)");
             stmt.execute("CREATE INDEX IF NOT EXISTS idx_runtime_tasks_created ON runtime_tasks(created_at)");
+            boolean hasReason = false;
+            boolean hasCleanupState = false;
+            try (ResultSet columns = stmt.executeQuery("PRAGMA table_info(runtime_tasks)")) {
+                while (columns.next()) {
+                    if ("reason".equals(columns.getString("name"))) hasReason = true;
+                    if ("cleanup_state".equals(columns.getString("name"))) hasCleanupState = true;
+                }
+            }
+            if (!hasReason) stmt.execute("ALTER TABLE runtime_tasks ADD COLUMN reason TEXT");
+            if (!hasCleanupState) stmt.execute("ALTER TABLE runtime_tasks ADD COLUMN cleanup_state TEXT");
         }
     }
 
     private synchronized void recoverRunningTasks() throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement("""
                 UPDATE runtime_tasks
-                SET status = ?, updated_at = ?
+                SET status = ?, updated_at = ?, cleanup_state = 'incomplete'
                 WHERE status = ?
                 """)) {
             ps.setString(1, TaskStatus.ENQUEUED.value());
@@ -315,8 +382,22 @@ public class DurableTaskManager implements Closeable {
                 parseInstant(rs.getString("created_at")),
                 parseInstant(rs.getString("started_at")),
                 parseInstant(rs.getString("finished_at")),
-                rs.getLong("duration_ms")
+                rs.getLong("duration_ms"),
+                parseReason(rs.getString("reason")),
+                parseCleanupState(rs.getString("cleanup_state"))
         );
+    }
+
+    private static ExecutionOutcome.Reason parseReason(String value) {
+        if (value == null) return null; // Historical rows remain unknown, never inferred from prose.
+        try { return ExecutionOutcome.Reason.valueOf(value); }
+        catch (IllegalArgumentException unknownFutureReason) { return null; }
+    }
+
+    private static TaskCleanupState parseCleanupState(String value) {
+        if (value == null) return null; // Old rows have no observed cleanup state.
+        try { return TaskCleanupState.valueOf(value.toUpperCase(java.util.Locale.ROOT)); }
+        catch (IllegalArgumentException unknownFutureState) { return null; }
     }
 
     private static Instant parseInstant(String value) {
@@ -327,20 +408,32 @@ public class DurableTaskManager implements Closeable {
     }
 
     @Override
-    public synchronized void close() {
-        running = false;
-        notifyAll();
-        if (workers != null) {
-            workers.shutdownNow();
+    public void close() {
+        ExecutorService pool;
+        Map<String, RootTaskScope> active;
+        synchronized (this) {
+            running = false;
+            notifyAll();
+            pool = workers;
+            active = Map.copyOf(runningTasks);
+        }
+        active.values().forEach(RootTaskScope::requestCancel);
+        if (pool != null) {
+            pool.shutdownNow();
             try {
-                workers.awaitTermination(2, TimeUnit.SECONDS);
+                pool.awaitTermination(2, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
-        try {
-            connection.close();
-        } catch (SQLException ignored) {
+        synchronized (this) {
+            for (Map.Entry<String, RootTaskScope> entry : active.entrySet()) {
+                if (!entry.getValue().isStopped()) {
+                    updateCleanupState(entry.getKey(), TaskCleanupState.INCOMPLETE);
+                }
+            }
+            try { connection.close(); }
+            catch (SQLException ignored) { }
         }
     }
 }

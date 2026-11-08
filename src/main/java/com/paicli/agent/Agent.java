@@ -165,7 +165,37 @@ public class Agent {
      * the text the user actually submitted.
      */
     public String run(String userInput, String submittedUserInput) {
-        return runInternal(userInput, submittedUserInput, false);
+        return runInternal(userInput, submittedUserInput, false, false).displayContent();
+    }
+
+    /** Machine-readable termination with full output even when the UI already streamed it. */
+    public ExecutionOutcome runWithOutcome(String userInput) {
+        return runWithOutcome(userInput, userInput);
+    }
+
+    public ExecutionOutcome runWithOutcome(String userInput, String submittedUserInput) {
+        return runWithOutcome(userInput, TaskContract.understand(submittedUserInput));
+    }
+
+    public ExecutionOutcome runWithOutcome(String userInput, TaskContract contract) {
+        return runMachine(userInput, contract, false);
+    }
+
+    public ExecutionOutcome runExplicitTaskWithOutcome(String userInput, String submittedUserInput) {
+        return runMachine(userInput, TaskContract.understand(submittedUserInput), true);
+    }
+
+    private ExecutionOutcome runMachine(String userInput, TaskContract contract, boolean explicitTaskEnvelope) {
+        try {
+            ExecutionOutcome outcome = runInternal(userInput, contract.goal(), explicitTaskEnvelope, true, contract);
+            return outcome.acceptance() == null
+                    ? new ExecutionOutcome(outcome.reason(), outcome.content(), outcome.displayContent(),
+                            TaskAcceptance.notEvaluated()) : outcome;
+        } catch (RuntimeException failure) {
+            return new ExecutionOutcome(isRunCancelled() ? ExecutionOutcome.Reason.CANCELLED
+                    : ExecutionOutcome.Reason.EXECUTION_ERROR, "❌ 执行失败: " + failure.getMessage(),
+                    "❌ 执行失败: " + failure.getMessage(), TaskAcceptance.notEvaluated());
+        }
     }
 
     /**
@@ -174,16 +204,26 @@ public class Agent {
      * bare-title actionability heuristic is bypassed.
      */
     public String runExplicitTask(String userInput, String submittedUserInput) {
-        return runInternal(userInput, submittedUserInput, true);
+        return runInternal(userInput, submittedUserInput, true, false).displayContent();
     }
 
-    private String runInternal(String userInput, String submittedUserInput, boolean explicitTaskEnvelope) {
+    private ExecutionOutcome runInternal(String userInput, String submittedUserInput,
+                                         boolean explicitTaskEnvelope, boolean retainStreamedContent) {
+        return runInternal(userInput, submittedUserInput, explicitTaskEnvelope, retainStreamedContent,
+                TaskContract.understand(submittedUserInput));
+    }
+
+    private ExecutionOutcome runInternal(String userInput, String submittedUserInput,
+                                         boolean explicitTaskEnvelope, boolean retainStreamedContent,
+                                         TaskContract contract) {
         return LangfuseTelemetry.observeTurn("react",
                 conversationLedger.isEnabled() ? conversationLedger.sessionId() : null,
-                () -> runTraced(userInput, submittedUserInput, explicitTaskEnvelope));
+                () -> runTraced(userInput, submittedUserInput, explicitTaskEnvelope, retainStreamedContent, contract));
     }
 
-    private String runTraced(String userInput, String submittedUserInput, boolean explicitTaskEnvelope) {
+    private ExecutionOutcome runTraced(String userInput, String submittedUserInput,
+                                       boolean explicitTaskEnvelope, boolean retainStreamedContent,
+                                       TaskContract contract) {
         log.info("ReAct run started: inputLength={}", userInput == null ? 0 : userInput.length());
         TurnToolPolicy turnToolPolicy = explicitTaskEnvelope
                 ? TurnToolPolicy.forExplicitTask(
@@ -198,42 +238,50 @@ public class Agent {
             renderer().stream().println(AnsiStyle.subtle(
                     "  ℹ 这句输入看起来是标题或摘录，本轮未开放联网工具；需要搜索或抓取时请说明要做什么"));
         }
-        pruneHistoricalImagePayloads();
-        recordExpandedMcpResources(userInput, submittedUserInput);
-        storeExplicitBrowserMemoryHint(userInput);
+        //处理进入本轮之前的附加消息
+        pruneHistoricalImagePayloads(); //清理历史消息的图片
+        recordExpandedMcpResources(userInput, submittedUserInput);//记录输入中已展开的 MCP 资源相关信息
+        storeExplicitBrowserMemoryHint(userInput);//处理用户明确表达的浏览器记忆提示
 
         // 检索相关长期记忆，注入到 system prompt
         ContextProfile contextProfile = memoryManager.getContextProfile();
-        String memoryContext = LangfuseTelemetry.observeStage("memory retrieval",
-                () -> memoryManager.buildContextForQuery(userInput, contextProfile.memoryContextTokens()));
-        updateSystemPromptWithMemory(memoryContext);
-        String turnSystemPrompt = conversationHistory.get(0).content();
-
+        String memoryContext = LangfuseTelemetry.observeStage(
+                "memory retrieval",
+                () -> memoryManager.buildContextForQuery(
+                        userInput, contextProfile.memoryContextTokens()
+                ));
+        updateSystemPromptWithMemory(memoryContext, contract.executionView(userInput));//把长期记忆和本轮契约交给sys prompt
+        String turnSystemPrompt = conversationHistory.get(0).content();//保存第一条sys
+        //把Q加入对话中
         appendConversationMessage(ImageReferenceParser.userMessage(
                 userInput,
                 Path.of(toolRegistry.getProjectPath())), "user_input");
-        StringBuilder reasoningTranscript = new StringBuilder();
-        StreamRenderer streamRenderer = new StreamRenderer(renderer());
+        StringBuilder reasoningTranscript = new StringBuilder();//LLM返回的推理文版
+        StreamRenderer streamRenderer = new StreamRenderer(renderer());//流式片段
+        StringBuilder partialToolResults = new StringBuilder();
+        TaskAcceptance acceptance = TaskAcceptance.fromContract(contract, toolRegistry.getProjectPath());
 
         long startNanos = System.nanoTime();
-        AgentBudget budget = AgentBudget.fromSystemProperties();
-        RunawayGuard runawayGuard = new RunawayGuard();
+        //他们都是观察整个任务的消息
+        AgentBudget budget = AgentBudget.fromSystemProperties();//计算token 检查token预算
+        RunawayGuard runawayGuard = new RunawayGuard();//观察 重复行为
         pushStatus(budget, startNanos, "running");
 
         // 主退出条件 = LLM 自己决定（不再调用工具就返回）；
         // budget 仅在显式 token / 硬轮数预算命中或检测到死循环时兜底；默认不限制轮数。
         while (true) {
-            if (CancellationContext.isCancelled()) {
+            if (isRunCancelled()) {
                 log.info("ReAct run cancelled before iteration");
                 LangfuseTelemetry.recordFailure("CANCELLED");
                 pushStatus(budget, startNanos, "idle");
-                return "⏹️ 已取消当前任务。";
+                return incompleteOutcome(ExecutionOutcome.Reason.CANCELLED, "⏹️ 已取消当前任务。",
+                        partialToolResults, streamRenderer);
             }
             // 调 LLM 前只评估真正发送的 conversationHistory。会话记忆快速路径和完整摘要
             // 回退路径都由同一个协调器管理，不再复制一份影子短期记忆。
             injectPendingLspDiagnostics();
             LangfuseTelemetry.observeStage("context maintenance", () -> {
-                maybeCompactHistory();
+                maybeCompactHistory();//检查上下文压缩
                 return null;
             });
             AgentExecutionKernel.IterationAdmission admission = AgentExecutionKernel.admitIteration(budget);
@@ -241,11 +289,13 @@ public class Agent {
                 log.info("ReAct run cancelled at iteration admission");
                 LangfuseTelemetry.recordFailure("CANCELLED");
                 pushStatus(budget, startNanos, "idle");
-                return "⏹️ 已取消当前任务。";
+                return incompleteOutcome(ExecutionOutcome.Reason.CANCELLED, "⏹️ 已取消当前任务。",
+                        partialToolResults, streamRenderer);
             }
             if (admission.state() == AgentExecutionKernel.IterationState.BUDGET_EXHAUSTED) {
                 return finalizePartialResult(
-                        admission.exitReason(), budget, startNanos, reasoningTranscript, streamRenderer, turnSystemPrompt);
+                        admission.exitReason(), budget, startNanos, reasoningTranscript, streamRenderer,
+                        turnSystemPrompt, retainStreamedContent, partialToolResults);
             }
 
             int iteration = admission.iteration();
@@ -273,7 +323,8 @@ public class Agent {
                     LangfuseTelemetry.recordFailure("CANCELLED");
                     streamRenderer.finish();
                     pushStatus(budget, startNanos, "idle");
-                    return "⏹️ 已取消当前任务。";
+                    return incompleteOutcome(ExecutionOutcome.Reason.CANCELLED, "⏹️ 已取消当前任务。",
+                            partialToolResults, streamRenderer);
                 }
                 LlmClient.ChatResponse response = modelTurn.response();
 
@@ -281,7 +332,7 @@ public class Agent {
                 if (response.hasToolCalls()) {
                     appendReasoning(reasoningTranscript, response.reasoningContent());
                     log.info("LLM requested {} tool call(s) in iteration {}", response.toolCalls().size(), iteration);
-                    budget.recordToolCalls(response.toolCalls());
+                    budget.recordToolCalls(response.toolCalls());//停止判断
                     // 添加助手消息（包含工具调用）
                     appendConversationMessage(LlmClient.Message.assistant(
                             response.reasoningContent(),
@@ -301,14 +352,16 @@ public class Agent {
                             toolRegistry.getSkillRegistry(),
                             conversationHistory);
                     List<ToolExecutionResult> toolResults = skills.results();
+                    acceptance.observe(toolResults);
                     for (ToolExecutionResult toolResult : toolResults) {
+                        partialToolResults.append(toolResult.result()).append('\n');
                         appendConversationMessage(
                                 LlmClient.Message.tool(toolResult.id(), ToolResultBoundary.wrap(toolResult)),
                                 "tool_execution");
                     }
                     appendImageToolMessages(toolResults);
                     appendLoadedSkillMessage(skills.message());
-                    runawayGuard.observe(toolResults).ifPresent(this::appendRunawayReminder);
+                    runawayGuard.observe(toolResults).ifPresent(this::appendRunawayReminder);//把本轮工具结果给检测器
                     pushStatus(budget, startNanos, "running");
 
                     // 继续循环，让 LLM 根据工具结果继续思考
@@ -347,33 +400,58 @@ public class Agent {
                     if (unexecutedToolCall) {
                         renderer().stream().println(AnsiStyle.subtle(UNEXECUTED_TOOL_CALL_NOTICE));
                     }
-                    return returnFinalResponseWhenStreamed ? (response.content() == null ? "" : response.content().trim()) : "";
+                    String full = response.content() == null ? "" : response.content().trim();
+                    return new ExecutionOutcome(ExecutionOutcome.Reason.COMPLETED, full,
+                            returnFinalResponseWhenStreamed ? full : "", acceptance.verify());
                 }
                 streamRenderer.clearThinkingPanel();
                 String answer = formatUserFacingResponse(reasoningTranscript.toString(), response.content());
-                return unexecutedToolCall ? answer + "\n\n" + UNEXECUTED_TOOL_CALL_NOTICE : answer;
+                String finalAnswer = unexecutedToolCall ? answer + "\n\n" + UNEXECUTED_TOOL_CALL_NOTICE : answer;
+                return new ExecutionOutcome(ExecutionOutcome.Reason.COMPLETED,
+                        finalAnswer, finalAnswer, acceptance.verify());
 
             } catch (IOException e) {
                 log.error("LLM call failed in ReAct loop", e);
                 LangfuseTelemetry.recordFailure("LLM_IO_ERROR");
                 streamRenderer.finish();
                 pushStatus(budget, startNanos, "idle");
-                return "❌ 调用 LLM 失败: " + e.getMessage();
+                return incompleteOutcome(isRunCancelled() ? ExecutionOutcome.Reason.CANCELLED
+                                : ExecutionOutcome.Reason.MODEL_ERROR,
+                        isRunCancelled() ? "⏹️ 已取消当前任务。" : "❌ 调用 LLM 失败: " + e.getMessage(),
+                        partialToolResults, streamRenderer);
+            } catch (RuntimeException e) {
+                if (!retainStreamedContent) throw e; // Preserve the legacy String API exception behavior.
+                streamRenderer.finish();
+                pushStatus(budget, startNanos, "idle");
+                return incompleteOutcome(isRunCancelled() ? ExecutionOutcome.Reason.CANCELLED
+                                : ExecutionOutcome.Reason.EXECUTION_ERROR,
+                        "❌ 执行失败: " + e.getMessage(), partialToolResults, streamRenderer);
             }
         }
+    }
+
+    private static boolean isRunCancelled() {
+        return CancellationContext.isCancelled() || Thread.currentThread().isInterrupted();
+    }
+
+    private static ExecutionOutcome incompleteOutcome(ExecutionOutcome.Reason reason, String notice,
+                                                       StringBuilder toolResults, StreamRenderer renderer) {
+        String partial = (toolResults.toString() + renderer.currentContent).trim();
+        return new ExecutionOutcome(reason, partial.isBlank() ? notice
+                : notice + "\n\n已取得的部分结果（不代表任务完成）：\n" + partial);
     }
 
     /**
      * 预算安全阀命中后只允许一次无工具模型调用，把已完成工作整理成可交付的部分结果。
      * 这次调用不重新进入 ReAct 循环，也不暴露任何工具。
      */
-    private String finalizePartialResult(
+    private ExecutionOutcome finalizePartialResult(
             AgentBudget.ExitReason exitReason,
             AgentBudget budget,
             long startNanos,
             StringBuilder reasoningTranscript,
             StreamRenderer streamRenderer,
-            String baseSystemPrompt) {
+            String baseSystemPrompt, boolean retainStreamedContent, StringBuilder partialToolResults) {
         String description = budget.describeExit(exitReason);
         log.warn("ReAct run exhausted budget: reason={}, iteration={}, tokens={}/{}",
                 exitReason, budget.iteration(),
@@ -410,15 +488,19 @@ public class Agent {
 
             if (streamRenderer.hasStreamedOutput()) {
                 streamRenderer.finish();
-                return returnFinalResponseWhenStreamed ? partialResult : "";
+                return new ExecutionOutcome(ExecutionOutcome.budgetExhausted(exitReason, "").reason(),
+                        partialResult, returnFinalResponseWhenStreamed ? partialResult : "");
             }
             streamRenderer.clearThinkingPanel();
-            return formatUserFacingResponse(reasoningTranscript.toString(), partialResult);
+            return ExecutionOutcome.budgetExhausted(exitReason,
+                    formatUserFacingResponse(reasoningTranscript.toString(), partialResult));
         } catch (IOException e) {
             log.error("LLM finalization call failed after ReAct budget exhaustion", e);
             streamRenderer.finish();
             pushStatus(budget, startNanos, "idle");
-            return formatPartialResult(description, "收尾调用失败：" + e.getMessage());
+            return incompleteOutcome(ExecutionOutcome.budgetExhausted(exitReason, "").reason(),
+                    formatPartialResult(description, "收尾调用失败：" + e.getMessage()),
+                    partialToolResults, streamRenderer);
         }
     }
 
@@ -547,8 +629,11 @@ public class Agent {
     /**
      * 将记忆上下文注入到 system prompt 中（替换 conversationHistory[0]）
      */
-    private void updateSystemPromptWithMemory(String memoryContext) {
-        LlmClient.Message systemMessage = LlmClient.Message.system(buildSystemPrompt(memoryContext));
+    private void updateSystemPromptWithMemory(String memoryContext, String taskContext) {
+        String prompt = buildSystemPrompt(memoryContext);
+        if (taskContext != null && !taskContext.isBlank())
+            prompt += "\n\n## Current Task Context\n\n" + taskContext;
+        LlmClient.Message systemMessage = LlmClient.Message.system(prompt);
         conversationHistory.set(0, systemMessage);
         conversationLedger.appendMessage(
                 "react", "agent", "memory_context_refresh", systemMessage);
@@ -575,11 +660,11 @@ public class Agent {
     }
 
     private void maybeCompactHistory() {
-        int trigger = memoryManager.getContextProfile().compressionTriggerTokens();
+        int trigger = memoryManager.getContextProfile().compressionTriggerTokens();//压缩阈值
         int beforeMessages = conversationHistory.size();
         long beforeTokens = estimateCurrentContextTokens();
         try {
-            AutoCompactionManager.Result result = autoCompactionManager.compactIfNeeded(conversationHistory, trigger);
+            AutoCompactionManager.Result result = autoCompactionManager.compactIfNeeded(conversationHistory, trigger);//按需清理旧工具结果，并在仍超过阈值时尝试摘要压缩
             if (result.clearedToolResults() > 0) {
                 recordCompaction("automatic:tool_result_clearing", beforeMessages, beforeTokens);
                 renderer().stream().println("🧹 上下文增长，已清理 " + result.clearedToolResults()
@@ -651,7 +736,7 @@ public class Agent {
 
     /** 重复检测命中时提醒模型换思路；只提醒，不拦截工具。 */
     private void appendRunawayReminder(String reminder) {
-        appendConversationMessage(LlmClient.Message.user(reminder), "runaway_reminder");
+        appendConversationMessage(LlmClient.Message.user(reminder), "runaway_reminder");//提醒模型
         renderer().stream().println(AnsiStyle.subtle("  ↻ 检测到重复的工具调用，已提醒模型换个思路"));
     }
 
@@ -1162,6 +1247,7 @@ public class Agent {
         private final StringBuilder pendingReasoning = new StringBuilder();
         private final StringBuilder visibleReasoning = new StringBuilder();
         private final StringBuilder lateReasoning = new StringBuilder();
+        private final StringBuilder currentContent = new StringBuilder();
         private TerminalMarkdownRenderer reasoningRenderer;
         private TerminalMarkdownRenderer contentRenderer;
         private boolean reasoningHeadingPrinted;
@@ -1258,6 +1344,8 @@ public class Agent {
             if (delta == null || delta.isEmpty()) {
                 return;
             }
+            currentContent.append(delta);// 保留当前文本内容
+            //首次收到正文时初始化 Markdown 渲染器……
             if (!contentStarted) {
                 if (hasThinkingPanel()) {
                     finishThinkingPanelAndPrintQuote();
@@ -1278,6 +1366,7 @@ public class Agent {
                 contentStarted = true;
                 streamedOutput = true;
             }
+            // 交给 Markdown 渲染
             contentRenderer.append(delta);
             if (renderer != null) {
                 renderer.appendAssistantContentDelta(delta);
@@ -1290,6 +1379,7 @@ public class Agent {
         }
 
         private void resetBetweenIterations() {
+            currentContent.setLength(0);
             if (hasThinkingPanel()) {
                 finishThinkingPanelAndPrintQuote();
             }

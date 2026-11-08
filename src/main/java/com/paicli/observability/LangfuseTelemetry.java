@@ -62,6 +62,22 @@ public final class LangfuseTelemetry {
 
     public record TracedResult<T>(T value, String traceId) {}
 
+    /** Keeps one interactive root span open across understanding, confirmation and execution. */
+    public static RootTrace openRootTask(String taskId) {
+        if (taskId == null || taskId.isBlank()) throw new IllegalArgumentException("taskId is required");
+        if (!enabled()) return () -> {};
+        TraceLabels labels = new TraceLabels("root-task", null, taskId);
+        Span span = STATE.tracer().spanBuilder("simple-cli root-task").startSpan();
+        span.setAttribute(OBSERVATION_TYPE_KEY, "agent");
+        applyLabels(span, labels);
+        Scope scope = Context.current().with(LABELS, labels).with(span).makeCurrent();
+        return () -> { scope.close(); span.end(); };
+    }
+
+    public interface RootTrace extends AutoCloseable {
+        @Override void close();
+    }
+
     /** Flush the short-lived CLI's pending spans without holding the terminal open. */
     public static void shutdown() {
         if (STATE.provider() == null || !CLOSED.compareAndSet(false, true)) return;
@@ -75,7 +91,9 @@ public final class LangfuseTelemetry {
     public static <T> T observeTurn(String mode, String sessionId, Supplier<T> action) {
         if (!enabled()) return action.get();
         TraceCapture capture = Context.current().get(EVALUATION);
-        String taskId = capture == null ? UUID.randomUUID().toString() : capture.taskId;
+        TraceLabels parent = Context.current().get(LABELS);
+        String taskId = capture != null ? capture.taskId
+                : parent != null ? parent.taskId() : UUID.randomUUID().toString();
         TraceLabels labels = new TraceLabels(mode, sessionId, taskId);
         Span span = STATE.tracer().spanBuilder("simple-cli " + mode).startSpan();
         span.setAttribute(OBSERVATION_TYPE_KEY, "agent");

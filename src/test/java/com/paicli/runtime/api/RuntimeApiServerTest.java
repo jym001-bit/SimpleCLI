@@ -1,5 +1,6 @@
 package com.paicli.runtime.api;
 
+import com.paicli.agent.ExecutionOutcome;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -17,7 +18,7 @@ class RuntimeApiServerTest {
     @Test
     void exposesThreadTurnAndSseEvents(@TempDir Path tempDir) throws Exception {
         try (RuntimeThreadStore store = new RuntimeThreadStore(tempDir.resolve("runtime.db"));
-             RuntimeApiServer server = new RuntimeApiServer(store, prompt -> "reply:" + prompt, 0, "secret")) {
+             RuntimeApiServer server = new RuntimeApiServer(store, prompt -> ExecutionOutcome.completed("reply:" + prompt), 0, "secret")) {
             server.start();
             HttpClient client = HttpClient.newHttpClient();
             String base = "http://127.0.0.1:" + server.port();
@@ -44,7 +45,7 @@ class RuntimeApiServerTest {
     @Test
     void rejectsMissingApiKey(@TempDir Path tempDir) throws Exception {
         try (RuntimeThreadStore store = new RuntimeThreadStore(tempDir.resolve("runtime.db"));
-             RuntimeApiServer server = new RuntimeApiServer(store, prompt -> "x", 0, "secret")) {
+             RuntimeApiServer server = new RuntimeApiServer(store, prompt -> ExecutionOutcome.completed("x"), 0, "secret")) {
             server.start();
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + server.port() + "/v1/threads"))

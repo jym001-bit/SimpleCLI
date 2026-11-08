@@ -1,5 +1,6 @@
 package com.paicli.runtime.task;
 
+import com.paicli.agent.ExecutionOutcome;
 import java.time.Instant;
 
 public record DurableTask(
@@ -11,8 +12,21 @@ public record DurableTask(
         Instant createdAt,
         Instant startedAt,
         Instant finishedAt,
-        long durationMs
+        long durationMs,
+        ExecutionOutcome.Reason reason,
+        TaskCleanupState cleanupState
 ) {
+    public DurableTask(String id, TaskStatus status, String prompt, String result, String error,
+                       Instant createdAt, Instant startedAt, Instant finishedAt, long durationMs,
+                       ExecutionOutcome.Reason reason) {
+        this(id, status, prompt, result, error, createdAt, startedAt, finishedAt, durationMs,
+                reason, null);
+    }
+    /** Old databases/callers have no recorded termination reason. Do not guess it from text. */
+    public DurableTask(String id, TaskStatus status, String prompt, String result, String error,
+                       Instant createdAt, Instant startedAt, Instant finishedAt, long durationMs) {
+        this(id, status, prompt, result, error, createdAt, startedAt, finishedAt, durationMs, null);
+    }
     public boolean terminal() {
         return status == TaskStatus.COMPLETED
                 || status == TaskStatus.FAILED

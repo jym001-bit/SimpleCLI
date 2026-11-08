@@ -116,8 +116,53 @@ class LangfuseTelemetryTest {
         }
     }
 
+    @Test
+    void rootTaskAndUnderstandingShareExportedTraceWithExecution() throws Exception {
+        try (MockWebServer server = new MockWebServer()) {
+            server.enqueue(new MockResponse().setResponseCode(200).setBody("{}"));
+            server.start();
+            String javaBinary = System.getProperty("os.name", "").toLowerCase().contains("win")
+                    ? "java.exe" : "java";
+            String java = Path.of(System.getProperty("java.home"), "bin", javaBinary).toString();
+            String classpath = System.getProperty("surefire.test.class.path", System.getProperty("java.class.path"));
+            ProcessBuilder command = new ProcessBuilder(java, "-Dpaicli.log.dir=target/langfuse-test-logs", "-cp",
+                    classpath, LangfuseTelemetryTest.class.getName(), "root-probe");
+            command.environment().put("LANGFUSE_ENABLED", "true");
+            command.environment().put("LANGFUSE_PUBLIC_KEY", "pk-test");
+            command.environment().put("LANGFUSE_SECRET_KEY", "sk-test");
+            command.environment().put("LANGFUSE_BASE_URL", server.url("/").toString());
+            command.redirectErrorStream(true);
+            command.redirectOutput(Path.of("target", "langfuse-root-probe.out").toFile());
+            Process process = command.start();
+            assertTrue(process.waitFor(15, TimeUnit.SECONDS));
+            assertEquals(0, process.exitValue());
+            RecordedRequest request = server.takeRequest(5, TimeUnit.SECONDS);
+            assertNotNull(request);
+            String body = new String(request.getBody().readByteArray(), StandardCharsets.ISO_8859_1);
+            assertTrue(body.contains("simple-cli root-task"));
+            assertTrue(body.contains("task understanding"));
+            assertTrue(body.contains("simple-cli react"));
+            assertTrue(body.contains("root-probe-id"));
+            assertFalse(body.contains("PRIVATE_PROMPT_SENTINEL"));
+        }
+    }
+
     /** Isolated JVM lets the test set environment variables before telemetry initializes. */
     public static void main(String[] args) {
+        if (args.length > 0 && "root-probe".equals(args[0])) {
+            try (var root = LangfuseTelemetry.openRootTask("root-probe-id")) {
+                LangfuseTelemetry.observeStage("task understanding", () -> {
+                    try {
+                        return LangfuseTelemetry.observeGeneration("test-provider", "test-model",
+                                () -> new LlmClient.ChatResponse("assistant", "PRIVATE_PROMPT_SENTINEL",
+                                        List.of(), 2, 1));
+                    } catch (java.io.IOException error) { throw new IllegalStateException(error); }
+                });
+                LangfuseTelemetry.observeTurn("react", null, () -> "done");
+            }
+            LangfuseTelemetry.shutdown();
+            return;
+        }
         LangfuseTelemetry.evaluate("task-test-id", () -> LangfuseTelemetry.observeTurn("react", "session-test", () -> {
             LangfuseTelemetry.observeStage("memory retrieval", () -> "PRIVATE_PROMPT_SENTINEL");
             try {

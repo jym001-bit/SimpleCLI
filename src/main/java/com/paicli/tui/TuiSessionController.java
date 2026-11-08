@@ -1,6 +1,8 @@
 package com.paicli.tui;
 
 import com.paicli.agent.Agent;
+import com.paicli.agent.ExecutionOutcome;
+import com.paicli.agent.TaskContract;
 import com.paicli.agent.AgentOrchestrator;
 import com.paicli.agent.PlanExecuteAgent;
 import com.paicli.config.PaiCliConfig;
@@ -255,6 +257,12 @@ public final class TuiSessionController implements AutoCloseable {
     }
 
     private void runAgentTask(String input, RunMode mode) {
+        lastOutcome = null;
+        TaskContract contract = TaskContract.understand(input);
+        if (contract.needsConfirmation()) {
+            appendSystem(contract.confirmationSummary() + "\n请修改后重新提交完整任务。");
+            return;
+        }
         CancellationToken token = CancellationContext.startRun();
         currentToken = token;
         statusPane.startTimer();
@@ -264,7 +272,7 @@ public final class TuiSessionController implements AutoCloseable {
         try {
             SnapshotService snapshots = reactAgent.getToolRegistry().getSnapshotService();
             output = captureStdout(() -> snapshots.runTurn(mode.name().toLowerCase(), input, () -> switch (mode) {
-                    case REACT -> reactAgent.run(input);
+                    case REACT -> recordOutcome(reactAgent.runWithOutcome(input, contract));
                     case PLAN -> {
                         PlanExecuteAgent planAgent = new PlanExecuteAgent(
                                 llmClient,
@@ -273,7 +281,7 @@ public final class TuiSessionController implements AutoCloseable {
                                 (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute()
                         );
                         planAgent.setConversationLedger(reactAgent.getConversationLedger());
-                        yield planAgent.run(input);
+                        yield recordOutcome(planAgent.runWithOutcome(input, contract));
                     }
                     case TEAM -> {
                         AgentOrchestrator orchestrator = new AgentOrchestrator(
@@ -282,11 +290,13 @@ public final class TuiSessionController implements AutoCloseable {
                                 reactAgent.getMemoryManager()
                         );
                         orchestrator.setConversationLedger(reactAgent.getConversationLedger());
-                        yield orchestrator.run(input);
+                        yield recordOutcome(orchestrator.runWithOutcome(input, contract));
                     }
                 }));
         } catch (Exception e) {
             output = "执行失败: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+            lastOutcome = new ExecutionOutcome(token.isCancelled() ? ExecutionOutcome.Reason.CANCELLED
+                    : ExecutionOutcome.Reason.EXECUTION_ERROR, output);
         } finally {
             CancellationContext.clear(token);
             currentToken = null;
@@ -296,6 +306,18 @@ public final class TuiSessionController implements AutoCloseable {
             });
         }
         appendAssistant(cleanOutput(output));
+        if (lastOutcome != null && lastOutcome.acceptance() != null)
+            appendSystem(lastOutcome.acceptance().terminalSummary());
+    }
+
+    private volatile ExecutionOutcome lastOutcome;
+
+    /** Machine state remains available after stdout/display formatting. */
+    public ExecutionOutcome getLastOutcome() { return lastOutcome; }
+
+    private String recordOutcome(ExecutionOutcome outcome) {
+        lastOutcome = outcome;
+        return outcome.displayContent();
     }
 
     private String formatSnapshots() {
