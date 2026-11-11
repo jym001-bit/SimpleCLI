@@ -7,7 +7,6 @@ import com.paicli.agent.PlanExecuteAgent;
 import com.paicli.config.PaiCliConfig;
 import com.paicli.llm.LlmClient;
 import com.paicli.llm.LlmClientFactory;
-import com.paicli.render.PlainRenderer;
 import com.paicli.runtime.CancellationContext;
 import com.paicli.runtime.CancellationToken;
 
@@ -159,7 +158,7 @@ public final class HeadlessMain {
     private static String runMode(HeadlessOptions.Mode mode, LlmClient client,
                                   CountingToolRegistry registry, String prompt, PrintStream quiet) {
         Agent reactAgent = new Agent(client, registry);
-        reactAgent.setRenderer(new PlainRenderer(quiet));
+        reactAgent.setRenderer(new SilentRenderer(quiet));
         reactAgent.setReturnFinalResponseWhenStreamed(true);
         return switch (mode) {
             case REACT -> reactAgent.run(prompt);
