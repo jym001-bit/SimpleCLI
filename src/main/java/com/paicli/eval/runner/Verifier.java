@@ -8,11 +8,14 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 任务验收：命令退出码 + 最终回答关键词，两种方式可单独或同时使用。
+ * 任务验收：命令退出码、回答关键词、改动文件范围、指定文件未被改动。
+ *
+ * <p>四种检查可以单独或组合使用；任何一项不满足即判失败。</p>
  */
 public final class Verifier {
 
     private static final int DEFAULT_COMMAND_TIMEOUT_SECONDS = 300;
+    private static final int MAX_REPORTED_FILES = 8;
 
     public record Result(boolean ok, String detail) {
     }
@@ -21,10 +24,16 @@ public final class Verifier {
     }
 
     public static Result verify(TaskSpec.VerifySpec spec, String answer, Path workdir) {
+        return verify(spec, answer, workdir, List.of());
+    }
+
+    public static Result verify(TaskSpec.VerifySpec spec, String answer, Path workdir,
+                                List<String> changedFiles) {
         if (spec == null) {
             return new Result(true, "未配置验收方式");
         }
         List<String> problems = new ArrayList<>();
+
         if (spec.command() != null && !spec.command().isBlank()) {
             int expected = spec.exitCode() == null ? 0 : spec.exitCode();
             int actual = runCommand(spec.command(), workdir, DEFAULT_COMMAND_TIMEOUT_SECONDS);
@@ -32,10 +41,37 @@ public final class Verifier {
                 problems.add("验收命令退出码 " + actual + "（期望 " + expected + "）");
             }
         }
+
         List<String> missing = missingKeywords(answer, spec.keywords());
         if (!missing.isEmpty()) {
             problems.add("回答缺少关键词: " + String.join(", ", missing));
         }
+
+        List<String> changed = changedFiles == null ? List.of() : changedFiles;
+        if (spec.allowedChangedFiles() != null) {
+            List<String> outside = new ArrayList<>();
+            for (String file : changed) {
+                if (!matchesAny(file, spec.allowedChangedFiles())) {
+                    outside.add(file);
+                }
+            }
+            if (!outside.isEmpty()) {
+                problems.add("改动超出允许范围: " + summarize(outside));
+            }
+        }
+
+        if (spec.unchangedFiles() != null) {
+            List<String> touched = new ArrayList<>();
+            for (String file : spec.unchangedFiles()) {
+                if (changed.contains(file)) {
+                    touched.add(file);
+                }
+            }
+            if (!touched.isEmpty()) {
+                problems.add("不允许改动的文件被修改: " + summarize(touched));
+            }
+        }
+
         return problems.isEmpty()
                 ? new Result(true, "ok")
                 : new Result(false, String.join("；", problems));
@@ -80,6 +116,30 @@ public final class Verifier {
             Thread.currentThread().interrupt();
             return -3;
         }
+    }
+
+    private static boolean matchesAny(String path, List<String> patterns) {
+        for (String pattern : patterns) {
+            if (pattern == null || pattern.isBlank()) {
+                continue;
+            }
+            String normalized = pattern.replace('\\', '/');
+            if (normalized.equals(path)) {
+                return true;
+            }
+            String regex = normalized.replace(".", "\\.").replace("*", ".*");
+            if (path.matches(regex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String summarize(List<String> files) {
+        if (files.size() <= MAX_REPORTED_FILES) {
+            return String.join(", ", files);
+        }
+        return String.join(", ", files.subList(0, MAX_REPORTED_FILES)) + " 等 " + files.size() + " 个";
     }
 
     private static boolean isWindows() {

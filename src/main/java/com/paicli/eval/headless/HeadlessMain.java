@@ -83,9 +83,15 @@ public final class HeadlessMain {
         long startNanos = System.nanoTime();
         Path workdir = options.workdir.toAbsolutePath().normalize();
 
-        LlmClient base = options.stub
-                ? new StubLlmClient(options.stubAnswer, options.stubDelayMs, options.stubLoop)
-                : LlmClientFactory.createFromConfig(PaiCliConfig.load());
+        LlmClient base;
+        if (options.stub) {
+            base = new StubLlmClient(options.stubAnswer, options.stubDelayMs, options.stubLoop);
+        } else {
+            PaiCliConfig config = PaiCliConfig.load();
+            base = options.provider == null
+                    ? LlmClientFactory.createFromConfig(config)
+                    : LlmClientFactory.create(options.provider, options.model, config);
+        }
         if (base == null) {
             return new HeadlessResult(false, "error", 0, 0L, 0L, 0L,
                     elapsedSeconds(startNanos), 0, "", "未找到可用的 API Key", options.mode.name().toLowerCase(Locale.ROOT),
