@@ -126,22 +126,24 @@ public final class EvalRunnerMain {
     private static RunResult runOnce(TaskSpec task, int runIndex, Path jar,
                                      Options options, Map<String, String> environment) {
         Path work = null;
+        Path meta = null;
         try {
             work = Files.createTempDirectory("paicli-eval-");
+            meta = Files.createTempDirectory("paicli-eval-meta-");
             if (task.fixture() != null && !task.fixture().isBlank()) {
                 Path fixture = Path.of(task.fixture()).toAbsolutePath().normalize();
                 FixtureCopier.copy(fixture, work);
             }
             Path home = work.resolve(".eval-home");
             Files.createDirectories(home);
-            Path resultFile = work.resolve("headless-result.json");
+            Path resultFile = meta.resolve("headless-result.json");
             int timeoutSeconds = task.timeoutSeconds() == null ? 120 : task.timeoutSeconds();
 
             Map<String, String> before = WorkspaceSnapshot.capture(work);
             List<String> command = buildCommand(task, jar, work, home, resultFile, timeoutSeconds, options);
             ProcessBuilder builder = new ProcessBuilder(command).directory(work.toFile());
-            builder.redirectOutput(work.resolve("headless.stdout.log").toFile());
-            builder.redirectError(work.resolve("headless.stderr.log").toFile());
+            builder.redirectOutput(meta.resolve("headless.stdout.log").toFile());
+            builder.redirectError(meta.resolve("headless.stderr.log").toFile());
             if (!environment.isEmpty()) {
                 builder.environment().putAll(environment);
             }
@@ -195,6 +197,7 @@ public final class EvalRunnerMain {
         } finally {
             if (!options.keepTemp) {
                 FixtureCopier.deleteRecursively(work);
+                FixtureCopier.deleteRecursively(meta);
             }
         }
     }
