@@ -1,0 +1,67 @@
+{
+  "tasks": [
+    {
+      "id": "stub-pass",
+      "type": "stub-smoke",
+      "prompt": "say hello to the evaluation harness",
+      "fixture": "evals/selftest/fixtures/pass",
+      "runs": 1,
+      "mode": "react",
+      "approval": "auto",
+      "maxRequests": 5,
+      "timeoutSeconds": 30,
+      "stub": {
+        "answer": "hello from stub, build 42 is ready",
+        "delayMs": 0,
+        "loop": false
+      },
+      "verify": {
+        "command": "exit 0",
+        "exitCode": 0,
+        "keywords": ["hello", "stub", "build 42"]
+      }
+    },
+    {
+      "id": "stub-fail",
+      "type": "stub-smoke",
+      "prompt": "return a text that does not match the expectation",
+      "fixture": "evals/selftest/fixtures/fail",
+      "runs": 1,
+      "mode": "react",
+      "approval": "auto",
+      "maxRequests": 5,
+      "timeoutSeconds": 30,
+      "stub": {
+        "answer": "this answer intentionally misses the required token",
+        "delayMs": 0,
+        "loop": false
+      },
+      "verify": {
+        "command": "exit 0",
+        "exitCode": 0,
+        "keywords": ["must-contain-this-token"]
+      }
+    },
+    {
+      "id": "stub-timeout",
+      "type": "stub-smoke",
+      "prompt": "block longer than the configured timeout",
+      "fixture": "evals/selftest/fixtures/timeout",
+      "runs": 1,
+      "mode": "react",
+      "approval": "auto",
+      "maxRequests": 5,
+      "timeoutSeconds": 1,
+      "stub": {
+        "answer": "too late to matter",
+        "delayMs": 5000,
+        "loop": false
+      },
+      "verify": {
+        "command": "exit 0",
+        "exitCode": 0,
+        "keywords": ["too late"]
+      }
+    }
+  ]
+}
