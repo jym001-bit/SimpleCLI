@@ -1,0 +1,1 @@
+当前失败的测试类有三个：StringCalculatorTest（null、空串、负数用例失败）、InventoryTest（unknownSkuHasZeroStock 空指针）、OrderParserTest（缺少分隔符与负价格用例失败）。

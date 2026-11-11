@@ -1,0 +1,1 @@
+OrderService 里计算订单总价的方法是 calculateTotal，它接收 Map<String, Integer> 商品数量并按单价累加。

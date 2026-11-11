@@ -1,0 +1,69 @@
+diff --git a/src/main/java/shop/OrderService.java b/src/main/java/shop/OrderService.java
+index a1c930e..7f774ee 100644
+--- a/src/main/java/shop/OrderService.java
++++ b/src/main/java/shop/OrderService.java
+@@ -1,12 +1,16 @@
+ package shop;
+ 
++import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.LinkedHashMap;
++import java.util.List;
+ import java.util.Map;
+ 
+ public class OrderService {
+ 
+     private final UserService userService;
+     private final Map<String, Double> prices = new HashMap<>();
++    private final Map<String, List<Order>> history = new LinkedHashMap<>();
+     private int sequence;
+ 
+     public OrderService(UserService userService) {
+@@ -27,7 +31,13 @@ public class OrderService {
+         userService.findById(userId)
+                 .orElseThrow(() -> new IllegalArgumentException("unknown user: " + userId));
+         double total = calculateTotal(items);
+-        return new Order("order-" + (++sequence), userId, Map.copyOf(items), total);
++        Order order = new Order("order-" + (++sequence), userId, Map.copyOf(items), total);
++        history.computeIfAbsent(userId, key -> new ArrayList<>()).add(order);
++        return order;
++    }
++
++    public List<Order> ordersOf(String userId) {
++        return List.copyOf(history.getOrDefault(userId, List.of()));
+     }
+ 
+     public double calculateTotal(Map<String, Integer> items) {
+diff --git a/src/test/java/shop/OrderServiceTest.java b/src/test/java/shop/OrderServiceTest.java
+index 532aceb..641749c 100644
+--- a/src/test/java/shop/OrderServiceTest.java
++++ b/src/test/java/shop/OrderServiceTest.java
+@@ -2,6 +2,7 @@ package shop;
+ 
+ import org.junit.jupiter.api.Test;
+ 
++import java.util.List;
+ import java.util.Map;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
+@@ -26,4 +27,20 @@ class OrderServiceTest {
+         assertThrows(IllegalArgumentException.class,
+                 () -> service.createOrder("missing-user", Map.of("apple", 1)));
+     }
++
++    @Test
++    void recordsOrdersPerUser() {
++        UserService users = new UserService();
++        users.register("u1", "Alice", "alice@example.com");
++        OrderService service = new OrderService(users);
++        service.setPrice("apple", 10.0);
++
++        service.createOrder("u1", Map.of("apple", 1));
++        service.createOrder("u1", Map.of("apple", 2));
++
++        List<Order> orders = service.ordersOf("u1");
++        assertEquals(2, orders.size());
++        assertEquals(10.0, orders.get(0).total(), 0.0001);
++        assertEquals(20.0, orders.get(1).total(), 0.0001);
++    }
+ }

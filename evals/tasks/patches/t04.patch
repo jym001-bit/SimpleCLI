@@ -1,0 +1,28 @@
+diff --git a/src/main/java/bugs/StringCalculator.java b/src/main/java/bugs/StringCalculator.java
+index 83998d8..d52a2c3 100644
+--- a/src/main/java/bugs/StringCalculator.java
++++ b/src/main/java/bugs/StringCalculator.java
+@@ -8,10 +8,20 @@ package bugs;
+ public class StringCalculator {
+ 
+     public int add(String input) {
+-        String[] parts = input.split(",");
++        if (input == null || input.isBlank()) {
++            return 0;
++        }
+         int sum = 0;
+-        for (String part : parts) {
+-            sum += Integer.parseInt(part.trim());
++        for (String part : input.split(",")) {
++            String trimmed = part.trim();
++            if (trimmed.isEmpty()) {
++                continue;
++            }
++            int value = Integer.parseInt(trimmed);
++            if (value < 0) {
++                throw new IllegalArgumentException("negative numbers are not allowed: " + value);
++            }
++            sum += value;
+         }
+         return sum;
+     }

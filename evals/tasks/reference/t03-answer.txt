@@ -1,0 +1,1 @@
+测试方法统计：UserServiceTest 有 3 个 @Test，OrderServiceTest 有 2 个 @Test，CartServiceTest 有 3 个 @Test，合计 8 个。

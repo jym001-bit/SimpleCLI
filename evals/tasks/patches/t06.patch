@@ -1,0 +1,51 @@
+diff --git a/src/main/java/shop/CartService.java b/src/main/java/shop/CartService.java
+index 91297e5..13d8bca 100644
+--- a/src/main/java/shop/CartService.java
++++ b/src/main/java/shop/CartService.java
+@@ -23,6 +23,13 @@ public class CartService {
+         items.merge(sku, quantity, Integer::sum);
+     }
+ 
++    public boolean removeItem(String sku) {
++        if (sku == null || sku.isBlank()) {
++            return false;
++        }
++        return items.remove(sku) != null;
++    }
++
+     public Map<String, Integer> items() {
+         return Collections.unmodifiableMap(items);
+     }
+diff --git a/src/test/java/shop/CartServiceTest.java b/src/test/java/shop/CartServiceTest.java
+index fb663b8..b53e7cb 100644
+--- a/src/test/java/shop/CartServiceTest.java
++++ b/src/test/java/shop/CartServiceTest.java
+@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
+ import java.util.Map;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ class CartServiceTest {
+@@ -44,4 +45,20 @@ class CartServiceTest {
+         assertEquals(3.5, order.total(), 0.0001);
+         assertTrue(cart.items().isEmpty());
+     }
++
++    @Test
++    void removesExistingItem() {
++        CartService cart = new CartService(new OrderService(new UserService()));
++        cart.addItem("apple", 1);
++
++        assertTrue(cart.removeItem("apple"));
++        assertTrue(cart.items().isEmpty());
++    }
++
++    @Test
++    void removingMissingItemReturnsFalse() {
++        CartService cart = new CartService(new OrderService(new UserService()));
++
++        assertFalse(cart.removeItem("apple"));
++    }
+ }

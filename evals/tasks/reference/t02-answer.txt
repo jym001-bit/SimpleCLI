@@ -1,0 +1,2 @@
+调用链：CartService.checkout 先把购物车条目复制一份，然后调用 OrderService.createOrder；
+createOrder 校验用户存在后调用 OrderService.calculateTotal 计算总价，最后返回 Order 并清空购物车。

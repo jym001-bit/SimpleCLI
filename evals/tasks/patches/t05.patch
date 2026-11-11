@@ -1,0 +1,33 @@
+diff --git a/src/main/java/shop/OrderService.java b/src/main/java/shop/OrderService.java
+index a1c930e..d24db6b 100644
+--- a/src/main/java/shop/OrderService.java
++++ b/src/main/java/shop/OrderService.java
+@@ -41,4 +41,11 @@ public class OrderService {
+         }
+         return total;
+     }
++
++    public double calculateTotal(Map<String, Integer> items, double discountRate) {
++        if (discountRate < 0 || discountRate > 1) {
++            throw new IllegalArgumentException("discountRate must be between 0 and 1");
++        }
++        return calculateTotal(items) * (1 - discountRate);
++    }
+ }
+diff --git a/src/test/java/shop/OrderServiceTest.java b/src/test/java/shop/OrderServiceTest.java
+index 532aceb..ef43490 100644
+--- a/src/test/java/shop/OrderServiceTest.java
++++ b/src/test/java/shop/OrderServiceTest.java
+@@ -26,4 +26,12 @@ class OrderServiceTest {
+         assertThrows(IllegalArgumentException.class,
+                 () -> service.createOrder("missing-user", Map.of("apple", 1)));
+     }
++
++    @Test
++    void appliesDiscountRate() {
++        OrderService service = new OrderService(new UserService());
++        service.setPrice("apple", 100.0);
++
++        assertEquals(90.0, service.calculateTotal(Map.of("apple", 1), 0.1), 0.0001);
++    }
+ }

@@ -1,0 +1,16 @@
+diff --git a/src/main/java/bugs/Inventory.java b/src/main/java/bugs/Inventory.java
+index d90af76..b465885 100644
+--- a/src/main/java/bugs/Inventory.java
++++ b/src/main/java/bugs/Inventory.java
+@@ -23,7 +23,10 @@ public class Inventory {
+     }
+ 
+     public int stockOf(String sku) {
+-        return stock.get(sku);
++        if (sku == null) {
++            return 0;
++        }
++        return stock.getOrDefault(sku, 0);
+     }
+ 
+     public boolean isAvailable(String sku, int quantity) {
