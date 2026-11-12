@@ -7,7 +7,8 @@
 - **当前唯一有效基线**：`evals/baseline/baseline-opencode-go-v3.csv`
 - v3 的两个来源字段（分开记，不合并）：
   - `agent_commit: 02750c8` —— 被测 agent 代码对应的提交
-  - `eval_rules_commit: 02750c8` —— v3 产出时使用的评测规则提交
+  - `eval_rules_commit: 31cc6cb` —— 当前生效的评测规则提交
+- 说明：v3 数据在 `02750c8` 的规则下产出；`31cc6cb` 把 `timeout` 改为 invalid，v3 的 30 行全部是 `completed`，因此不受影响。
 - 元数据见 `evals/baseline/baseline-opencode-go-v3.meta.json`。
 - 任何“升级前后对照”都必须写明：**对比 v3 baseline（agent_commit 02750c8 / eval_rules_commit 02750c8）**，并把本次运行的 `agent_commit`、`eval_rules_commit` 记在报告里。
 - runner 每次运行都会把这两个字段写进结果 JSON，并在启动时打印；可用 `--agent-commit` / `--eval-rules-commit` 覆盖，默认自动取 git 值。
