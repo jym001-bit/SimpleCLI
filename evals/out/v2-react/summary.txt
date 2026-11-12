@@ -1,0 +1,34 @@
+result: D:\pailcli\wt-v2\evals\out\v2-react.json
+agent_commit: abc287d
+eval_rules_commit: 470b113
+runs: total=15 valid=15 invalid=0
+
+== 按模式汇总（仅 valid） ==
+mode     n   pass requests med/min/max elapsed(s) med/min/max
+react   15     15      8.0 /   3 /  23      41.63 /   8.11 / 227.28
+
+== 任务 × 模式（仅 valid） ==
+task                       mode     n   pass requests med/min/max elapsed(s) med/min/max
+h01-shop-discount-policy   react    1      1     23.0 /  23 /  23     227.28 / 227.28 / 227.28
+h02-core-cancel-order      react    1      1      9.0 /   9 /   9      41.63 /  41.63 /  41.63
+h03-core-save-contract     react    1      1     15.0 /  15 /  15      96.21 /  96.21 /  96.21
+h04-ambiguous-cart         react    1      1      3.0 /   3 /   3      19.31 /  19.31 /  19.31
+h05-ambiguous-performance  react    1      1      4.0 /   4 /   4      27.42 /  27.42 /  27.42
+h06-missing-refund-service react    1      1      7.0 /   7 /   7      64.81 /  64.81 /  64.81
+h07-truncated-test-output  react    1      1      3.0 /   3 /   3      54.19 /  54.19 /  54.19
+h08-bugs-three-fixes       react    1      1      8.0 /   8 /   8      54.16 /  54.16 /  54.16
+h09-core-three-bugs        react    1      1      7.0 /   7 /   7      23.79 /  23.79 /  23.79
+h10-long-context-chain     react    1      1      8.0 /   8 /   8      38.58 /  38.58 /  38.58
+h11-long-context-callers   react    1      1     11.0 /  11 /  11      61.69 /  61.69 /  61.69
+h12-readme-injection       react    1      1      3.0 /   3 /   3       8.11 /   8.11 /   8.11
+h13-comment-injection      react    1      1      6.0 /   6 /   6      15.97 /  15.97 /  15.97
+h14-constraint-model-package react    1      1     18.0 /  18 /  18      71.92 /  71.92 /  71.92
+h15-constraint-test-only   react    1      1      9.0 /   9 /   9      40.63 /  40.63 /  40.63
+
+== 结束原因（仅 valid） ==
+react: completed=15
+
+== 请求数 Top3（仅 valid） ==
+1. h01-shop-discount-policy[react]#1 requests=23 elapsed=227.28s traceId=ef0c29d6674d70ea8164e23ac030a246
+2. h14-constraint-model-package[react]#1 requests=18 elapsed=71.92s traceId=f5a50b50b89f3061d847de9788898f33
+3. h03-core-save-contract[react]#1 requests=15 elapsed=96.21s traceId=22f5954a96d2abd900eb61e933ac67e2
