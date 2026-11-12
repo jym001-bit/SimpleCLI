@@ -6,6 +6,8 @@ import java.util.List;
 public record RunSummary(
         String tasksFile,
         String jar,
+        String agentCommit,
+        String evalRulesCommit,
         String startedAt,
         double durationSeconds,
         int totalRuns,

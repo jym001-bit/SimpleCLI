@@ -38,7 +38,10 @@ public final class EvalRunnerMain {
               --provider <名字>   覆盖模型供应商
               --model <名字>      覆盖模型名
               --hard-timeout <秒> 单次运行硬超时，默认 300
-              --max-retries <N>   无效运行最多重试次数，默认 3
+              --max-retries <N>   基础设施错误最多重试次数，默认 3
+              --timeout-retries <N> 超时最多重试次数，默认 1
+              --agent-commit <sha>  记录被测 agent 对应的提交，默认取 git HEAD
+              --eval-rules-commit <sha> 记录评测规则对应的提交，默认取 EVAL_RULES.md 最后修改提交
               --only-task <id>    只跑指定任务（用于补跑单格）
               --only-run <N>      只跑第 N 次，配合 --only-task 使用
               --keep-temp         保留临时目录
@@ -91,13 +94,20 @@ public final class EvalRunnerMain {
                 : defaultInvalidCsv(out);
 
         long startNanos = System.nanoTime();
+        RetryPolicy retryPolicy = new RetryPolicy(options.maxRetries, options.timeoutRetries);
+        String agentCommit = options.agentCommit != null ? options.agentCommit : detectAgentCommit();
+        String evalRulesCommit = options.evalRulesCommit != null ? options.evalRulesCommit : detectEvalRulesCommit();
+        System.out.printf(Locale.ROOT, "[runner] agent_commit=%s eval_rules_commit=%s%n",
+                agentCommit, evalRulesCommit);
         List<RunResult> results = new ArrayList<>();
         int invalidAttempts = 0;
         for (TaskSpec task : taskFile.tasks()) {
             for (int run : selectedRuns(task, options)) {
                 RunResult finalResult = null;
-                int maxAttempts = options.maxRetries + 1;
-                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                int infraRetries = 0;
+                int timeoutRetries = 0;
+                int attempt = 1;
+                while (true) {
                     RunResult result = runOnce(task, run, attempt, jar, options, environment);
                     finalResult = result;
                     if (result.valid()) {
@@ -105,10 +115,21 @@ public final class EvalRunnerMain {
                     }
                     invalidAttempts++;
                     InvalidRunCsv.append(invalidCsv, result, "auto-retry");
+                    boolean timeout = "timeout".equals(result.exitReason());
+                    boolean canRetry = retryPolicy.canRetry(result.exitReason(), infraRetries, timeoutRetries);
                     System.out.printf(Locale.ROOT,
                             "[runner] %s#%d attempt=%d invalid reason=%s%s%n",
                             result.taskId(), result.run(), result.attempt(), result.exitReason(),
-                            attempt < maxAttempts ? " -> 重试" : " -> 已达重试上限，保留无效记录");
+                            canRetry ? " -> 重试" : " -> 已达重试上限，保留无效记录");
+                    if (!canRetry) {
+                        break;
+                    }
+                    if (timeout) {
+                        timeoutRetries++;
+                    } else {
+                        infraRetries++;
+                    }
+                    attempt++;
                 }
                 results.add(finalResult);
                 System.out.printf(Locale.ROOT,
@@ -129,6 +150,8 @@ public final class EvalRunnerMain {
         RunSummary summary = new RunSummary(
                 tasksFile.toString(),
                 jar.toString(),
+                agentCommit,
+                evalRulesCommit,
                 Instant.now().toString(),
                 duration,
                 results.size(),
@@ -439,6 +462,38 @@ public final class EvalRunnerMain {
         return Files.isExecutable(candidate) ? candidate.toString() : "java";
     }
 
+    /** 被测 agent 对应的提交：默认取当前 HEAD。 */
+    private static String detectAgentCommit() {
+        String head = runGit("rev-parse", "--short", "HEAD");
+        return head == null || head.isBlank() ? "unknown" : head.trim();
+    }
+
+    /** 评测规则对应的提交：默认取 EVAL_RULES.md 最后一次修改。 */
+    private static String detectEvalRulesCommit() {
+        String sha = runGit("rev-list", "-1", "--short", "HEAD", "--", "EVAL_RULES.md");
+        return sha == null || sha.isBlank() ? detectAgentCommit() : sha.trim();
+    }
+
+    private static String runGit(String... args) {
+        List<String> command = new ArrayList<>();
+        command.add("git");
+        command.addAll(List.of(args));
+        try {
+            ProcessBuilder builder = new ProcessBuilder(command)
+                    .directory(Path.of("").toAbsolutePath().toFile());
+            builder.redirectErrorStream(true);
+            Process process = builder.start();
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            if (!process.waitFor(10, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                return null;
+            }
+            return process.exitValue() == 0 ? output.trim() : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private static void validate(List<TaskSpec> tasks) {
         for (TaskSpec task : tasks) {
             if (task == null) {
@@ -468,6 +523,9 @@ public final class EvalRunnerMain {
         private String model;
         private int hardTimeout = 300;
         private int maxRetries = 3;
+        private int timeoutRetries = 1;
+        private String agentCommit;
+        private String evalRulesCommit;
         private String onlyTask;
         private Integer onlyRun;
         private boolean keepTemp;
@@ -487,6 +545,9 @@ public final class EvalRunnerMain {
                     case "--model" -> options.model = value(args, ++i, arg);
                     case "--hard-timeout" -> options.hardTimeout = intValue(args, ++i, arg);
                     case "--max-retries" -> options.maxRetries = intValue(args, ++i, arg);
+                    case "--timeout-retries" -> options.timeoutRetries = intValue(args, ++i, arg);
+                    case "--agent-commit" -> options.agentCommit = value(args, ++i, arg);
+                    case "--eval-rules-commit" -> options.evalRulesCommit = value(args, ++i, arg);
                     case "--only-task" -> options.onlyTask = value(args, ++i, arg);
                     case "--only-run" -> options.onlyRun = intValue(args, ++i, arg);
                     case "--keep-temp" -> options.keepTemp = true;
@@ -501,6 +562,9 @@ public final class EvalRunnerMain {
             }
             if (options.maxRetries < 0) {
                 throw new IllegalArgumentException("--max-retries 不能为负数");
+            }
+            if (options.timeoutRetries < 0) {
+                throw new IllegalArgumentException("--timeout-retries 不能为负数");
             }
             if (options.onlyRun != null && options.onlyTask == null) {
                 throw new IllegalArgumentException("--only-run 必须配合 --only-task");

@@ -1,0 +1,11 @@
+{
+  "baseline": "baseline-opencode-go-v3.csv",
+  "agent_commit": "02750c8",
+  "eval_rules_commit": "02750c8",
+  "produced_at": "2026-11-12",
+  "model": "opencode-go/deepseek-v4.1-flash",
+  "mode": "react",
+  "tasks": "evals/tasks/tasks.json",
+  "runs_per_task": 3,
+  "note": "v3 在 02750c8 的规则下产出（当时 timeout 记为 valid）；v3 的 30 行全部是 completed，因此后续把 timeout 改为 invalid 不影响该基线。"
+}

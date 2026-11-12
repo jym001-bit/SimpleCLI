@@ -5,8 +5,12 @@
 ## 1. 基线
 
 - **当前唯一有效基线**：`evals/baseline/baseline-opencode-go-v3.csv`
-- v3 对应的提交：`02750c8`（10 个任务 × ReAct × 3 次，模型 opencode-go / deepseek-v4.1-flash）
-- 任何“升级前后对照”都必须写明：**对比 v3 baseline（02750c8）**，并把本次结果对应的 commit 记在报告里。
+- v3 的两个来源字段（分开记，不合并）：
+  - `agent_commit: 02750c8` —— 被测 agent 代码对应的提交
+  - `eval_rules_commit: 02750c8` —— v3 产出时使用的评测规则提交
+- 元数据见 `evals/baseline/baseline-opencode-go-v3.meta.json`。
+- 任何“升级前后对照”都必须写明：**对比 v3 baseline（agent_commit 02750c8 / eval_rules_commit 02750c8）**，并把本次运行的 `agent_commit`、`eval_rules_commit` 记在报告里。
+- runner 每次运行都会把这两个字段写进结果 JSON，并在启动时打印；可用 `--agent-commit` / `--eval-rules-commit` 覆盖，默认自动取 git 值。
 - `baseline-opencode-go.csv`（v1）和 `baseline-opencode-go-v2.csv`（v2）**已废弃，仅作历史记录**，禁止用于对比或引用为成绩。
 - v3 的数字不再重跑；需要新口径时新建版本号，不覆盖旧文件。
 
@@ -28,7 +32,14 @@
 
 ## 3. 重试
 
-- 同一格：1 次初始 + 最多 3 次重试（`--max-retries`，默认 3）。
+两类无效原因分开计数、分开限额：
+
+| 类型 | 默认重试上限 | 参数 |
+|---|---|---|
+| 基础设施错误（`error` / `no_result`） | 3 次 | `--max-retries` |
+| 超时（`timeout`） | 1 次 | `--timeout-retries` |
+
+- 同一格：1 次初始 + 对应类型允许的重试次数。
 - 每次无效尝试都**追加**写入 `invalid_runs.csv`（同表头，不覆盖、不删除）。
 - 重试后仍无效：保留 `valid=false` 的记录，不计入统计。
 - 只有无效才重试；`model_failed`（有效但验收不过）不重试。
@@ -41,7 +52,8 @@
 
 ## 5. 结果文件
 
-- `--out`：JSON 汇总（含每次运行的答案与错误）。
+- `--out`：JSON 汇总（含 `agentCommit` / `evalRulesCommit` 与每次运行的答案与错误）。
+- CSV 只放运行数据，不混入元数据；元数据以 JSON 和报告文字为准。
 - `--csv`：`taskId,run,attempt,passed,valid,outcome,requests,inputTokens,outputTokens,totalTokens,elapsedSeconds,exitReason`
 - `--invalid-csv`：`taskId,run,attempt,exitReason,outcome,requests,totalTokens,elapsedSeconds,recordedAt,note`
 
