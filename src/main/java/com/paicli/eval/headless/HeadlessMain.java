@@ -8,6 +8,7 @@ import com.paicli.agent.PlanExecuteAgent;
 import com.paicli.config.PaiCliConfig;
 import com.paicli.llm.LlmClient;
 import com.paicli.llm.LlmClientFactory;
+import com.paicli.observability.LangfuseTelemetry;
 import com.paicli.runtime.CancellationContext;
 import com.paicli.runtime.CancellationToken;
 
@@ -96,7 +97,7 @@ public final class HeadlessMain {
         if (base == null) {
             return new HeadlessResult(false, "error", 0, 0L, 0L, 0L,
                     elapsedSeconds(startNanos), 0, "", "未找到可用的 API Key", options.mode.name().toLowerCase(Locale.ROOT),
-                    null, null, workdir.toString());
+                    null, null, workdir.toString(), null);
         }
 
         CountingLlmClient client = new CountingLlmClient(base, options.maxRequests);
@@ -115,9 +116,20 @@ public final class HeadlessMain {
         String answer = "";
         String exitReason;
         String error = null;
+        String traceName = options.traceName == null || options.traceName.isBlank()
+                ? "eval-headless" : options.traceName;
+        java.util.concurrent.atomic.AtomicReference<String> traceId = new java.util.concurrent.atomic.AtomicReference<>();
         try {
-            Future<ExecutionOutcome> future = executor.submit(
-                    () -> runMode(options.mode, client, registry, prompt, quiet));
+            Future<ExecutionOutcome> future = executor.submit(() -> {
+                if (!LangfuseTelemetry.enabled()) {
+                    return runMode(options.mode, client, registry, prompt, quiet);
+                }
+                LangfuseTelemetry.TracedResult<ExecutionOutcome> traced =
+                        LangfuseTelemetry.evaluate(traceName,
+                                () -> runMode(options.mode, client, registry, prompt, quiet));
+                traceId.set(traced.traceId());
+                return traced.value();
+            });
             ExecutionOutcome outcome = future.get(options.timeoutSeconds, TimeUnit.SECONDS);
             exitReason = exitReasonFor(outcome.reason());
             answer = outcome.content() == null ? "" : outcome.content();
@@ -143,6 +155,7 @@ public final class HeadlessMain {
             error = "运行被中断";
         } finally {
             executor.shutdownNow();
+            LangfuseTelemetry.shutdown();
         }
 
         return new HeadlessResult(
@@ -159,7 +172,8 @@ public final class HeadlessMain {
                 options.mode.name().toLowerCase(Locale.ROOT),
                 base.getModelName(),
                 base.getProviderName(),
-                workdir.toString()
+                workdir.toString(),
+                traceId.get()
         );
     }
 

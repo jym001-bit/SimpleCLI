@@ -34,6 +34,7 @@ public final class HeadlessOptions {
               --out <文件>                     结果 JSON 路径，默认 headless-result.json
               --provider <名字>                指定模型供应商，例如 opencode-go
               --model <名字>                   指定模型名（可选，默认用供应商默认值）
+              --trace-name <名字>               Langfuse trace 名（启用追踪时使用）
               --stub                           使用固定回答的假模型（不联网、不花钱）
               --stub-answer <文本>             stub 的最终回答
               --stub-delay-ms <N>              stub 每次响应前延迟毫秒（超时自测用）
@@ -54,6 +55,7 @@ public final class HeadlessOptions {
     Path out;
     String provider;
     String model;
+    String traceName;
     boolean help;
     boolean stub;
     String stubAnswer = "stub answer";
@@ -82,6 +84,7 @@ public final class HeadlessOptions {
                 case "--out" -> options.out = Path.of(value(args, ++i, arg));
                 case "--provider" -> options.provider = value(args, ++i, arg);
                 case "--model" -> options.model = value(args, ++i, arg);
+                case "--trace-name" -> options.traceName = value(args, ++i, arg);
                 case "--stub" -> options.stub = true;
                 case "--stub-answer" -> options.stubAnswer = value(args, ++i, arg);
                 case "--stub-delay-ms" -> options.stubDelayMs = parseInt(value(args, ++i, arg), arg);

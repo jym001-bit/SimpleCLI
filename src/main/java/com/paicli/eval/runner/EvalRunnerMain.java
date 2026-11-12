@@ -40,6 +40,8 @@ public final class EvalRunnerMain {
               --hard-timeout <秒> 单次运行硬超时，默认 300
               --max-retries <N>   基础设施错误最多重试次数，默认 3
               --timeout-retries <N> 超时最多重试次数，默认 0
+              --modes <列表>      依次运行的模式，例如 react,plan,team；默认用任务里的 mode
+              --runs <N>          覆盖每个任务/模式的运行次数
               --agent-commit <sha>  记录被测 agent 对应的提交，默认取 git HEAD
               --eval-rules-commit <sha> 评测规则对应的提交（必填，避免口径漂移）
               --only-task <id>    只跑指定任务（用于补跑单格）
@@ -102,43 +104,47 @@ public final class EvalRunnerMain {
         List<RunResult> results = new ArrayList<>();
         int invalidAttempts = 0;
         for (TaskSpec task : taskFile.tasks()) {
-            for (int run : selectedRuns(task, options)) {
-                RunResult finalResult = null;
-                int infraRetries = 0;
-                int timeoutRetries = 0;
-                int attempt = 1;
-                while (true) {
-                    RunResult result = runOnce(task, run, attempt, jar, options, environment);
-                    finalResult = result;
-                    if (result.valid()) {
-                        break;
+            for (String mode : modesFor(task, options)) {
+                for (int run : selectedRuns(task, options)) {
+                    RunResult finalResult = null;
+                    int infraRetries = 0;
+                    int timeoutRetries = 0;
+                    int attempt = 1;
+                    while (true) {
+                        RunResult result = runOnce(task, mode, run, attempt, jar, options, environment);
+                        finalResult = result;
+                        if (result.valid()) {
+                            break;
+                        }
+                        invalidAttempts++;
+                        InvalidRunCsv.append(invalidCsv, result, "auto-retry");
+                        boolean timeout = "timeout".equals(result.exitReason());
+                        boolean canRetry = retryPolicy.canRetry(result.exitReason(), infraRetries, timeoutRetries);
+                        System.out.printf(Locale.ROOT,
+                                "[runner] %s[%s]#%d attempt=%d invalid reason=%s%s%n",
+                                result.taskId(), result.mode(), result.run(), result.attempt(), result.exitReason(),
+                                canRetry ? " -> 重试" : " -> 已达重试上限，保留无效记录");
+                        if (!canRetry) {
+                            break;
+                        }
+                        if (timeout) {
+                            timeoutRetries++;
+                        } else {
+                            infraRetries++;
+                        }
+                        attempt++;
                     }
-                    invalidAttempts++;
-                    InvalidRunCsv.append(invalidCsv, result, "auto-retry");
-                    boolean timeout = "timeout".equals(result.exitReason());
-                    boolean canRetry = retryPolicy.canRetry(result.exitReason(), infraRetries, timeoutRetries);
+                    results.add(finalResult);
                     System.out.printf(Locale.ROOT,
-                            "[runner] %s#%d attempt=%d invalid reason=%s%s%n",
-                            result.taskId(), result.run(), result.attempt(), result.exitReason(),
-                            canRetry ? " -> 重试" : " -> 已达重试上限，保留无效记录");
-                    if (!canRetry) {
-                        break;
-                    }
-                    if (timeout) {
-                        timeoutRetries++;
-                    } else {
-                        infraRetries++;
-                    }
-                    attempt++;
+                            "[runner] %s[%s]#%d passed=%s valid=%s outcome=%s exit=%d reason=%s requests=%d tokens=%d/%d toolCalls=%d elapsed=%.2fs trace=%s%s%n",
+                            finalResult.taskId(), finalResult.mode(), finalResult.run(),
+                            finalResult.passed(), finalResult.valid(),
+                            finalResult.outcome(), finalResult.headlessExitCode(), finalResult.exitReason(),
+                            finalResult.requests(), finalResult.inputTokens(), finalResult.outputTokens(),
+                            finalResult.toolCalls(), finalResult.elapsedSeconds(),
+                            finalResult.traceId() == null ? "none" : finalResult.traceId(),
+                            finalResult.failureReason() == null ? "" : " 原因=" + finalResult.failureReason());
                 }
-                results.add(finalResult);
-                System.out.printf(Locale.ROOT,
-                        "[runner] %s#%d passed=%s valid=%s outcome=%s exit=%d reason=%s requests=%d tokens=%d/%d toolCalls=%d elapsed=%.2fs%s%n",
-                        finalResult.taskId(), finalResult.run(), finalResult.passed(), finalResult.valid(),
-                        finalResult.outcome(), finalResult.headlessExitCode(), finalResult.exitReason(),
-                        finalResult.requests(), finalResult.inputTokens(), finalResult.outputTokens(),
-                        finalResult.toolCalls(), finalResult.elapsedSeconds(),
-                        finalResult.failureReason() == null ? "" : " 原因=" + finalResult.failureReason());
             }
         }
 
@@ -172,8 +178,18 @@ public final class EvalRunnerMain {
         return failed == 0 && invalid == 0 ? 0 : 1;
     }
 
+    private static List<String> modesFor(TaskSpec task, Options options) {
+        if (options.modes != null && !options.modes.isEmpty()) {
+            return options.modes;
+        }
+        String mode = task.mode() == null || task.mode().isBlank() ? "react" : task.mode();
+        return List.of(mode);
+    }
+
     private static List<Integer> selectedRuns(TaskSpec task, Options options) {
-        int runs = task.runs() == null || task.runs() < 1 ? 1 : task.runs();
+        int runs = options.runs != null
+                ? options.runs
+                : (task.runs() == null || task.runs() < 1 ? 1 : task.runs());
         if (options.onlyTask == null) {
             List<Integer> all = new ArrayList<>();
             for (int i = 1; i <= runs; i++) {
@@ -197,7 +213,7 @@ public final class EvalRunnerMain {
         return List.of(options.onlyRun);
     }
 
-    private static RunResult runOnce(TaskSpec task, int runIndex, int attempt, Path jar,
+    private static RunResult runOnce(TaskSpec task, String mode, int runIndex, int attempt, Path jar,
                                      Options options, Map<String, String> environment) {
         Path work = null;
         Path meta = null;
@@ -216,7 +232,8 @@ public final class EvalRunnerMain {
             int headlessTimeout = Math.max(1, Math.min(taskTimeout, options.hardTimeout - 5));
 
             Map<String, String> before = WorkspaceSnapshot.capture(work);
-            List<String> command = buildCommand(task, jar, work, home, resultFile, headlessTimeout, options);
+            String traceName = task.id() + "#" + mode + "#" + runIndex;
+            List<String> command = buildCommand(task, mode, traceName, jar, work, home, resultFile, headlessTimeout, options);
             ProcessBuilder builder = new ProcessBuilder(command).directory(work.toFile());
             builder.redirectOutput(meta.resolve("headless.stdout.log").toFile());
             builder.redirectError(meta.resolve("headless.stderr.log").toFile());
@@ -238,13 +255,14 @@ public final class EvalRunnerMain {
 
             if (!exited) {
                 return new RunResult(
-                        task.id(), task.type(), runIndex, attempt,
+                        task.id(), mode, runIndex, attempt,
                         false, false, OutcomeClassifier.classify(false, false, "timeout"),
                         exitCode, "timeout",
                         0, 0L, 0L, elapsed, 0, "",
                         "硬超时（>" + options.hardTimeout + "s），已强制结束",
                         false, "硬超时，未执行验收",
-                        "硬超时（>" + options.hardTimeout + "s）"
+                        "硬超时（>" + options.hardTimeout + "s）",
+                        null
                 );
             }
 
@@ -270,7 +288,7 @@ public final class EvalRunnerMain {
             String failureReason = passed ? null : buildFailure(headless, exitCode, verify, exitReason);
 
             return new RunResult(
-                    task.id(), task.type(), runIndex, attempt,
+                    task.id(), mode, runIndex, attempt,
                     passed, valid, outcome,
                     exitCode, exitReason,
                     headless == null ? 0 : headless.requests(),
@@ -280,7 +298,8 @@ public final class EvalRunnerMain {
                     headless == null ? 0 : headless.toolCalls(),
                     headless == null ? "" : headless.answer(),
                     headless == null ? "未生成结果 JSON" : headless.error(),
-                    verify.ok(), verify.detail(), failureReason
+                    verify.ok(), verify.detail(), failureReason,
+                    headless == null ? null : headless.traceId()
             );
         } catch (IOException e) {
             throw new IllegalStateException("任务 " + task.id() + " 运行失败: " + e.getMessage(), e);
@@ -344,8 +363,9 @@ public final class EvalRunnerMain {
         }
     }
 
-    private static List<String> buildCommand(TaskSpec task, Path jar, Path work, Path home,
-                                             Path resultFile, int headlessTimeout, Options options) {
+    private static List<String> buildCommand(TaskSpec task, String mode, String traceName, Path jar,
+                                             Path work, Path home, Path resultFile, int headlessTimeout,
+                                             Options options) {
         List<String> command = new ArrayList<>();
         command.add(javaExecutable());
         command.add("-Dfile.encoding=UTF-8");
@@ -359,7 +379,9 @@ public final class EvalRunnerMain {
         command.add("--workdir");
         command.add(work.toString());
         command.add("--mode");
-        command.add(task.mode() == null ? "react" : task.mode());
+        command.add(mode);
+        command.add("--trace-name");
+        command.add(traceName);
         command.add("--approval");
         command.add(task.approval() == null ? "auto" : task.approval());
         command.add("--max-requests");
@@ -421,18 +443,16 @@ public final class EvalRunnerMain {
 
     private static void writeCsv(Path path, List<RunResult> results) throws IOException {
         StringBuilder builder = new StringBuilder();
-        builder.append("taskId,run,attempt,passed,valid,outcome,requests,inputTokens,outputTokens,totalTokens,elapsedSeconds,exitReason\n");
+        builder.append("taskId,mode,run,passed,valid,requests,inputTokens,outputTokens,elapsedSeconds,exitReason\n");
         for (RunResult result : results) {
             builder.append(csv(result.taskId())).append(',')
+                    .append(csv(result.mode())).append(',')
                     .append(result.run()).append(',')
-                    .append(result.attempt()).append(',')
                     .append(result.passed()).append(',')
                     .append(result.valid()).append(',')
-                    .append(result.outcome()).append(',')
                     .append(result.requests()).append(',')
                     .append(result.inputTokens()).append(',')
                     .append(result.outputTokens()).append(',')
-                    .append(result.inputTokens() + result.outputTokens()).append(',')
                     .append(String.format(Locale.ROOT, "%.2f", result.elapsedSeconds())).append(',')
                     .append(csv(result.exitReason())).append('\n');
         }
@@ -518,6 +538,8 @@ public final class EvalRunnerMain {
         private int hardTimeout = 300;
         private int maxRetries = 3;
         private int timeoutRetries = 0;
+        private List<String> modes;
+        private Integer runs;
         private String agentCommit;
         private String evalRulesCommit;
         private String onlyTask;
@@ -540,6 +562,8 @@ public final class EvalRunnerMain {
                     case "--hard-timeout" -> options.hardTimeout = intValue(args, ++i, arg);
                     case "--max-retries" -> options.maxRetries = intValue(args, ++i, arg);
                     case "--timeout-retries" -> options.timeoutRetries = intValue(args, ++i, arg);
+                    case "--modes" -> options.modes = parseModes(value(args, ++i, arg));
+                    case "--runs" -> options.runs = intValue(args, ++i, arg);
                     case "--agent-commit" -> options.agentCommit = value(args, ++i, arg);
                     case "--eval-rules-commit" -> options.evalRulesCommit = value(args, ++i, arg);
                     case "--only-task" -> options.onlyTask = value(args, ++i, arg);
@@ -563,10 +587,31 @@ public final class EvalRunnerMain {
             if (options.evalRulesCommit == null || options.evalRulesCommit.isBlank()) {
                 throw new IllegalArgumentException("必须提供 --eval-rules-commit（评测规则提交），避免口径漂移");
             }
+            if (options.runs != null && options.runs < 1) {
+                throw new IllegalArgumentException("--runs 必须大于 0");
+            }
             if (options.onlyRun != null && options.onlyTask == null) {
                 throw new IllegalArgumentException("--only-run 必须配合 --only-task");
             }
             return options;
+        }
+
+        private static List<String> parseModes(String raw) {
+            List<String> modes = new ArrayList<>();
+            for (String piece : raw.split(",")) {
+                String mode = piece.trim().toLowerCase(Locale.ROOT);
+                if (mode.isEmpty()) {
+                    continue;
+                }
+                if (!mode.equals("react") && !mode.equals("plan") && !mode.equals("team")) {
+                    throw new IllegalArgumentException("--modes 只支持 react,plan,team: " + piece);
+                }
+                modes.add(mode);
+            }
+            if (modes.isEmpty()) {
+                throw new IllegalArgumentException("--modes 不能为空");
+            }
+            return List.copyOf(modes);
         }
 
         private static String value(String[] args, int index, String option) {

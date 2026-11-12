@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class InvalidRunCsvTest {
 
     private static RunResult result(String taskId, int run, int attempt, String reason) {
-        return new RunResult(taskId, "stub", run, attempt, false, false, "run_failed",
+        return new RunResult(taskId, "react", run, attempt, false, false, "invalid",
                 4, reason, 1, 10L, 5L, 0.5, 0, "", "boom",
-                false, "skip", "boom");
+                false, "skip", "boom", null);
     }
 
     @Test
