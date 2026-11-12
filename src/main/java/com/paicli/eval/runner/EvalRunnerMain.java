@@ -216,7 +216,7 @@ public final class EvalRunnerMain {
             if (!exited) {
                 return new RunResult(
                         task.id(), task.type(), runIndex, attempt,
-                        false, true, OutcomeClassifier.classify(false, true, "timeout"),
+                        false, false, OutcomeClassifier.classify(false, false, "timeout"),
                         exitCode, "timeout",
                         0, 0L, 0L, elapsed, 0, "",
                         "硬超时（>" + options.hardTimeout + "s），已强制结束",

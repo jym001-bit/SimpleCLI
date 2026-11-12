@@ -16,11 +16,15 @@ class RunValidityTest {
     }
 
     @Test
-    void modelBehaviourStaysValid() {
+    void timeoutAndExternalCancelAreInvalid() {
+        assertFalse(RunValidity.isValid("timeout"));
+        assertFalse(RunValidity.isValid("cancelled"));
+    }
+
+    @Test
+    void agentBehaviourStaysValid() {
         assertTrue(RunValidity.isValid("completed"));
-        assertTrue(RunValidity.isValid("timeout"));
         assertTrue(RunValidity.isValid("budget_exhausted"));
         assertTrue(RunValidity.isValid("stopped"));
-        assertTrue(RunValidity.isValid("cancelled"));
     }
 }

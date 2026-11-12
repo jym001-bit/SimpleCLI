@@ -3,15 +3,16 @@ package com.paicli.eval.runner;
 import java.util.Set;
 
 /**
- * 判断一次运行是否有效。
+ * 判断一次运行是否有效（口径见仓库根目录 EVAL_RULES.md）。
  *
- * <p>有效 = 运行过程本身没有基础设施故障；即使模型答得不对或超时，也算有效，
- * 因为那是被测对象的表现，不是评测环境的问题。</p>
+ * <p>有效：agent 得到了完整机会跑完，结果能反映它的真实表现，即使答错、超预算或触发自身兜底。
+ * 无效：基础设施故障或评测流程干预，结果不能用于通过率与平均值统计。</p>
  */
 public final class RunValidity {
 
-    /** 基础设施故障：LLM 调用失败、网络异常、引擎异常、根本没产出结果。 */
-    private static final Set<String> INVALID_REASONS = Set.of("error", "no_result");
+    /** 无效原因：LLM/网络/引擎异常、无结果、超时、外部取消。 */
+    private static final Set<String> INVALID_REASONS =
+            Set.of("error", "no_result", "timeout", "cancelled");
 
     private RunValidity() {
     }
