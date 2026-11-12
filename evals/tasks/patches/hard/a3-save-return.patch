@@ -1,0 +1,66 @@
+diff --git a/src/main/java/core/repo/InMemoryOrderRepository.java b/src/main/java/core/repo/InMemoryOrderRepository.java
+index 08591a5..6449fcd 100644
+--- a/src/main/java/core/repo/InMemoryOrderRepository.java
++++ b/src/main/java/core/repo/InMemoryOrderRepository.java
+@@ -13,8 +13,8 @@ public class InMemoryOrderRepository implements OrderRepository {
+     private final Map<String, Order> orders = new LinkedHashMap<>();
+ 
+     @Override
+-    public void save(Order order) {
+-        orders.put(order.id(), order);
++    public boolean save(Order order) {
++        return orders.put(order.id(), order) == null;
+     }
+ 
+     @Override
+diff --git a/src/main/java/core/repo/OrderRepository.java b/src/main/java/core/repo/OrderRepository.java
+index a3dc071..6bd73e6 100644
+--- a/src/main/java/core/repo/OrderRepository.java
++++ b/src/main/java/core/repo/OrderRepository.java
+@@ -7,7 +7,7 @@ import java.util.Optional;
+ 
+ public interface OrderRepository {
+ 
+-    void save(Order order);
++    boolean save(Order order);
+ 
+     Optional<Order> find(String id);
+ 
+diff --git a/src/main/java/core/service/OrderService.java b/src/main/java/core/service/OrderService.java
+index 9fd14e2..2c21980 100644
+--- a/src/main/java/core/service/OrderService.java
++++ b/src/main/java/core/service/OrderService.java
+@@ -27,7 +27,10 @@ public class OrderService {
+     public Order createOrder(String id, String customerId, List<OrderLine> lines) {
+         long total = pricing.subtotal(lines, products);
+         Order order = new Order(id, customerId, List.copyOf(lines), total);
+-        repository.save(order);
++        boolean created = repository.save(order);
++        if (!created) {
++            throw new IllegalStateException("duplicate order: " + id);
++        }
+         return order;
+     }
+ }
+diff --git a/src/test/java/core/repo/InMemoryOrderRepositoryTest.java b/src/test/java/core/repo/InMemoryOrderRepositoryTest.java
+index 2065e09..6060f61 100644
+--- a/src/test/java/core/repo/InMemoryOrderRepositoryTest.java
++++ b/src/test/java/core/repo/InMemoryOrderRepositoryTest.java
+@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
+ import java.util.List;
+ 
+ import static org.junit.jupiter.api.Assertions.assertEquals;
++import static org.junit.jupiter.api.Assertions.assertFalse;
+ import static org.junit.jupiter.api.Assertions.assertTrue;
+ 
+ class InMemoryOrderRepositoryTest {
+@@ -16,7 +17,8 @@ class InMemoryOrderRepositoryTest {
+         InMemoryOrderRepository repository = new InMemoryOrderRepository();
+         Order order = new Order("o1", "c1", List.of(new OrderLine("apple", 1)), 100);
+ 
+-        repository.save(order);
++        assertTrue(repository.save(order));
++        assertFalse(repository.save(order));
+ 
+         assertTrue(repository.find("o1").isPresent());
+         assertEquals(1, repository.all().size());

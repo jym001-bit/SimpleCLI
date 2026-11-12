@@ -1,0 +1,1 @@
+{"assumptions":["保持现有公开接口不变","只优化 PricingService 的重复计算"]}

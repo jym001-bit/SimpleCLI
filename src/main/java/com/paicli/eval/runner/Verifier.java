@@ -1,9 +1,11 @@
 package com.paicli.eval.runner;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -13,6 +15,9 @@ import java.util.concurrent.TimeUnit;
  * <p>四种检查可以单独或组合使用；任何一项不满足即判失败。</p>
  */
 public final class Verifier {
+
+    private static final com.fasterxml.jackson.databind.ObjectMapper ANSWER_MAPPER =
+            new com.fasterxml.jackson.databind.ObjectMapper();
 
     private static final int DEFAULT_COMMAND_TIMEOUT_SECONDS = 300;
     private static final int MAX_REPORTED_FILES = 8;
@@ -47,6 +52,32 @@ public final class Verifier {
             problems.add("回答缺少关键词: " + String.join(", ", missing));
         }
 
+        if (spec.fileContains() != null) {
+            for (Map.Entry<String, List<String>> entry : spec.fileContains().entrySet()) {
+                Path file = workdir == null ? null : workdir.resolve(entry.getKey());
+                if (file == null || !Files.isRegularFile(file)) {
+                    problems.add("缺少预期文件: " + entry.getKey());
+                    continue;
+                }
+                String content;
+                try {
+                    content = Files.readString(file);
+                } catch (IOException e) {
+                    problems.add("读取失败: " + entry.getKey());
+                    continue;
+                }
+                for (String token : entry.getValue()) {
+                    if (!content.contains(token)) {
+                        problems.add("文件 " + entry.getKey() + " 缺少内容: " + token);
+                    }
+                }
+            }
+        }
+
+        if (spec.answerJson() != null) {
+            problems.addAll(checkAnswerJson(spec.answerJson(), answer));
+        }
+
         List<String> changed = changedFiles == null ? List.of() : changedFiles;
         if (spec.allowedChangedFiles() != null) {
             List<String> outside = new ArrayList<>();
@@ -77,8 +108,71 @@ public final class Verifier {
                 : new Result(false, String.join("；", problems));
     }
 
-    public static List<String> missingKeywords(String answer, List<String> keywords) {
-        List<String> missing = new ArrayList<>();
+    private static List<String> checkAnswerJson(TaskSpec.AnswerSpec spec, String answer) {
+        List<String> problems = new ArrayList<>();
+        if (answer == null || answer.isBlank()) {
+            problems.add("回答为空，无法解析 JSON");
+            return problems;
+        }
+        com.fasterxml.jackson.databind.JsonNode root;
+        try {
+            root = ANSWER_MAPPER.readTree(answer);
+        } catch (IOException e) {
+            problems.add("回答不是合法 JSON: " + e.getMessage());
+            return problems;
+        }
+        if (root == null || !root.isObject()) {
+            problems.add("回答不是 JSON 对象");
+            return problems;
+        }
+        if (spec.requiredAll() != null) {
+            for (String field : spec.requiredAll()) {
+                if (!isNonEmpty(root.get(field))) {
+                    problems.add("回答缺少必填字段或为空: " + field);
+                }
+            }
+        }
+        if (spec.requiredAnyOf() != null && !spec.requiredAnyOf().isEmpty()) {
+            boolean any = false;
+            for (String field : spec.requiredAnyOf()) {
+                if (isNonEmpty(root.get(field))) {
+                    any = true;
+                    break;
+                }
+            }
+            if (!any) {
+                problems.add("以下字段至少需要一个非空: " + String.join(", ", spec.requiredAnyOf()));
+            }
+        }
+        if (spec.expected() != null) {
+            for (Map.Entry<String, String> entry : spec.expected().entrySet()) {
+                com.fasterxml.jackson.databind.JsonNode node = root.get(entry.getKey());
+                String actual = node == null ? "" : node.asText();
+                if (!entry.getValue().equalsIgnoreCase(actual)) {
+                    problems.add("字段 " + entry.getKey() + " 期望 " + entry.getValue() + "，实际 " + actual);
+                }
+            }
+        }
+        return problems;
+    }
+
+    private static boolean isNonEmpty(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node == null || node.isNull()) {
+            return false;
+        }
+        if (node.isTextual()) {
+            return !node.asText().isBlank();
+        }
+        if (node.isArray() || node.isObject()) {
+            return node.size() > 0;
+        }
+        if (node.isBoolean()) {
+            return node.asBoolean();
+        }
+        return true;
+    }
+
+    public static List<String> missingKeywords(String answer, List<String> keywords) {        List<String> missing = new ArrayList<>();
         if (keywords == null) {
             return missing;
         }

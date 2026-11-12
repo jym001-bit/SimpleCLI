@@ -1,0 +1,55 @@
+diff --git a/src/main/java/core/api/OrderController.java b/src/main/java/core/api/OrderController.java
+index 6373ea2..0170930 100644
+--- a/src/main/java/core/api/OrderController.java
++++ b/src/main/java/core/api/OrderController.java
+@@ -14,6 +14,10 @@ public class OrderController {
+         this.orderService = orderService;
+     }
+ 
++    public boolean cancel(String id) {
++        return orderService.cancel(id);
++    }
++
+     public Order placeOrder(String id, String customerId, List<OrderLine> lines) {
+         return orderService.createOrder(id, customerId, lines);
+     }
+diff --git a/src/main/java/core/repo/InMemoryOrderRepository.java b/src/main/java/core/repo/InMemoryOrderRepository.java
+index 08591a5..148f63a 100644
+--- a/src/main/java/core/repo/InMemoryOrderRepository.java
++++ b/src/main/java/core/repo/InMemoryOrderRepository.java
+@@ -26,4 +26,9 @@ public class InMemoryOrderRepository implements OrderRepository {
+     public List<Order> all() {
+         return new ArrayList<>(orders.values());
+     }
++
++    @Override
++    public boolean remove(String id) {
++        return orders.remove(id) != null;
++    }
+ }
+diff --git a/src/main/java/core/repo/OrderRepository.java b/src/main/java/core/repo/OrderRepository.java
+index a3dc071..e63b232 100644
+--- a/src/main/java/core/repo/OrderRepository.java
++++ b/src/main/java/core/repo/OrderRepository.java
+@@ -12,4 +12,6 @@ public interface OrderRepository {
+     Optional<Order> find(String id);
+ 
+     List<Order> all();
++
++    boolean remove(String id);
+ }
+diff --git a/src/main/java/core/service/OrderService.java b/src/main/java/core/service/OrderService.java
+index 9fd14e2..603e2d5 100644
+--- a/src/main/java/core/service/OrderService.java
++++ b/src/main/java/core/service/OrderService.java
+@@ -24,6 +24,10 @@ public class OrderService {
+         products.put(product.id(), product);
+     }
+ 
++    public boolean cancel(String id) {
++        return repository.remove(id);
++    }
++
+     public Order createOrder(String id, String customerId, List<OrderLine> lines) {
+         long total = pricing.subtotal(lines, products);
+         Order order = new Order(id, customerId, List.copyOf(lines), total);

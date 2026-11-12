@@ -1,0 +1,91 @@
+diff --git a/src/main/java/shop/CartService.java b/src/main/java/shop/CartService.java
+index 91297e5..07f5f1f 100644
+--- a/src/main/java/shop/CartService.java
++++ b/src/main/java/shop/CartService.java
+@@ -27,6 +27,10 @@ public class CartService {
+         return Collections.unmodifiableMap(items);
+     }
+ 
++    public void setDiscountPolicy(DiscountPolicy discountPolicy) {
++        orderService.setDiscountPolicy(discountPolicy);
++    }
++
+     public double total() {
+         return orderService.calculateTotal(items);
+     }
+diff --git a/src/main/java/shop/DiscountPolicy.java b/src/main/java/shop/DiscountPolicy.java
+new file mode 100644
+index 0000000..a208ca2
+--- /dev/null
++++ b/src/main/java/shop/DiscountPolicy.java
+@@ -0,0 +1,8 @@
++package shop;
++
++public class DiscountPolicy {
++
++    public double discountFor(int totalQuantity) {
++        return totalQuantity >= 10 ? 0.10 : 0.0;
++    }
++}
+\ No newline at end of file
+diff --git a/src/main/java/shop/OrderService.java b/src/main/java/shop/OrderService.java
+index a1c930e..1e045c9 100644
+--- a/src/main/java/shop/OrderService.java
++++ b/src/main/java/shop/OrderService.java
+@@ -7,12 +7,17 @@ public class OrderService {
+ 
+     private final UserService userService;
+     private final Map<String, Double> prices = new HashMap<>();
++    private DiscountPolicy discountPolicy;
+     private int sequence;
+ 
+     public OrderService(UserService userService) {
+         this.userService = userService;
+     }
+ 
++    public void setDiscountPolicy(DiscountPolicy discountPolicy) {
++        this.discountPolicy = discountPolicy;
++    }
++
+     public void setPrice(String sku, double price) {
+         if (sku == null || sku.isBlank()) {
+             throw new IllegalArgumentException("sku is required");
+@@ -32,12 +37,17 @@ public class OrderService {
+ 
+     public double calculateTotal(Map<String, Integer> items) {
+         double total = 0;
++        int quantity = 0;
+         for (Map.Entry<String, Integer> entry : items.entrySet()) {
+             Double unitPrice = prices.get(entry.getKey());
+             if (unitPrice == null) {
+                 throw new IllegalArgumentException("unknown sku: " + entry.getKey());
+             }
+             total += unitPrice * entry.getValue();
++            quantity += entry.getValue();
++        }
++        if (discountPolicy != null) {
++            total = total * (1 - discountPolicy.discountFor(quantity));
+         }
+         return total;
+     }
+diff --git a/src/test/java/shop/CartServiceTest.java b/src/test/java/shop/CartServiceTest.java
+index fb663b8..2836259 100644
+--- a/src/test/java/shop/CartServiceTest.java
++++ b/src/test/java/shop/CartServiceTest.java
+@@ -19,6 +19,16 @@ class CartServiceTest {
+         assertEquals(5, cart.items().get("apple"));
+     }
+ 
++    @Test
++    void appliesBulkDiscountThroughPolicy() {
++        OrderService orders = new OrderService(new UserService());
++        orders.setPrice("apple", 10.0);
++        CartService cart = new CartService(orders);
++        cart.setDiscountPolicy(new DiscountPolicy());
++        cart.addItem("apple", 10);
++        assertEquals(90.0, cart.total(), 0.0001);
++    }
++
+     @Test
+     void totalUsesOrderServicePricing() {
+         OrderService orders = new OrderService(new UserService());

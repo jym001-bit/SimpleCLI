@@ -1,0 +1,39 @@
+diff --git a/src/main/java/core/service/OrderService.java b/src/main/java/core/service/OrderService.java
+index 9fd14e2..8f6225f 100644
+--- a/src/main/java/core/service/OrderService.java
++++ b/src/main/java/core/service/OrderService.java
+@@ -25,7 +25,7 @@ public class OrderService {
+     }
+ 
+     public Order createOrder(String id, String customerId, List<OrderLine> lines) {
+-        long total = pricing.subtotal(lines, products);
++        long total = pricing.total(lines, products);
+         Order order = new Order(id, customerId, List.copyOf(lines), total);
+         repository.save(order);
+         return order;
+diff --git a/src/main/java/core/service/PricingService.java b/src/main/java/core/service/PricingService.java
+index 8c24400..0227cfe 100644
+--- a/src/main/java/core/service/PricingService.java
++++ b/src/main/java/core/service/PricingService.java
+@@ -22,7 +22,7 @@ public class PricingService {
+     }
+ 
+     public long applyBulkDiscount(long subtotalCents, int totalQuantity) {
+-        if (totalQuantity >= 10) {
++        if (totalQuantity > 10) {
+             return subtotalCents - Money.round(subtotalCents * 0.10);
+         }
+         return subtotalCents;
+diff --git a/src/main/java/core/util/Money.java b/src/main/java/core/util/Money.java
+index a36abb7..d4dab30 100644
+--- a/src/main/java/core/util/Money.java
++++ b/src/main/java/core/util/Money.java
+@@ -7,7 +7,7 @@ public final class Money {
+ 
+     /** 四舍五入到整数分。 */
+     public static long round(double value) {
+-        return (long) value;
++        return Math.round(value);
+     }
+ 
+     public static String format(long cents) {

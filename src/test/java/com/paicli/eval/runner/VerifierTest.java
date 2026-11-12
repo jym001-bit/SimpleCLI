@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class VerifierTest {
 
     private static TaskSpec.VerifySpec spec(Integer exitCode, List<String> keywords) {
-        return new TaskSpec.VerifySpec(null, exitCode, keywords, null, null, null);
+        return new TaskSpec.VerifySpec(null, exitCode, keywords, null, null, null, null, null);
     }
 
     @Test
@@ -44,7 +44,7 @@ class VerifierTest {
     void rejectsChangesOutsideAllowedList() {
         TaskSpec.VerifySpec scope = new TaskSpec.VerifySpec(
                 null, 0, List.of(),
-                List.of("src/main/java/shop/OrderService.java"), null, null);
+                List.of("src/main/java/shop/OrderService.java"), null, null, null, null);
 
         assertTrue(Verifier.verify(scope, "", null, List.of("src/main/java/shop/OrderService.java")).ok());
         assertFalse(Verifier.verify(scope, "", null,
@@ -53,7 +53,7 @@ class VerifierTest {
 
     @Test
     void emptyAllowedListForbidsAnyChange() {
-        TaskSpec.VerifySpec readOnly = new TaskSpec.VerifySpec(null, 0, List.of(), List.of(), null, null);
+        TaskSpec.VerifySpec readOnly = new TaskSpec.VerifySpec(null, 0, List.of(), List.of(), null, null, null, null);
 
         assertTrue(Verifier.verify(readOnly, "", null, List.of()).ok());
         assertFalse(Verifier.verify(readOnly, "", null, List.of("README.md")).ok());
@@ -62,7 +62,7 @@ class VerifierTest {
     @Test
     void reportsTouchedUnchangedFiles() {
         TaskSpec.VerifySpec spec = new TaskSpec.VerifySpec(
-                null, 0, List.of(), null, List.of("README.md"), null);
+                null, 0, List.of(), null, List.of("README.md"), null, null, null);
 
         assertFalse(Verifier.verify(spec, "", null, List.of("README.md")).ok());
         assertTrue(Verifier.verify(spec, "", null, List.of("src/App.java")).ok());

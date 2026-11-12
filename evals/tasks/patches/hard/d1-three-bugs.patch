@@ -1,0 +1,70 @@
+diff --git a/src/main/java/bugs/Inventory.java b/src/main/java/bugs/Inventory.java
+index d90af76..c4fae47 100644
+--- a/src/main/java/bugs/Inventory.java
++++ b/src/main/java/bugs/Inventory.java
+@@ -23,7 +23,7 @@ public class Inventory {
+     }
+ 
+     public int stockOf(String sku) {
+-        return stock.get(sku);
++        return stock.getOrDefault(sku, 0);
+     }
+ 
+     public boolean isAvailable(String sku, int quantity) {
+diff --git a/src/main/java/bugs/OrderParser.java b/src/main/java/bugs/OrderParser.java
+index 44f7d83..0fb99ea 100644
+--- a/src/main/java/bugs/OrderParser.java
++++ b/src/main/java/bugs/OrderParser.java
+@@ -8,7 +8,22 @@ package bugs;
+ public class OrderParser {
+ 
+     public double parsePrice(String line) {
+-        String value = line.split(":")[1];
+-        return Double.parseDouble(value);
++        if (line == null) {
++            throw new IllegalArgumentException("line is required");
++        }
++        int separator = line.indexOf(':');
++        if (separator < 0 || separator == line.length() - 1) {
++            throw new IllegalArgumentException("invalid price line: " + line);
++        }
++        double value;
++        try {
++            value = Double.parseDouble(line.substring(separator + 1).trim());
++        } catch (NumberFormatException e) {
++            throw new IllegalArgumentException("invalid price: " + line, e);
++        }
++        if (value < 0) {
++            throw new IllegalArgumentException("price must be >= 0: " + line);
++        }
++        return value;
+     }
+ }
+diff --git a/src/main/java/bugs/StringCalculator.java b/src/main/java/bugs/StringCalculator.java
+index 83998d8..d52a2c3 100644
+--- a/src/main/java/bugs/StringCalculator.java
++++ b/src/main/java/bugs/StringCalculator.java
+@@ -8,10 +8,20 @@ package bugs;
+ public class StringCalculator {
+ 
+     public int add(String input) {
+-        String[] parts = input.split(",");
++        if (input == null || input.isBlank()) {
++            return 0;
++        }
+         int sum = 0;
+-        for (String part : parts) {
+-            sum += Integer.parseInt(part.trim());
++        for (String part : input.split(",")) {
++            String trimmed = part.trim();
++            if (trimmed.isEmpty()) {
++                continue;
++            }
++            int value = Integer.parseInt(trimmed);
++            if (value < 0) {
++                throw new IllegalArgumentException("negative numbers are not allowed: " + value);
++            }
++            sum += value;
+         }
+         return sum;
+     }

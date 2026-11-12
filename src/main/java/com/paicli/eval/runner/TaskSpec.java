@@ -33,7 +33,8 @@ public record TaskSpec(
         StubSpec stub,
         VerifySpec verify,
         ReferenceSpec reference,
-        String mutateFile
+        String mutateFile,
+        String difficultyReason
 ) {
 
     /** 假模型配置：固定回答 / 延迟 / 死循环造请求 / 模拟网络失败。 */
@@ -56,7 +57,23 @@ public record TaskSpec(
             List<String> keywords,
             List<String> allowedChangedFiles,
             List<String> unchangedFiles,
-            Map<String, String> hiddenFiles
+            Map<String, String> hiddenFiles,
+            Map<String, java.util.List<String>> fileContains,
+            AnswerSpec answerJson
+    ) {
+    }
+
+    /**
+     * 回答类任务的结构化验收：答案必须是 JSON 对象。
+     *
+     * @param requiredAll   这些字段必须存在且非空
+     * @param requiredAnyOf 至少一个字段存在且非空
+     * @param expected      字段取值必须等于给定期望（按字符串比较）
+     */
+    public record AnswerSpec(
+            List<String> requiredAll,
+            List<String> requiredAnyOf,
+            Map<String, String> expected
     ) {
     }
 

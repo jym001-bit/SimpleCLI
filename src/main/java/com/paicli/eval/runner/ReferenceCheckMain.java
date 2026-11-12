@@ -102,6 +102,17 @@ public final class ReferenceCheckMain {
                         "[reference] %-22s 参考答案 -> %s（期望通过）%s%n",
                         task.id(), result.ok() ? "通过" : "失败",
                         result.ok() ? "" : "  <-- 不符合预期: " + result.detail());
+
+                Verifier.Result empty = Verifier.verify(task.verify(), "", null, List.of());
+                checks++;
+                boolean emptyOk = !empty.ok();
+                if (!emptyOk) {
+                    failures++;
+                }
+                System.out.printf(Locale.ROOT,
+                        "[reference] %-22s 空答案   -> %s（期望失败）%s%n",
+                        task.id(), empty.ok() ? "通过" : "失败",
+                        emptyOk ? "" : "  <-- 不符合预期: " + empty.detail());
             }
 
             if (task.mutateFile() != null && !task.mutateFile().isBlank()) {
