@@ -156,6 +156,7 @@ public class PaiCliConfig {
             case "deepseek" -> "DEEPSEEK_MODEL";
             case "hunyuan" -> "HUNYUAN_MODEL";
             case "kimi" -> "KIMI_MODEL";
+            case "opencode-go" -> "OPENCODE_GO_MODEL";
             case "freellmapi" -> "FREELLMAPI_MODEL";
             case "xfyun" -> "XFYUN_MAAS_MODEL";
             default -> provider.toUpperCase() + "_MODEL";
@@ -211,6 +212,7 @@ public class PaiCliConfig {
                     "HUNYUAN_API_KEY", "TOKENHUB_API_KEY", "TENCENTMAAS_API_KEY");
             case "step" -> List.of("STEP_API_KEY");
             case "kimi" -> List.of("KIMI_API_KEY", "MOONSHOT_API_KEY");
+            case "opencode-go" -> List.of("OPENCODE_GO_API_KEY");
             case "freellmapi" -> List.of("FREELLMAPI_API_KEY");
             case "xfyun" -> List.of("XFYUN_MAAS_API_KEY", "XFYUN_API_KEY");
             default -> List.of(provider.toUpperCase() + "_API_KEY");
@@ -234,6 +236,7 @@ public class PaiCliConfig {
             case "step" -> "STEP_BASE_URL";
             case "hunyuan" -> "HUNYUAN_BASE_URL";
             case "kimi" -> "KIMI_BASE_URL";
+            case "opencode-go" -> "OPENCODE_GO_BASE_URL";
             case "freellmapi" -> "FREELLMAPI_BASE_URL";
             case "xfyun" -> "XFYUN_MAAS_BASE_URL";
             default -> provider.toUpperCase() + "_BASE_URL";

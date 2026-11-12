@@ -681,6 +681,7 @@ public class Main {
                             ui.println("   /model hy4-preview   - 切换到混元 Hy4 preview");
                             ui.println("   /model step          - 切换到 StepFun（读取配置模型）");
                             ui.println("   /model kimi          - 切换到 Kimi（读取配置模型）");
+                            ui.println("   /model opencode-go   - 切换到 OpenCode Go 套餐 DeepSeek");
                             ui.println("   /model freellmapi    - 切换到本地 FreeLLMAPI（读取配置模型）");
                             ui.println("   /model xfyun         - 切换到讯飞星辰 MaaS（读取配置模型）");
                             ui.println("   /model agnes         - 切换到 Agnes 2.0 Flash（读取配置模型）\n");
@@ -1909,6 +1910,7 @@ public class Main {
                 new SlashCommandHint("/model hy4-preview", "/model hy4-preview", "切换到混元 Hy4 preview"),
                 new SlashCommandHint("/model step", "/model step", "切换到 StepFun（读取配置模型）"),
                 new SlashCommandHint("/model kimi", "/model kimi", "切换到 Kimi（读取配置模型）"),
+                new SlashCommandHint("/model opencode-go", "/model opencode-go", "切换 OpenCode Go 套餐"),
                 new SlashCommandHint("/model freellmapi", "/model freellmapi", "切换到本地 FreeLLMAPI（读取配置模型）"),
                 new SlashCommandHint("/model xfyun", "/model xfyun", "切换到讯飞星辰 MaaS（读取配置模型）"),
                 new SlashCommandHint("/model agnes", "/model agnes", "切换到 Agnes 2.0 Flash（读取配置模型）"),
@@ -2366,7 +2368,7 @@ public class Main {
     }
 
     private static boolean isSupportedProvider(String provider) {
-        return List.of("glm", "deepseek", "hunyuan", "step", "kimi", "freellmapi", "xfyun", "agnes").contains(provider);
+        return List.of("glm", "deepseek", "hunyuan", "step", "kimi", "freellmapi", "xfyun", "agnes", "opencode-go").contains(provider);
     }
 
     private static String maskSecret(String value) {
@@ -3230,6 +3232,8 @@ public class Main {
             for (String provider : com.paicli.llm.ModelCatalog.BUILTINS.keySet()) {
                 if (com.paicli.llm.ModelCatalog.entries(config, provider).containsKey(value)) matches.add(provider);
             }
+            if (matches.size() > 1 && com.paicli.llm.ModelCatalog.BUILTINS.get("deepseek").contains(value))
+                return new ModelSelection("deepseek", value, true);
             if (matches.size() > 1) throw new IllegalArgumentException("模型 ID 属于多个供应商，请使用 /model <provider>/<模型ID>");
             if (matches.size() == 1) return new ModelSelection(matches.get(0), value, true);
         }
@@ -3242,6 +3246,7 @@ public class Main {
         return switch (normalized) {
             case "glm" -> new ModelSelection("glm", "glm-5.1", true);
             case "deepseek" -> new ModelSelection("deepseek", null, false);
+            case "opencode-go" -> new ModelSelection("opencode-go", null, false);
             case "hunyuan", "hy4", "tokenhub", "tencent-hunyuan", "tencent_hunyuan" ->
                     new ModelSelection("hunyuan", null, false);
             case "hy4-preview" -> new ModelSelection("hunyuan", value, true);

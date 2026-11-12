@@ -225,7 +225,7 @@ public final class EvalRunnerMain {
                 Path fixture = Path.of(task.fixture()).toAbsolutePath().normalize();
                 FixtureCopier.copy(fixture, work);
             }
-            Path home = work.resolve(".eval-home");
+            Path home = work.resolve(".eval-home");//临时目录
             Files.createDirectories(home);
             Path resultFile = meta.resolve("headless-result.json");
             int taskTimeout = task.timeoutSeconds() == null ? 120 : task.timeoutSeconds();
@@ -277,7 +277,7 @@ public final class EvalRunnerMain {
             Verifier.Result verify;
             if (completed) {
                 copyHiddenFiles(task.verify(), work);
-                verify = Verifier.verify(task.verify(),
+                verify = Verifier.verify(task.verify(),//检查
                         headless == null ? null : headless.answer(), work, changedFiles);
             } else {
                 verify = new Verifier.Result(false, "运行未正常结束，跳过验收");

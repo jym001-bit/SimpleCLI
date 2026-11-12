@@ -185,7 +185,7 @@ public class DeepSeekClient extends AbstractOpenAiCompatibleClient {
 
     private boolean usesV4Protocol() {
         String normalized = model.trim().toLowerCase(Locale.ROOT);
-        return normalized.equals("deepseek-flash") || normalized.startsWith("deepseek-v4-");
+        return normalized.equals("deepseek-flash") || (normalized.startsWith("deepseek-v4-") || normalized.startsWith("deepseek-v4.1-"));
     }
 
     private static int requireBenchmarkMaxOutputTokens(int value) {

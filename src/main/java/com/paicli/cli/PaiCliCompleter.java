@@ -125,6 +125,7 @@ final class PaiCliCompleter implements Completer {
                 option("hy4-preview", "混元 Hy4 preview"),
                 option("step", "StepFun，读取配置模型"),
                 option("kimi", "Kimi/Moonshot，读取配置模型"),
+                option("opencode-go", "OpenCode Go 套餐 DeepSeek"),
                 option("freellmapi", "本地 FreeLLMAPI，读取配置模型"),
                 option("xfyun", "讯飞星辰 MaaS，读取配置模型"),
                 option("agnes", "Agnes 2.0 Flash，读取配置模型"));
@@ -146,6 +147,7 @@ final class PaiCliCompleter implements Completer {
             String prefix = payload.endsWith(" ") ? "" : parts[parts.length - 1];
             if (parts.length <= 2 && !payload.contains("--")) {
                 addMatching(candidates, "Provider", prefix,
+                        option("opencode-go ", "OpenCode Go 套餐"),
                         option("freellmapi ", "本地 FreeLLMAPI"),
                         option("glm ", "GLM"),
                         option("deepseek ", "DeepSeek"),

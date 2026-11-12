@@ -996,3 +996,9 @@ src/main/java/com/paicli
 └── tool/
     └── ToolRegistry.java       # 工具注册表
 ```
+
+### OpenCode Go 套餐 DeepSeek
+
+在本地 `.env` 配置 `OPENCODE_GO_API_KEY`，可选 `OPENCODE_GO_BASE_URL` 和 `OPENCODE_GO_MODEL`。默认地址为 `https://opencode.ai/inference/go/openai/v1`，默认模型为 `deepseek-v4.1-flash`。运行 `/model opencode-go` 切换，`/model deepseek` 切回官方入口。也支持 `/model opencode-go/deepseek-v4-pro` 和 `/model list opencode-go`。目前此供应商适配 DeepSeek 模型。
+
+客户端复用 DeepSeek 思考历史和 DSML 工具处理，发送 `User-Agent` 与客户端实例内稳定的 `x-opencode-session`。重建客户端会产生新 ID。额度由 OpenCode 工作区共享，订阅 Key 从 Go 工作区创建。

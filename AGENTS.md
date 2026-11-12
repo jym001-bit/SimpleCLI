@@ -179,6 +179,10 @@ src/main/java/com/paicli/
 - 命令沙箱默认 off：沙箱里没有网络，也看不到 `~/.m2`、`~/.gitconfig`，所以 `mvn`、`npm install`、`git push` 会失败；在 Seatbelt 沙箱里 `java -version` 仍会以 139 退出
 - 不要把 `ROADMAP.md` 里“将来要做”的内容当成“现在已经有”
 
+## OpenCode Go
+
+新增供应商 `opencode-go`，使用 `OPENCODE_GO_API_KEY`、可选 `OPENCODE_GO_BASE_URL` 和 `OPENCODE_GO_MODEL`。默认 DeepSeek V4.1 Flash，`/model opencode-go` 切换。复用 DeepSeek 请求与工具协议，通过客户端实例稳定的 `x-opencode-session` 和 SimpleCLI User-Agent 接入 Go。原官方模型 ID 有歧义时优先保留 deepseek 归属，Go Pro 使用供应商前缀选择。
+
 ## 维护约定
 
 用户将 Simple CLI 作为长期维护项目（2026-11-08）：后续完成有意义的功能或修复后，主动检查是否适合整理更新，按功能及依赖划分 Git 提交，并写中文更新说明（改了什么、验证结果、已知限制）。每次推送 GitHub 前，把具体提交清单和目标仓库/分支给用户确认，确认后才推送；不能把本次确认当成以后自动推送的许可。不承诺在会话之外自动监控。整理提交时保留原有改动，不伪造历史日期或把当前差异声称为逐轮原始记录。

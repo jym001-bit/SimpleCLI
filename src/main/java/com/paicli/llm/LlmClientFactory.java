@@ -64,6 +64,7 @@ public class LlmClientFactory {
             case "hunyuan" -> new HunyuanClient(apiKey, model, baseUrl);
             case "step" -> new StepClient(apiKey, model, baseUrl);
             case "kimi" -> new KimiClient(apiKey, model, baseUrl);
+            case "opencode-go" -> new OpenCodeGoClient(apiKey, model, baseUrl);
             case "freellmapi" -> new FreeLlmApiClient(apiKey, model, baseUrl);
             case "xfyun" -> new XfyunMaaSClient(apiKey, model, baseUrl, loraId);
             case "agnes" -> new AgnesClient(apiKey, model, baseUrl);
@@ -77,7 +78,7 @@ public class LlmClientFactory {
             return client;
         }
 
-        for (String provider : new String[]{"deepseek", "glm", "hunyuan", "step", "kimi", "freellmapi", "xfyun", "agnes"}) {
+        for (String provider : new String[]{"deepseek", "glm", "hunyuan", "step", "kimi", "freellmapi", "xfyun", "agnes", "opencode-go"}) {
             client = create(provider, config.getStartupModel(provider), config);
             if (client != null) {
                 return client;

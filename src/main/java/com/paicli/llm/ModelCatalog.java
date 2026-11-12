@@ -17,6 +17,7 @@ public final class ModelCatalog {
         models.put("hunyuan", List.of("hy4-preview"));
         models.put("step", List.of("step-3.5-flash"));
         models.put("kimi", List.of("kimi-k2.6"));
+        models.put("opencode-go", List.of("deepseek-v4.1-flash", "deepseek-v4-pro"));
         models.put("freellmapi", List.of("auto"));
         models.put("xfyun", List.of("Qwen3.6-35B-A3B"));
         models.put("agnes", List.of("agnes-2.0-flash"));
