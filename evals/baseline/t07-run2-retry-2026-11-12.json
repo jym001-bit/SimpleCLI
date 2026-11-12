@@ -1,0 +1,31 @@
+{
+  "tasksFile" : "D:\\pailcli\\paicli-main\\evals\\tasks\\tasks.json",
+  "jar" : "D:\\pailcli\\paicli-main\\target\\paicli-1.0-SNAPSHOT.jar",
+  "startedAt" : "2026-11-12T02:47:56.404200100Z",
+  "durationSeconds" : 75.897648,
+  "totalRuns" : 1,
+  "passed" : 1,
+  "failed" : 0,
+  "invalidRuns" : 0,
+  "runs" : [ {
+    "taskId" : "t07-order-history",
+    "type" : "feature",
+    "run" : 2,
+    "attempt" : 1,
+    "passed" : true,
+    "valid" : true,
+    "outcome" : "passed",
+    "headlessExitCode" : 0,
+    "exitReason" : "completed",
+    "requests" : 10,
+    "inputTokens" : 79033,
+    "outputTokens" : 2683,
+    "elapsedSeconds" : 72.687792,
+    "toolCalls" : 15,
+    "answer" : "已完成。\n\n**实现（`src/main/java/shop/OrderService.java`）**\n- 新增 `Map<String, List<Order>> ordersByUser`，按用户保存订单。\n- `createOrder` 只有在用户校验和金额计算都成功后，才把新订单追加进该用户列表，因此失败的下单不会留下记录。\n- 新增 `ordersOf(String userId)`：按创建顺序返回该用户的订单；未注册或没有订单的用户返回空列表。返回的是 `List.copyOf` 快照，外部无法修改内部历史。\n\n**测试（`src/test/java/shop/OrderServiceTest.java`）**\n- 多个用户的订单相互隔离，且各自按创建顺序返回。\n- 没有订单的用户和不存在的用户都返回空列表。\n- 未知 SKU、未知用户导致的下单失败不会写入历史。\n- 返回的历史不可变，无法据此修改内部状态。\n\n**验证**\n`mvn -o test` 通过：`Tests run: 12, Failures: 0, Errors: 0, Skipped: 0`，BUILD SUCCESS。",
+    "error" : null,
+    "verifyOk" : true,
+    "verifyDetail" : "ok",
+    "failureReason" : null
+  } ]
+}

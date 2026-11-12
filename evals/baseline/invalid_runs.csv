@@ -1,0 +1,2 @@
+taskId,run,attempt,exitReason,outcome,requests,totalTokens,elapsedSeconds,recordedAt,note
+t07-order-history,2,1,completed,run_failed,4,17381,43669.13,2026-11-12T02:50:00Z,"v1 legacy record: LLM handshake failure + 12h machine suspend; old runner misclassified as completed"

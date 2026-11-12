@@ -86,7 +86,7 @@ public final class HeadlessMain {
 
         LlmClient base;
         if (options.stub) {
-            base = new StubLlmClient(options.stubAnswer, options.stubDelayMs, options.stubLoop);
+            base = new StubLlmClient(options.stubAnswer, options.stubDelayMs, options.stubLoop, options.stubFail);
         } else {
             PaiCliConfig config = PaiCliConfig.load();
             base = options.provider == null
@@ -197,7 +197,7 @@ public final class HeadlessMain {
         return switch (reason) {
             case COMPLETED -> "completed";
             case CANCELLED -> "cancelled";
-            case MODEL_ERROR -> "llm_error";
+            case MODEL_ERROR -> "error";
             case EXECUTION_ERROR -> "error";
             case TOKEN_BUDGET_EXCEEDED, MODEL_REQUEST_BUDGET_EXCEEDED -> "budget_exhausted";
             case HARD_ITERATION_LIMIT, STAGNATION_DETECTED -> "stopped";

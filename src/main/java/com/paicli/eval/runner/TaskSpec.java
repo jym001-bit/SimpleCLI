@@ -36,8 +36,8 @@ public record TaskSpec(
         String mutateFile
 ) {
 
-    /** 假模型配置：固定回答 / 延迟 / 死循环造请求。 */
-    public record StubSpec(String answer, Long delayMs, Boolean loop) {
+    /** 假模型配置：固定回答 / 延迟 / 死循环造请求 / 模拟网络失败。 */
+    public record StubSpec(String answer, Long delayMs, Boolean loop, Boolean fail) {
     }
 
     /**

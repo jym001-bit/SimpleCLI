@@ -11,6 +11,7 @@ public record RunSummary(
         int totalRuns,
         int passed,
         int failed,
+        int invalidRuns,
         List<RunResult> runs
 ) {
 }

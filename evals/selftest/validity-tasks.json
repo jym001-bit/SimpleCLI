@@ -1,0 +1,43 @@
+{
+  "tasks": [
+    {
+      "id": "validity-infra-fail",
+      "type": "validity-demo",
+      "prompt": "simulate an infrastructure failure",
+      "fixture": "evals/selftest/fixtures/pass",
+      "runs": 1,
+      "mode": "react",
+      "approval": "auto",
+      "maxRequests": 5,
+      "timeoutSeconds": 30,
+      "stub": {"answer": "never reached", "delayMs": 0, "loop": false, "fail": true},
+      "verify": {"keywords": ["never-reached"], "allowedChangedFiles": []}
+    },
+    {
+      "id": "validity-model-fail",
+      "type": "validity-demo",
+      "prompt": "return a wrong answer",
+      "fixture": "evals/selftest/fixtures/pass",
+      "runs": 1,
+      "mode": "react",
+      "approval": "auto",
+      "maxRequests": 5,
+      "timeoutSeconds": 30,
+      "stub": {"answer": "this is wrong", "delayMs": 0, "loop": false, "fail": false},
+      "verify": {"keywords": ["expected-token"], "allowedChangedFiles": []}
+    },
+    {
+      "id": "validity-timeout",
+      "type": "validity-demo",
+      "prompt": "block until the timeout fires",
+      "fixture": "evals/selftest/fixtures/pass",
+      "runs": 1,
+      "mode": "react",
+      "approval": "auto",
+      "maxRequests": 5,
+      "timeoutSeconds": 1,
+      "stub": {"answer": "too late", "delayMs": 5000, "loop": false, "fail": false},
+      "verify": {"keywords": ["too late"], "allowedChangedFiles": []}
+    }
+  ]
+}

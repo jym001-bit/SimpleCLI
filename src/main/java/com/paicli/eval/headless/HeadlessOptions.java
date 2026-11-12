@@ -38,6 +38,7 @@ public final class HeadlessOptions {
               --stub-answer <文本>             stub 的最终回答
               --stub-delay-ms <N>              stub 每次响应前延迟毫秒（超时自测用）
               --stub-loop                      stub 永远返回假工具调用（预算自测用）
+              --stub-fail                     stub 抛网络异常（无效运行/重试自测用）
               --help                           打印本说明
 
             退出码: 0 正常完成 / 2 预算耗尽 / 3 超时 / 4 异常 / 5 参数错误 / 6 已取消
@@ -58,6 +59,7 @@ public final class HeadlessOptions {
     String stubAnswer = "stub answer";
     long stubDelayMs;
     boolean stubLoop;
+    boolean stubFail;
 
     private HeadlessOptions() {
     }
@@ -84,6 +86,7 @@ public final class HeadlessOptions {
                 case "--stub-answer" -> options.stubAnswer = value(args, ++i, arg);
                 case "--stub-delay-ms" -> options.stubDelayMs = parseInt(value(args, ++i, arg), arg);
                 case "--stub-loop" -> options.stubLoop = true;
+                case "--stub-fail" -> options.stubFail = true;
                 case "--help", "-h" -> options.help = true;
                 default -> throw new IllegalArgumentException("未知参数: " + arg);
             }

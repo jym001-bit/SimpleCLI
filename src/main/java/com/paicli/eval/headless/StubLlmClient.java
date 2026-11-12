@@ -19,11 +19,13 @@ final class StubLlmClient implements LlmClient {
     private final String answer;
     private final long delayMs;
     private final boolean loop;
+    private final boolean fail;
 
-    StubLlmClient(String answer, long delayMs, boolean loop) {
+    StubLlmClient(String answer, long delayMs, boolean loop, boolean fail) {
         this.answer = answer == null ? "" : answer;
         this.delayMs = Math.max(0L, delayMs);
         this.loop = loop;
+        this.fail = fail;
     }
 
     @Override
@@ -37,6 +39,9 @@ final class StubLlmClient implements LlmClient {
     }
 
     private ChatResponse respond() throws IOException {
+        if (fail) {
+            throw new IOException("stub network failure (--stub-fail)");
+        }
         if (delayMs > 0) {
             try {
                 Thread.sleep(delayMs);
