@@ -8,10 +8,10 @@
 - v3 的两个来源字段（分开记，不合并）：
   - `agent_commit: 02750c8` —— 被测 agent 代码对应的提交
   - `eval_rules_commit: 31cc6cb` —— 当前生效的评测规则提交
-- 说明：v3 数据在 `02750c8` 的规则下产出；`31cc6cb` 把 `timeout` 改为 invalid，v3 的 30 行全部是 `completed`，因此不受影响。
+- 说明：v3 数据在 `02750c8` 的规则下产出；其后 timeout 口径经过调整、最终定为 valid，v3 的 30 行全部是 `completed`，因此不受影响。
 - 元数据见 `evals/baseline/baseline-opencode-go-v3.meta.json`。
-- 任何“升级前后对照”都必须写明：**对比 v3 baseline（agent_commit 02750c8 / eval_rules_commit 02750c8）**，并把本次运行的 `agent_commit`、`eval_rules_commit` 记在报告里。
-- runner 每次运行都会把这两个字段写进结果 JSON，并在启动时打印；可用 `--agent-commit` / `--eval-rules-commit` 覆盖，默认自动取 git 值。
+- 任何“升级前后对照”都必须写明：**对比 v3 baseline（agent_commit 02750c8 / eval_rules_commit 31cc6cb）**，并把本次运行的 `agent_commit`、`eval_rules_commit` 记在报告里。
+- runner 启动时必须显式提供 `--eval-rules-commit`，不传直接报错（避免口径漂移）；`--agent-commit` 不传则自动取 git HEAD。
 - `baseline-opencode-go.csv`（v1）和 `baseline-opencode-go-v2.csv`（v2）**已废弃，仅作历史记录**，禁止用于对比或引用为成绩。
 - v3 的数字不再重跑；需要新口径时新建版本号，不覆盖旧文件。
 
@@ -26,7 +26,7 @@
 | `stopped` | agent 自身兜底（硬轮数上限 / 停滞检测） | true |
 | `error` | LLM 调用失败、网络异常、引擎异常 | false |
 | `no_result` | 没生成结果 JSON | false |
-| `timeout` | 超时（headless 自超时或 runner 硬超时） | false |
+| `timeout` | 超时（headless 自超时或 runner 硬超时） | true |
 | `cancelled` | 外部取消（headless 没有 agent 自取消路径） | false |
 
 判据实现：`com.paicli.eval.runner.RunValidity`。通过率、平均请求/token/耗时**只统计 valid=true 的运行**。
@@ -38,7 +38,7 @@
 | 类型 | 默认重试上限 | 参数 |
 |---|---|---|
 | 基础设施错误（`error` / `no_result`） | 3 次 | `--max-retries` |
-| 超时（`timeout`） | 1 次 | `--timeout-retries` |
+| 超时（`timeout`） | 0 次（超时算 valid，不重试） | `--timeout-retries` |
 
 - 同一格：1 次初始 + 对应类型允许的重试次数。
 - 每次无效尝试都**追加**写入 `invalid_runs.csv`（同表头，不覆盖、不删除）。
@@ -48,7 +48,7 @@
 ## 4. 计时与超时
 
 - runner 用 `System.nanoTime()` 对整段子进程计时，作为 `elapsedSeconds`。
-- 单次硬超时默认 300 秒（`--hard-timeout`），触发即强杀进程，记 `timeout`、`valid=false`。
+- 单次硬超时默认 300 秒（`--hard-timeout`），触发即强杀进程，记 `timeout`、`valid=true`（属于模型/流程表现，不是基础设施故障）。
 - headless 自身的 `--timeout` 取 `min(任务 timeout, 硬超时 - 5)`，保证优先由 headless 自己收尾。
 
 ## 5. 结果文件
@@ -65,7 +65,7 @@ mvn -B -o -DskipTests package
 java -cp target/paicli-1.0-SNAPSHOT.jar com.paicli.eval.runner.EvalRunnerMain \
   --tasks evals/tasks/tasks.json \
   --out evals/out/baseline.json --csv evals/out/baseline.csv \
-  --env-file .env --provider opencode-go
+  --env-file .env --provider opencode-go --eval-rules-commit <当前规则提交>
 ```
 
 单格补跑：
@@ -73,7 +73,8 @@ java -cp target/paicli-1.0-SNAPSHOT.jar com.paicli.eval.runner.EvalRunnerMain \
 ```bash
 java -cp target/paicli-1.0-SNAPSHOT.jar com.paicli.eval.runner.EvalRunnerMain \
   --tasks evals/tasks/tasks.json --only-task <taskId> --only-run <N> \
-  --out evals/out/one.json --csv evals/out/one.csv --env-file .env --provider opencode-go
+  --out evals/out/one.json --csv evals/out/one.csv --env-file .env --provider opencode-go \
+  --eval-rules-commit <当前规则提交>
 ```
 
 ## 7. 禁止事项

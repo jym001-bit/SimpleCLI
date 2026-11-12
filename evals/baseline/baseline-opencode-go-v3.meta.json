@@ -7,5 +7,5 @@
   "mode": "react",
   "tasks": "evals/tasks/tasks.json",
   "runs_per_task": 3,
-  "note": "v3 数据在 02750c8 的规则下产出；31cc6cb 把 timeout 改为 invalid，v3 的 30 行全部是 completed，因此该基线在新规则下仍然有效。"
+  "note": "v3 数据在 02750c8 的规则下产出；其后 timeout 口径经过调整、最终定为 valid（超时算模型/流程表现）；v3 的 30 行全部是 completed，因此该基线仍然有效。"
 }

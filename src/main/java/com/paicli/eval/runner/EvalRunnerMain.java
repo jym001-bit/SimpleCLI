@@ -39,9 +39,9 @@ public final class EvalRunnerMain {
               --model <名字>      覆盖模型名
               --hard-timeout <秒> 单次运行硬超时，默认 300
               --max-retries <N>   基础设施错误最多重试次数，默认 3
-              --timeout-retries <N> 超时最多重试次数，默认 1
+              --timeout-retries <N> 超时最多重试次数，默认 0
               --agent-commit <sha>  记录被测 agent 对应的提交，默认取 git HEAD
-              --eval-rules-commit <sha> 记录评测规则对应的提交，默认取 EVAL_RULES.md 最后修改提交
+              --eval-rules-commit <sha> 评测规则对应的提交（必填，避免口径漂移）
               --only-task <id>    只跑指定任务（用于补跑单格）
               --only-run <N>      只跑第 N 次，配合 --only-task 使用
               --keep-temp         保留临时目录
@@ -96,7 +96,7 @@ public final class EvalRunnerMain {
         long startNanos = System.nanoTime();
         RetryPolicy retryPolicy = new RetryPolicy(options.maxRetries, options.timeoutRetries);
         String agentCommit = options.agentCommit != null ? options.agentCommit : detectAgentCommit();
-        String evalRulesCommit = options.evalRulesCommit != null ? options.evalRulesCommit : detectEvalRulesCommit();
+        String evalRulesCommit = options.evalRulesCommit;
         System.out.printf(Locale.ROOT, "[runner] agent_commit=%s eval_rules_commit=%s%n",
                 agentCommit, evalRulesCommit);
         List<RunResult> results = new ArrayList<>();
@@ -468,12 +468,6 @@ public final class EvalRunnerMain {
         return head == null || head.isBlank() ? "unknown" : head.trim();
     }
 
-    /** 评测规则对应的提交：默认取 EVAL_RULES.md 最后一次修改。 */
-    private static String detectEvalRulesCommit() {
-        String sha = runGit("rev-list", "-1", "--short", "HEAD", "--", "EVAL_RULES.md");
-        return sha == null || sha.isBlank() ? detectAgentCommit() : sha.trim();
-    }
-
     private static String runGit(String... args) {
         List<String> command = new ArrayList<>();
         command.add("git");
@@ -523,7 +517,7 @@ public final class EvalRunnerMain {
         private String model;
         private int hardTimeout = 300;
         private int maxRetries = 3;
-        private int timeoutRetries = 1;
+        private int timeoutRetries = 0;
         private String agentCommit;
         private String evalRulesCommit;
         private String onlyTask;
@@ -565,6 +559,9 @@ public final class EvalRunnerMain {
             }
             if (options.timeoutRetries < 0) {
                 throw new IllegalArgumentException("--timeout-retries 不能为负数");
+            }
+            if (options.evalRulesCommit == null || options.evalRulesCommit.isBlank()) {
+                throw new IllegalArgumentException("必须提供 --eval-rules-commit（评测规则提交），避免口径漂移");
             }
             if (options.onlyRun != null && options.onlyTask == null) {
                 throw new IllegalArgumentException("--only-run 必须配合 --only-task");

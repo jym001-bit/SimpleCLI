@@ -16,8 +16,7 @@ class RunValidityTest {
     }
 
     @Test
-    void timeoutAndExternalCancelAreInvalid() {
-        assertFalse(RunValidity.isValid("timeout"));
+    void externalCancelIsInvalid() {
         assertFalse(RunValidity.isValid("cancelled"));
     }
 
@@ -26,5 +25,6 @@ class RunValidityTest {
         assertTrue(RunValidity.isValid("completed"));
         assertTrue(RunValidity.isValid("budget_exhausted"));
         assertTrue(RunValidity.isValid("stopped"));
+        assertTrue(RunValidity.isValid("timeout"));
     }
 }
