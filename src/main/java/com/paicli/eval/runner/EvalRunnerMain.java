@@ -89,8 +89,8 @@ public final class EvalRunnerMain {
                 RunResult result = runOnce(task, run, jar, options, environment);
                 results.add(result);
                 System.out.printf(Locale.ROOT,
-                        "[runner] %s#%d passed=%s exit=%d reason=%s requests=%d tokens=%d/%d toolCalls=%d elapsed=%.2fs%s%n",
-                        result.taskId(), result.run(), result.passed(), result.headlessExitCode(),
+                        "[runner] %s#%d passed=%s outcome=%s exit=%d reason=%s requests=%d tokens=%d/%d toolCalls=%d elapsed=%.2fs%s%n",
+                        result.taskId(), result.run(), result.passed(), result.outcome(), result.headlessExitCode(),
                         result.exitReason(), result.requests(), result.inputTokens(),
                         result.outputTokens(), result.toolCalls(), result.elapsedSeconds(),
                         result.failureReason() == null ? "" : " 原因=" + result.failureReason());
@@ -170,12 +170,15 @@ public final class EvalRunnerMain {
             boolean completed = headless != null && headless.completed();
             boolean passed = completed && verify.ok();
             String failureReason = passed ? null : buildFailure(headless, exitCode, verify);
+            String outcome = OutcomeClassifier.classify(passed,
+                    headless == null ? "no_result" : headless.exitReason());
 
             return new RunResult(
                     task.id(),
                     task.type(),
                     runIndex,
                     passed,
+                    outcome,
                     exitCode,
                     headless == null ? "no_result" : headless.exitReason(),
                     headless == null ? 0 : headless.requests(),
@@ -319,11 +322,12 @@ public final class EvalRunnerMain {
 
     private static void writeCsv(Path path, List<RunResult> results) throws IOException {
         StringBuilder builder = new StringBuilder();
-        builder.append("taskId,run,passed,requests,inputTokens,outputTokens,totalTokens,elapsedSeconds,exitReason\n");
+        builder.append("taskId,run,passed,outcome,requests,inputTokens,outputTokens,totalTokens,elapsedSeconds,exitReason\n");
         for (RunResult result : results) {
             builder.append(csv(result.taskId())).append(',')
                     .append(result.run()).append(',')
                     .append(result.passed()).append(',')
+                    .append(result.outcome()).append(',')
                     .append(result.requests()).append(',')
                     .append(result.inputTokens()).append(',')
                     .append(result.outputTokens()).append(',')

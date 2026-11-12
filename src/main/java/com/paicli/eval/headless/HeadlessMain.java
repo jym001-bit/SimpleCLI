@@ -3,6 +3,7 @@ package com.paicli.eval.headless;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paicli.agent.Agent;
 import com.paicli.agent.AgentOrchestrator;
+import com.paicli.agent.ExecutionOutcome;
 import com.paicli.agent.PlanExecuteAgent;
 import com.paicli.config.PaiCliConfig;
 import com.paicli.llm.LlmClient;
@@ -115,13 +116,14 @@ public final class HeadlessMain {
         String exitReason;
         String error = null;
         try {
-            Future<String> future = executor.submit(
+            Future<ExecutionOutcome> future = executor.submit(
                     () -> runMode(options.mode, client, registry, prompt, quiet));
-            answer = future.get(options.timeoutSeconds, TimeUnit.SECONDS);
-            if (answer == null) {
-                answer = "";
+            ExecutionOutcome outcome = future.get(options.timeoutSeconds, TimeUnit.SECONDS);
+            exitReason = exitReasonFor(outcome.reason());
+            answer = outcome.content() == null ? "" : outcome.content();
+            if (!"completed".equals(exitReason)) {
+                error = answer.isBlank() ? "终止原因: " + outcome.reason() : answer;
             }
-            exitReason = answer.startsWith("\u23f9") ? "cancelled" : "completed";
         } catch (TimeoutException e) {
             token.cancel();
             exitReason = "timeout";
@@ -161,26 +163,44 @@ public final class HeadlessMain {
         );
     }
 
-    private static String runMode(HeadlessOptions.Mode mode, LlmClient client,
-                                  CountingToolRegistry registry, String prompt, PrintStream quiet) {
+    private static ExecutionOutcome runMode(HeadlessOptions.Mode mode, LlmClient client,
+                                            CountingToolRegistry registry, String prompt, PrintStream quiet) {
         Agent reactAgent = new Agent(client, registry);
         reactAgent.setRenderer(new SilentRenderer(quiet));
         reactAgent.setReturnFinalResponseWhenStreamed(true);
         return switch (mode) {
-            case REACT -> reactAgent.run(prompt);
+            case REACT -> reactAgent.runWithOutcome(prompt);
             case PLAN -> new PlanExecuteAgent(
                     client,
                     registry,
                     reactAgent.getMemoryManager(),
                     (goal, plan) -> PlanExecuteAgent.PlanReviewDecision.execute(),
                     quiet
-            ).run(prompt);
+            ).runWithOutcome(prompt);
             case TEAM -> new AgentOrchestrator(
                     client,
                     registry,
                     reactAgent.getMemoryManager(),
                     quiet
-            ).run(prompt);
+            ).runWithOutcome(prompt);
+        };
+    }
+
+    /**
+     * 把引擎的机器可读结束原因映射成评测口径：
+     * completed / cancelled / llm_error / error / budget_exhausted / stopped。
+     */
+    private static String exitReasonFor(ExecutionOutcome.Reason reason) {
+        if (reason == null) {
+            return "error";
+        }
+        return switch (reason) {
+            case COMPLETED -> "completed";
+            case CANCELLED -> "cancelled";
+            case MODEL_ERROR -> "llm_error";
+            case EXECUTION_ERROR -> "error";
+            case TOKEN_BUDGET_EXCEEDED, MODEL_REQUEST_BUDGET_EXCEEDED -> "budget_exhausted";
+            case HARD_ITERATION_LIMIT, STAGNATION_DETECTED -> "stopped";
         };
     }
 
