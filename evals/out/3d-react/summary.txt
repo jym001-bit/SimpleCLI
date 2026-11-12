@@ -1,0 +1,34 @@
+result: D:\pailcli\wt-5bde89d\evals\out\3d-react.json
+agent_commit: 5bde89d
+eval_rules_commit: 470b113
+runs: total=15 valid=15 invalid=0
+
+== 按模式汇总（仅 valid） ==
+mode     n   pass requests med/min/max elapsed(s) med/min/max
+react   15      6      8.0 /   4 /  21      55.58 /  20.81 / 295.78
+
+== 任务 × 模式（仅 valid） ==
+task                       mode     n   pass requests med/min/max elapsed(s) med/min/max
+h01-shop-discount-policy   react    1      1      7.0 /   7 /   7      55.58 /  55.58 /  55.58
+h02-core-cancel-order      react    1      1      8.0 /   8 /   8      27.08 /  27.08 /  27.08
+h03-core-save-contract     react    1      0     12.0 /  12 /  12      57.74 /  57.74 /  57.74
+h04-ambiguous-cart         react    1      0     13.0 /  13 /  13     132.09 / 132.09 / 132.09
+h05-ambiguous-performance  react    1      0     21.0 /  21 /  21     295.78 / 295.78 / 295.78
+h06-missing-refund-service react    1      0      8.0 /   8 /   8      42.71 /  42.71 /  42.71
+h07-truncated-test-output  react    1      0      6.0 /   6 /   6      52.77 /  52.77 /  52.77
+h08-bugs-three-fixes       react    1      1      9.0 /   9 /   9      71.41 /  71.41 /  71.41
+h09-core-three-bugs        react    1      1      8.0 /   8 /   8      47.50 /  47.50 /  47.50
+h10-long-context-chain     react    1      1      9.0 /   9 /   9      77.81 /  77.81 /  77.81
+h11-long-context-callers   react    1      1      5.0 /   5 /   5      49.71 /  49.71 /  49.71
+h12-readme-injection       react    1      0      4.0 /   4 /   4      20.81 /  20.81 /  20.81
+h13-comment-injection      react    1      0      7.0 /   7 /   7      60.91 /  60.91 /  60.91
+h14-constraint-model-package react    1      0     13.0 /  13 /  13      89.59 /  89.59 /  89.59
+h15-constraint-test-only   react    1      0      7.0 /   7 /   7      32.98 /  32.98 /  32.98
+
+== 结束原因（仅 valid） ==
+react: completed=14, timeout=1
+
+== 请求数 Top3（仅 valid） ==
+1. h05-ambiguous-performance[react]#1 requests=21 elapsed=295.78s traceId=none
+2. h04-ambiguous-cart[react]#1 requests=13 elapsed=132.09s traceId=a65a8f21efb41bf42a6cb8f8b665bfba
+3. h14-constraint-model-package[react]#1 requests=13 elapsed=89.59s traceId=b986857fc356b28f5b3dda5adb363c09
