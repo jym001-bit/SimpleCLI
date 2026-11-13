@@ -47,6 +47,7 @@ public final class EvalRunnerMain {
               --only-task <id>    只跑指定任务（用于补跑单格）
               --only-run <N>      只跑第 N 次，配合 --only-task 使用
               --keep-temp         保留临时目录
+              --telemetry-detail  评测详细记录：记录工具路径、命令（≤300 字符）与返回摘要（≤200 字符），默认关闭
 
             退出码: 0 全部通过 / 1 存在失败 / 2 参数错误 / 3 运行异常
             """;
@@ -371,6 +372,9 @@ public final class EvalRunnerMain {
         command.add("-Dfile.encoding=UTF-8");
         command.add("-Djava.awt.headless=true");
         command.add("-Duser.home=" + home);
+        if (options.telemetryDetail) {
+            command.add("-Dpaicli.eval.telemetry.detail=true");
+        }
         command.add("-cp");
         command.add(jar.toString());
         command.add("com.paicli.eval.headless.HeadlessMain");
@@ -545,6 +549,7 @@ public final class EvalRunnerMain {
         private String onlyTask;
         private Integer onlyRun;
         private boolean keepTemp;
+        private boolean telemetryDetail;
 
         static Options parse(String[] args) {
             Options options = new Options();
@@ -569,6 +574,7 @@ public final class EvalRunnerMain {
                     case "--only-task" -> options.onlyTask = value(args, ++i, arg);
                     case "--only-run" -> options.onlyRun = intValue(args, ++i, arg);
                     case "--keep-temp" -> options.keepTemp = true;
+                    case "--telemetry-detail" -> options.telemetryDetail = true;
                     default -> throw new IllegalArgumentException("未知参数: " + arg);
                 }
             }

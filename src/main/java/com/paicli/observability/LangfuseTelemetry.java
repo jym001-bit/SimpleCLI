@@ -1,5 +1,7 @@
 package com.paicli.observability;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.paicli.llm.LlmClient;
 import com.paicli.tool.ToolRegistry.ToolExecutionResult;
 import io.opentelemetry.api.common.AttributeKey;
@@ -23,15 +25,26 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-/** Optional, metadata-only Langfuse tracing. No prompts, tool arguments or results leave this class. */
+/**
+ * Optional Langfuse tracing. By default it is metadata-only: no prompts, tool arguments or results leave this class.
+ *
+ * <p>评测模式可以通过 {@link #DETAIL_PROPERTY} 打开“详细记录”，额外记录工具路径、命令（≤300 字符）和
+ * 返回摘要（≤200 字符）；普通交互不会设置该开关。</p>
+ */
 public final class LangfuseTelemetry {
     private static final Logger log = LoggerFactory.getLogger(LangfuseTelemetry.class);
+    static final String DETAIL_PROPERTY = "paicli.eval.telemetry.detail";
+    private static final int COMMAND_LIMIT = 300;
+    private static final int RESULT_PREVIEW_LIMIT = 200;
+    private static final ObjectMapper DETAIL_MAPPER = new ObjectMapper();
     private static final ContextKey<TraceLabels> LABELS = ContextKey.named("paicli-langfuse-labels");
     private static final ContextKey<TraceCapture> EVALUATION = ContextKey.named("paicli-evaluation-trace");
     private static final String MODE_KEY = "langfuse.trace.metadata.mode";
@@ -188,6 +201,9 @@ public final class LangfuseTelemetry {
             span.setAttribute(OBSERVATION_METADATA + "duration_ms", elapsed);
             span.setAttribute(OBSERVATION_METADATA + "successful", result.successful());
             span.setAttribute(OBSERVATION_METADATA + "timed_out", result.timedOut());
+            for (Map.Entry<String, String> detail : toolDetailAttributes(result).entrySet()) {
+                span.setAttribute(detail.getKey(), detail.getValue());
+            }
             if (safeCallId(result.id())) {
                 span.setAttribute(OBSERVATION_METADATA + "tool_call_id", result.id());
             }
@@ -203,6 +219,54 @@ public final class LangfuseTelemetry {
     /** Carry the active trace into Plan/Team executor threads. */
     public static Runnable wrap(Runnable task) {
         return Context.current().wrap(task);
+    }
+
+    /** 评测详细记录开关：仅 eval runner 通过 JVM 参数打开，默认关闭。 */
+    static boolean detailEnabled() {
+        return "true".equalsIgnoreCase(System.getProperty(DETAIL_PROPERTY, "false"));
+    }
+
+    /**
+     * 评测详细模式下要写进 Langfuse observation metadata 的字段。
+     * 开关关闭时返回空 Map，行为与原来的 metadata-only 一致。
+     */
+    static Map<String, String> toolDetailAttributes(ToolExecutionResult result) {
+        if (!detailEnabled() || result == null) return Map.of();
+        Map<String, String> attributes = new LinkedHashMap<>();
+        JsonNode arguments = parseArguments(result.argumentsJson());
+        if (arguments != null) {
+            JsonNode path = arguments.get("path");
+            if (path != null && path.isTextual()) {
+                attributes.put(OBSERVATION_METADATA + "tool_path", path.asText());
+            }
+            if ("execute_command".equals(result.name())) {
+                JsonNode command = arguments.get("command");
+                if (command != null && command.isTextual()) {
+                    attributes.put(OBSERVATION_METADATA + "tool_command",
+                            truncate(command.asText(), COMMAND_LIMIT));
+                }
+            }
+        }
+        String preview = truncate(result.result(), RESULT_PREVIEW_LIMIT);
+        if (!preview.isEmpty()) {
+            attributes.put(OBSERVATION_METADATA + "tool_result_preview", preview);
+        }
+        return attributes;
+    }
+
+    private static JsonNode parseArguments(String argumentsJson) {
+        if (argumentsJson == null || argumentsJson.isBlank()) return null;
+        try {
+            JsonNode node = DETAIL_MAPPER.readTree(argumentsJson);
+            return node != null && node.isObject() ? node : null;
+        } catch (IOException | RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static String truncate(String value, int limit) {
+        if (value == null) return "";
+        return value.length() <= limit ? value : value.substring(0, limit);
     }
 
     public static <T> java.util.concurrent.Callable<T> wrap(java.util.concurrent.Callable<T> task) {
