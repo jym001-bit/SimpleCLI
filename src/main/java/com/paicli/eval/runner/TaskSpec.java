@@ -69,11 +69,15 @@ public record TaskSpec(
      * @param requiredAll   这些字段必须存在且非空
      * @param requiredAnyOf 至少一个字段存在且非空
      * @param expected      字段取值必须等于给定期望（按字符串比较）
+     * @param exact         数组字段必须与期望集合完全相等（忽略顺序，不允许缺失、多余或重复）
+     * @param sequence      数组字段必须与期望序列完全相等（元素与顺序都必须一致）
      */
     public record AnswerSpec(
             List<String> requiredAll,
             List<String> requiredAnyOf,
-            Map<String, String> expected
+            Map<String, String> expected,
+            Map<String, List<String>> exact,
+            Map<String, List<String>> sequence
     ) {
     }
 

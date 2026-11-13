@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Locale;
@@ -153,7 +154,85 @@ public final class Verifier {
                 }
             }
         }
+        if (spec.exact() != null) {
+            for (Map.Entry<String, List<String>> entry : spec.exact().entrySet()) {
+                problems.addAll(checkExactArray(entry.getKey(), entry.getValue(), root.get(entry.getKey())));
+            }
+        }
+        if (spec.sequence() != null) {
+            for (Map.Entry<String, List<String>> entry : spec.sequence().entrySet()) {
+                problems.addAll(checkSequenceArray(entry.getKey(), entry.getValue(), root.get(entry.getKey())));
+            }
+        }
         return problems;
+    }
+
+    /** 集合相等：忽略顺序，但元素必须完全一致，且不允许重复。 */
+    private static List<String> checkExactArray(String field, List<String> expected,
+                                                com.fasterxml.jackson.databind.JsonNode node) {
+        List<String> problems = new ArrayList<>();
+        List<String> actual = readStringArray(field, node, problems);
+        if (actual == null) {
+            return problems;
+        }
+        List<String> wanted = trimAll(expected);
+        if (new HashSet<>(actual).size() != actual.size()) {
+            problems.add("字段 " + field + " 存在重复元素: " + actual);
+        }
+        if (actual.size() != wanted.size() || !new HashSet<>(actual).equals(new HashSet<>(wanted))) {
+            problems.add("字段 " + field + " 集合不一致: 期望 " + wanted + "，实际 " + actual);
+        }
+        return problems;
+    }
+
+    /** 顺序相等：元素和顺序都必须完全一致。 */
+    private static List<String> checkSequenceArray(String field, List<String> expected,
+                                                   com.fasterxml.jackson.databind.JsonNode node) {
+        List<String> problems = new ArrayList<>();
+        List<String> actual = readStringArray(field, node, problems);
+        if (actual == null) {
+            return problems;
+        }
+        List<String> wanted = trimAll(expected);
+        if (new HashSet<>(actual).size() != actual.size()) {
+            problems.add("字段 " + field + " 存在重复元素: " + actual);
+        }
+        if (!actual.equals(wanted)) {
+            problems.add("字段 " + field + " 顺序不一致: 期望 " + wanted + "，实际 " + actual);
+        }
+        return problems;
+    }
+
+    /** 读取字符串数组并做 trim；不是数组或元素不是字符串时返回 null，并在 problems 里记一笔。 */
+    private static List<String> readStringArray(String field, com.fasterxml.jackson.databind.JsonNode node,
+                                                List<String> problems) {
+        if (node == null || node.isNull()) {
+            problems.add("字段 " + field + " 缺失");
+            return null;
+        }
+        if (!node.isArray()) {
+            problems.add("字段 " + field + " 必须是数组");
+            return null;
+        }
+        List<String> values = new ArrayList<>();
+        for (com.fasterxml.jackson.databind.JsonNode item : node) {
+            if (!item.isTextual()) {
+                problems.add("字段 " + field + " 的元素必须是字符串: " + item);
+                return null;
+            }
+            values.add(item.asText().trim());
+        }
+        return values;
+    }
+
+    private static List<String> trimAll(List<String> values) {
+        List<String> result = new ArrayList<>();
+        if (values != null) {
+            for (String value : values) {
+                result.add(value == null ? "" : value.trim());
+            }
+        }
+        return result;
     }
 
     private static boolean isNonEmpty(com.fasterxml.jackson.databind.JsonNode node) {
