@@ -1,0 +1,25 @@
+# real-commands-corpus.txt
+# W2 第一阶段语料：W1+v5 45 次运行 + detail4/detail11 的 execute_command 去重
+#
+# 重要覆盖说明：
+# - W1+v5 的 45 次运行在 evals/out/whitebox/raw/W1-v5/after.json；按
+#   evals/out/audit/tool-stability.md 的统计，共 47 次 execute_command。
+# - 仓库里没有保存原始 Langfuse observations 的 tool_command 字段：
+#   evals/out/whitebox/raw/detail/detail4/*.json 与 detail/*.json 只有任务级结果
+#   （taskId/answer/requests/...），没有 tool_command；detail4/detail11 的 CSV 也只有统计。
+# - 因此这里只写入能在现有审计文档中逐字核对的 tool_command（8 条唯一命令）；
+#   其余调用的原始命令无法从仓库导出，不能凭答案文本猜造。
+# - 没有超过 300 字符的条目；如果以后从 Langfuse 导出到超长命令，用
+#   "<TRUNCATED:原始长度>" 标注截断，不要把截断文本当成完整命令回放。
+#
+# 格式：source<TAB>command
+# source 指向本仓库中能核对到该命令的文件与行号。
+
+evals/out/audit/report.md:19	ls -la
+evals/out/audit/report.md:20	git ls-files
+evals/out/audit/report.md:21	git log --oneline -n 20
+evals/out/audit/report.md:57	git status --porcelain
+evals/out/audit/tool-stability.md:31	Select-String -Path target\surefire-reports\*.txt -Pattern "Tests run" | ForEach-Object { $_.Line }
+evals/out/audit/tool-stability.md:31	Select-String -Path "target/surefire-reports/*.txt" -Pattern "Tests run" | ForEach-Object { $_.Line }
+evals/out/audit/tool-stability.md:62	mvn -o -q test
+evals/out/audit/tool-stability.md:63	mvn -o -q test; echo "EXIT=$LASTEXITCODE"
