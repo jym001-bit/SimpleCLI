@@ -8,7 +8,7 @@
 - **模型/供应商**: opencode-go / deepseek-v4.1-flash
 - **运行矩阵**: 10 个任务 × 2 个模式（react、plan）× 每格 1 次 = **20 次**
 - **team**: **未运行**（headless 规划解析失败），不计入通过率
-  - 证据：`evals/out/smoke-team.json`、`evals/out/smoke-team-debug.json`
+  - 证据：`evals/out/smoke/modes-3b/evidence/smoke-team.json`、`evals/out/smoke/modes-3b/evidence/smoke-team-debug.json`
   - 错误原文：`❌ 规划失败：无法解析执行计划`，原始输出是 `<function name="list_dir">...`
   - 相关代码：`src/main/java/com/paicli/agent/AgentOrchestrator.java:345`、`TeamPlanParser.java`
   - 保留的临时目录：`C:\Users\l\AppData\Local\Temp\paicli-eval-15470837652493322809`、`...paicli-eval-meta-2019858230370254386`

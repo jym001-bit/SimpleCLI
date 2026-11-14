@@ -84,8 +84,8 @@ h10-long-context-chain,3,1,error,invalid,6,35472,44.05,2026-11-13T13:23:42.00756
 
 ## 原始数据
 
-- `evals/out/whitebox/baseline.json`（45 条 RunResult）
-- `evals/out/whitebox/baseline.csv`
-- `evals/out/whitebox/invalid_runs.csv`
+- `evals/out/whitebox/raw/baseline/baseline.json`（45 条 RunResult）
+- `evals/out/whitebox/raw/baseline/baseline.csv`
+- `evals/out/whitebox/raw/baseline/invalid_runs.csv`
 
-原始文件留在运行 worktree（`D:\pailcli\wt-detail`），未提交；本文件是可提交的基线记录。
+原始文件已复制到 `evals/out/whitebox/raw/baseline/`（未跟踪，外部备份见 `README.md`）；本文件是可提交的基线记录。
