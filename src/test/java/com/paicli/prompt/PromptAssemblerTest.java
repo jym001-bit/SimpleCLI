@@ -209,6 +209,47 @@ class PromptAssemblerTest {
         }
     }
 
+    @Test
+    void runtimeContextUsesPowerShellOnWindowsAndReportsNoGitByDefault() {
+        String context = PromptAssembler.runtimeContext("Windows 11", tempDir);
+
+        assertTrue(context.contains("命令解释器: PowerShell"));
+        assertTrue(context.contains("当前目录是 git 仓库: 否"));
+    }
+
+    @Test
+    void runtimeContextUsesBashOnNonWindows() {
+        String context = PromptAssembler.runtimeContext("Linux", tempDir);
+
+        assertTrue(context.contains("命令解释器: bash"));
+    }
+
+    @Test
+    void runtimeContextDetectsGitRepositoryDirectory() throws Exception {
+        Files.createDirectories(tempDir.resolve(".git"));
+
+        String context = PromptAssembler.runtimeContext("Linux", tempDir);
+
+        assertTrue(context.contains("当前目录是 git 仓库: 是"));
+    }
+
+    @Test
+    void runtimeContextDetectsGitFileUsedByWorktrees() throws Exception {
+        Files.writeString(tempDir.resolve(".git"), "gitdir: ../.git/worktrees/example");
+
+        String context = PromptAssembler.runtimeContext("Linux", tempDir);
+
+        assertTrue(context.contains("当前目录是 git 仓库: 是"));
+    }
+
+    @Test
+    void assembledPromptIncludesRuntimeShellAndGitStatus() {
+        String prompt = PromptAssembler.createDefault().assemble(PromptMode.AGENT, PromptContext.empty());
+
+        assertTrue(prompt.contains("命令解释器: "));
+        assertTrue(prompt.contains("当前目录是 git 仓库: "));
+    }
+
     private static void restoreProperty(String key, String value) {
         if (value == null) {
             System.clearProperty(key);

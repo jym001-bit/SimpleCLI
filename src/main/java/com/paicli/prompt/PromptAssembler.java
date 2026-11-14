@@ -1,5 +1,7 @@
 package com.paicli.prompt;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.DateTimeException;
@@ -79,11 +81,27 @@ public class PromptAssembler {
     }
 
     private static String runtimeContext() {
+        return runtimeContext(System.getProperty("os.name", ""), Path.of(System.getProperty("user.dir", ".")));
+    }
+
+    static String runtimeContext(String osName, Path projectRoot) {
         ZoneId zone = configuredRuntimeZone();
         LocalDate date = configuredRuntimeDate(zone);
         return "## Runtime Context\n\n"
                 + "- 当前日期: " + date + "\n"
-                + "- 当前时区: " + zone;
+                + "- 当前时区: " + zone + "\n"
+                + "- 命令解释器: " + shellType(osName) + "\n"
+                + "- 当前目录是 git 仓库: " + (isGitRepository(projectRoot) ? "是" : "否");
+    }
+
+    static String shellType(String osName) {
+        String name = osName == null ? "" : osName.toLowerCase(Locale.ROOT);
+        return name.contains("win") ? "PowerShell" : "bash";
+    }
+
+    /** Read-only detection; covers both a .git directory and a .git file (worktree / submodule). */
+    static boolean isGitRepository(Path projectRoot) {
+        return projectRoot != null && Files.exists(projectRoot.resolve(".git"));
     }
 
     private static ZoneId configuredRuntimeZone() {
