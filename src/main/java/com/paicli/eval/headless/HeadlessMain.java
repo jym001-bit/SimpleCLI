@@ -104,6 +104,8 @@ public final class HeadlessMain {
         HeadlessHitlHandler hitl = new HeadlessHitlHandler(options.approval == HeadlessOptions.Approval.AUTO);
         CountingToolRegistry registry = new CountingToolRegistry(hitl);
         registry.setProjectPath(workdir.toString());
+        // 无人值守评测：不让模型命令继承 provider/平台密钥；交互式 CLI 默认行为不变。
+        registry.setSanitizeCommandEnvironment(true);
 
         PrintStream quiet = new PrintStream(OutputStream.nullOutputStream(), true, StandardCharsets.UTF_8);
         CancellationToken token = CancellationContext.startRun();

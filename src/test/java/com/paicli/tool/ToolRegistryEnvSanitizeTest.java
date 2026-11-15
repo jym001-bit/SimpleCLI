@@ -45,11 +45,11 @@ class ToolRegistryEnvSanitizeTest {
         assertFalse(env.containsKey("DB_PASSWORD"));
         assertFalse(env.containsKey("PRIVATE_KEY"));
 
-        // 当前净化名单的已知漏项：阶段 4 再决定是否补。
-        assertTrue(env.containsKey("SERPAPI_KEY"));
-        assertTrue(env.containsKey("NOTION_TOKEN"));
+        assertFalse(env.containsKey("SERPAPI_KEY"));
+        assertFalse(env.containsKey("NOTION_TOKEN"));
+        assertFalse(env.containsKey("AWS_SESSION_TOKEN"));
+        // 明确保留：GITHUB_TOKEN 不按 *_TOKEN 通配删除；LANGFUSE_PUBLIC_KEY 不是密钥。
         assertTrue(env.containsKey("GITHUB_TOKEN"));
-        assertTrue(env.containsKey("AWS_SESSION_TOKEN"));
         assertTrue(env.containsKey("LANGFUSE_PUBLIC_KEY"));
 
         // 运行必需变量不能被误删。
@@ -73,7 +73,7 @@ class ToolRegistryEnvSanitizeTest {
     }
 
     @Test
-    void removesMixedCaseApiKeyButKeepsLowercaseSerpApi() {
+    void removesCaseVariantsOfKnownSecretNames() {
         Map<String, String> env = environment(
                 "DeepSeek_Api_Key", "deepseek_api_key", "serpapi_key",
                 "Langfuse_Secret_Key");
@@ -83,7 +83,7 @@ class ToolRegistryEnvSanitizeTest {
         assertFalse(env.containsKey("DeepSeek_Api_Key"));
         assertFalse(env.containsKey("deepseek_api_key"));
         assertFalse(env.containsKey("Langfuse_Secret_Key"));
-        assertTrue(env.containsKey("serpapi_key"));
+        assertFalse(env.containsKey("serpapi_key"));
     }
 
     @Test
@@ -99,12 +99,12 @@ class ToolRegistryEnvSanitizeTest {
     }
 
     @Test
-    void prepareKeepsLowercaseLangfuseSecretWhenSanitizeOffButRemovesWhenOn() {
+    void prepareRemovesLangfuseSecretCaseInsensitivelyEvenWhenSanitizeOff() {
         Map<String, String> parent = environment(
                 "langfuse_secret_key", "deepseek_api_key", "PATH");
 
         Map<String, String> off = ToolRegistry.prepareCommandEnvironment(parent, false, false);
-        assertTrue(off.containsKey("langfuse_secret_key"));
+        assertFalse(off.containsKey("langfuse_secret_key"));
         assertTrue(off.containsKey("deepseek_api_key"));
 
         Map<String, String> on = ToolRegistry.prepareCommandEnvironment(parent, true, false);
@@ -120,7 +120,7 @@ class ToolRegistryEnvSanitizeTest {
         Map<String, String> prepared = ToolRegistry.prepareCommandEnvironment(parent, false, true);
 
         assertFalse(prepared.containsKey("DEEPSEEK_API_KEY"));
-        assertTrue(prepared.containsKey("SERPAPI_KEY"));
+        assertFalse(prepared.containsKey("SERPAPI_KEY"));
         assertTrue(prepared.containsKey("PATH"));
     }
 
@@ -141,10 +141,10 @@ class ToolRegistryEnvSanitizeTest {
         assertTrue(ToolRegistry.isSensitiveEnvironmentName("AUTHORIZATION"));
         assertTrue(ToolRegistry.isSensitiveEnvironmentName("LANGFUSE_SECRET_KEY"));
 
-        assertFalse(ToolRegistry.isSensitiveEnvironmentName("SERPAPI_KEY"));
-        assertFalse(ToolRegistry.isSensitiveEnvironmentName("NOTION_TOKEN"));
+        assertTrue(ToolRegistry.isSensitiveEnvironmentName("SERPAPI_KEY"));
+        assertTrue(ToolRegistry.isSensitiveEnvironmentName("NOTION_TOKEN"));
+        assertTrue(ToolRegistry.isSensitiveEnvironmentName("AWS_SESSION_TOKEN"));
         assertFalse(ToolRegistry.isSensitiveEnvironmentName("GITHUB_TOKEN"));
-        assertFalse(ToolRegistry.isSensitiveEnvironmentName("AWS_SESSION_TOKEN"));
         assertFalse(ToolRegistry.isSensitiveEnvironmentName("LANGFUSE_PUBLIC_KEY"));
         assertFalse(ToolRegistry.isSensitiveEnvironmentName("PATH"));
         assertFalse(ToolRegistry.isSensitiveEnvironmentName(null));

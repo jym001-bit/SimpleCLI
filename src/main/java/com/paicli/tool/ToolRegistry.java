@@ -2023,7 +2023,8 @@ public class ToolRegistry {
         if (parent != null) {
             environment.putAll(parent);
         }
-        environment.remove("LANGFUSE_SECRET_KEY");
+        environment.keySet().removeIf(name -> name != null
+                && "LANGFUSE_SECRET_KEY".equalsIgnoreCase(name.trim()));
         if (sanitize || sandboxActive) {
             removeSensitiveCommandEnvironment(environment);
         }
@@ -2044,6 +2045,9 @@ public class ToolRegistry {
         String normalized = name.trim().toUpperCase(Locale.ROOT);
         return normalized.endsWith("_API_KEY")
                 || normalized.equals("LANGFUSE_SECRET_KEY")
+                || normalized.equals("SERPAPI_KEY")
+                || normalized.equals("NOTION_TOKEN")
+                || normalized.equals("AWS_SESSION_TOKEN")
                 || normalized.endsWith("_AUTH_TOKEN")
                 || normalized.endsWith("_ACCESS_TOKEN")
                 || normalized.endsWith("_REFRESH_TOKEN")
