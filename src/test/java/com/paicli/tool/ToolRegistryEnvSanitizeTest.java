@@ -87,6 +87,44 @@ class ToolRegistryEnvSanitizeTest {
     }
 
     @Test
+    void prepareRemovesUppercaseLangfuseSecretEvenWhenSanitizeOff() {
+        Map<String, String> parent = environment(
+                "LANGFUSE_SECRET_KEY", "DEEPSEEK_API_KEY", "PATH");
+        Map<String, String> prepared = ToolRegistry.prepareCommandEnvironment(parent, false, false);
+
+        assertFalse(prepared.containsKey("LANGFUSE_SECRET_KEY"));
+        assertTrue(prepared.containsKey("DEEPSEEK_API_KEY"));
+        assertTrue(prepared.containsKey("PATH"));
+        assertTrue(parent.containsKey("LANGFUSE_SECRET_KEY"), "不应修改传入的父 map");
+    }
+
+    @Test
+    void prepareKeepsLowercaseLangfuseSecretWhenSanitizeOffButRemovesWhenOn() {
+        Map<String, String> parent = environment(
+                "langfuse_secret_key", "deepseek_api_key", "PATH");
+
+        Map<String, String> off = ToolRegistry.prepareCommandEnvironment(parent, false, false);
+        assertTrue(off.containsKey("langfuse_secret_key"));
+        assertTrue(off.containsKey("deepseek_api_key"));
+
+        Map<String, String> on = ToolRegistry.prepareCommandEnvironment(parent, true, false);
+        assertFalse(on.containsKey("langfuse_secret_key"));
+        assertFalse(on.containsKey("deepseek_api_key"));
+        assertTrue(on.containsKey("PATH"));
+    }
+
+    @Test
+    void prepareSanitizesWhenSandboxActiveEvenIfFlagOff() {
+        Map<String, String> parent = environment(
+                "DEEPSEEK_API_KEY", "SERPAPI_KEY", "PATH");
+        Map<String, String> prepared = ToolRegistry.prepareCommandEnvironment(parent, false, true);
+
+        assertFalse(prepared.containsKey("DEEPSEEK_API_KEY"));
+        assertTrue(prepared.containsKey("SERPAPI_KEY"));
+        assertTrue(prepared.containsKey("PATH"));
+    }
+
+    @Test
     void nullAndEmptyMapsAreSafe() {
         ToolRegistry.removeSensitiveCommandEnvironment(null);
         Map<String, String> empty = new LinkedHashMap<>();

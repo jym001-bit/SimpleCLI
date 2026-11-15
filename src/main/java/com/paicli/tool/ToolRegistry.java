@@ -1818,11 +1818,11 @@ public class ToolRegistry {
                     ? new File(projectPath)
                     : sandboxInvocation.workingDirectory().toFile());
             pb.redirectErrorStream(true);
-            // Langfuse credentials are only for the CLI exporter, never for model-run shell commands.
-            pb.environment().remove("LANGFUSE_SECRET_KEY");
-            if (sanitizeCommandEnvironment || activeSandbox != null) {
-                removeSensitiveCommandEnvironment(pb.environment());
-            }
+            // 环境准备顺序固定：先删 Langfuse secret，再按净化/沙箱条件删除敏感变量。
+            Map<String, String> preparedEnvironment = prepareCommandEnvironment(
+                    pb.environment(), sanitizeCommandEnvironment, activeSandbox != null);
+            pb.environment().clear();
+            pb.environment().putAll(preparedEnvironment);
             if (activeSandbox != null) {
                 activeSandbox.configureEnvironment(pb.environment());
             }
@@ -2010,6 +2010,24 @@ public class ToolRegistry {
         CommandObservation(long id, CommandExecutionObserver observer, String command, String workingDirectory) {
             this.id = id; this.observer = observer; this.command = command; this.workingDirectory = workingDirectory;
         }
+    }
+
+    /**
+     * 纯环境准备：不改传入 map，返回子进程实际应使用的环境。
+     * 顺序必须与历史行为一致：先删 LANGFUSE_SECRET_KEY，再按净化/沙箱条件删除敏感变量。
+     */
+    static Map<String, String> prepareCommandEnvironment(Map<String, String> parent,
+                                                         boolean sanitize,
+                                                         boolean sandboxActive) {
+        Map<String, String> environment = new LinkedHashMap<>();
+        if (parent != null) {
+            environment.putAll(parent);
+        }
+        environment.remove("LANGFUSE_SECRET_KEY");
+        if (sanitize || sandboxActive) {
+            removeSensitiveCommandEnvironment(environment);
+        }
+        return environment;
     }
 
     static void removeSensitiveCommandEnvironment(Map<String, String> environment) {
