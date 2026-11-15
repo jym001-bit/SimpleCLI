@@ -234,7 +234,10 @@ public final class EvalRunnerMain {
 
             Map<String, String> before = WorkspaceSnapshot.capture(work);
             String traceName = task.id() + "#" + mode + "#" + runIndex;
-            List<String> command = buildCommand(task, mode, traceName, jar, work, home, resultFile, headlessTimeout, options);
+            Path toolLog = options.telemetryDetail
+                    ? toolLogPath(task, mode, runIndex, options) : null;
+            List<String> command = buildCommand(task, mode, traceName, jar, work, home, resultFile,
+                    headlessTimeout, toolLog, options);
             ProcessBuilder builder = new ProcessBuilder(command).directory(work.toFile());
             builder.redirectOutput(meta.resolve("headless.stdout.log").toFile());
             builder.redirectError(meta.resolve("headless.stderr.log").toFile());
@@ -366,7 +369,7 @@ public final class EvalRunnerMain {
 
     private static List<String> buildCommand(TaskSpec task, String mode, String traceName, Path jar,
                                              Path work, Path home, Path resultFile, int headlessTimeout,
-                                             Options options) {
+                                             Path toolLog, Options options) {
         List<String> command = new ArrayList<>();
         command.add(javaExecutable());
         command.add("-Dfile.encoding=UTF-8");
@@ -394,6 +397,10 @@ public final class EvalRunnerMain {
         command.add(String.valueOf(headlessTimeout));
         command.add("--out");
         command.add(resultFile.toString());
+        if (toolLog != null) {
+            command.add("--tool-log");
+            command.add(toolLog.toString());
+        }
         if (options.provider != null) {
             command.add("--provider");
             command.add(options.provider);
@@ -422,6 +429,17 @@ public final class EvalRunnerMain {
             }
         }
         return command;
+    }
+
+    private static Path toolLogPath(TaskSpec task, String mode, int runIndex, Options options)
+            throws IOException {
+        Path out = options.out.toAbsolutePath().normalize();
+        Path parent = out.getParent();
+        Path directory = (parent == null ? Path.of(".") : parent).resolve("tool-calls");
+        Files.createDirectories(directory);
+        String name = (task.id() + "-" + mode + "-" + runIndex)
+                .replaceAll("[^A-Za-z0-9._-]", "_") + ".jsonl";
+        return directory.resolve(name).toAbsolutePath();
     }
 
     private static Path defaultInvalidCsv(Path out) {

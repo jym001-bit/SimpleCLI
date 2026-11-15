@@ -15,15 +15,24 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class CountingToolRegistry extends HitlToolRegistry {
 
     private final AtomicInteger executions = new AtomicInteger();
+    private volatile EvalToolCallLog toolCallLog;
 
     CountingToolRegistry(HitlHandler hitlHandler) {
         super(hitlHandler);
+    }
+
+    void setToolCallLog(EvalToolCallLog toolCallLog) {
+        this.toolCallLog = toolCallLog;
     }
 
     @Override
     public void onPolicyToolResults(List<ToolExecutionResult> results) {
         if (results != null && !results.isEmpty()) {
             executions.addAndGet(results.size());
+        }
+        EvalToolCallLog log = toolCallLog;
+        if (log != null) {
+            log.record(results);
         }
         super.onPolicyToolResults(results);
     }

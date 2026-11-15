@@ -32,6 +32,7 @@ public final class HeadlessOptions {
               --timeout <秒>                   整体超时，默认 300
               --approval auto|deny-dangerous   审批策略，默认 auto
               --out <文件>                     结果 JSON 路径，默认 headless-result.json
+              --tool-log <绝对路径>            仅详细模式下写入本地 JSONL 工具日志
               --provider <名字>                指定模型供应商，例如 opencode-go
               --model <名字>                   指定模型名（可选，默认用供应商默认值）
               --trace-name <名字>               Langfuse trace 名（启用追踪时使用）
@@ -53,6 +54,7 @@ public final class HeadlessOptions {
     int timeoutSeconds = 300;
     Approval approval = Approval.AUTO;
     Path out;
+    Path toolLog;
     String provider;
     String model;
     String traceName;
@@ -82,6 +84,7 @@ public final class HeadlessOptions {
                 case "--timeout" -> options.timeoutSeconds = parseInt(value(args, ++i, arg), arg);
                 case "--approval" -> options.approval = parseApproval(value(args, ++i, arg));
                 case "--out" -> options.out = Path.of(value(args, ++i, arg));
+                case "--tool-log" -> options.toolLog = Path.of(value(args, ++i, arg));
                 case "--provider" -> options.provider = value(args, ++i, arg);
                 case "--model" -> options.model = value(args, ++i, arg);
                 case "--trace-name" -> options.traceName = value(args, ++i, arg);
@@ -124,6 +127,9 @@ public final class HeadlessOptions {
         }
         if (timeoutSeconds <= 0) {
             throw new IllegalArgumentException("--timeout 必须大于 0");
+        }
+        if (toolLog != null && !toolLog.isAbsolute()) {
+            throw new IllegalArgumentException("--tool-log 必须是绝对路径: " + toolLog);
         }
     }
 
