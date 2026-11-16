@@ -67,7 +67,7 @@
 
 | 字段 | 内容 |
 |---|---|
-| 结论 | **保留（确定性部分）**；最终 45 格因大面积网络握手失败停止，最终状态**无法判定** |
+| 结论 | **保留** |
 | 日期 | 2026-11-16 |
 | 关联任务 | 全部（15 题，hard.v5） |
 | 改动文件 | `src/main/java/com/paicli/tool/ToolRegistry.java`、`src/main/java/com/paicli/eval/headless/HeadlessMain.java`、`src/main/java/com/paicli/eval/headless/HeadlessOptions.java`、`src/main/java/com/paicli/eval/headless/CountingToolRegistry.java`、`src/main/java/com/paicli/eval/headless/EvalToolCallLog.java`、`src/main/java/com/paicli/eval/runner/EvalRunnerMain.java`、`src/main/java/com/paicli/mcp/mention/AtMentionExpander.java`；对应测试与 `evals/out/audit/w3-design.md`、`w3-report.md`、`final-regression.md` |
@@ -76,10 +76,11 @@
 | 改后提交 | `1834b18` |
 | 改前红绿 | 环境回归 5 GREEN；环境缺口 3 RED；B2 缺口 2 RED；相关回归 95 过/3 跳过 |
 | 改后红绿 | 环境回归 9 GREEN；环境缺口 3 GREEN；B2 缺口 2 GREEN；JSONL 8 GREEN；相关回归 111 过/0 失败/3 跳过 |
-| 最终 45 格 | 仅 `h01#1` 完成（passed=true，requests=13，tokens=235153/21657，elapsed=252.54s）；12 个格 invalid（h01#2/#3、h02、h03、h04 各 3 格、h05#1；共 48 次尝试，全部 `Remote host terminated the handshake`）；剩余 32 格未跑，已停止 |
-| 本地工具日志 | 仅 `h01#1` 有 1 个 JSONL：24 次调用；execute_command 4 次/失败 0；策略拒绝 0；read_file 11 次，其中 3 个路径各重复 1 次；无环境变量缺失导致的失败 |
+| 网络冒烟 | `h04-ambiguous-cart` 3 次全部有效通过（3/3，0 invalid，53.72s）；未重复计入全量 |
+| 最终 45 格 | **45/45，0 失败，0 invalid**；总耗时 1949.44s；中位请求 6、token 48450、耗时 32.47s；无无效运行 |
+| 本地工具日志 | 44 个 JSONL（h05#2 没有工具调用）；526 次调用；execute_command 43 次/失败 5 次（4 条 PowerShell `Select-String` 参数错误 + 1 条 HITL deny）；策略拒绝 0；read_file 251 次，30 个路径重复、额外 218 次，24 个 run 内有同路径重复；PS 不兼容 0；git 探测 2、非仓库失败 0；环境变量缺失失败 0 |
 | 残余风险 | `GITHUB_TOKEN` 仅 headless 删除、`LANGFUSE_PUBLIC_KEY` 保留；没有 `*_TOKEN`/`*_KEY` 通配；本地 JSONL 脱敏是模式匹配，不加密/不轮转；W2 的 P8/H5-a/A1/C7-3/C8-3 仍未修；阶段 0 因 `C:\Users\` 绝对路径命中未 push |
-| 结论说明 | 确定性测试全部达标；最终 45 格被网络基础设施错误打断，不能据此判定通过率。没有自行回退或修改验收。 |
+| 结论说明 | 确定性测试全部达标；最终 45/45 达到 W1+v5 的 44/45 门槛；无环境变量缺失导致的失败；无策略拒绝，HITL deny 是只读 `Get-Item` 命令。没有自行回退或修改验收。 |
 
 ## 待办
 
