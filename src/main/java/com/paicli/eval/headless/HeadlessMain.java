@@ -106,6 +106,8 @@ public final class HeadlessMain {
         registry.setProjectPath(workdir.toString());
         // 无人值守评测：不让模型命令继承 provider/平台密钥；交互式 CLI 默认行为不变。
         registry.setSanitizeCommandEnvironment(true);
+        // headless 专用：GITHUB_TOKEN 不在通用名单里，避免改变交互式/沙箱路径。
+        registry.addSensitiveCommandEnvironmentName("GITHUB_TOKEN");
         if (options.toolLog != null && Boolean.parseBoolean(
                 System.getProperty("paicli.eval.telemetry.detail", "false"))) {
             registry.setToolCallLog(new EvalToolCallLog(options.toolLog));

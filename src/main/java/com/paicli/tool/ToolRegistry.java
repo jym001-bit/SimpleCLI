@@ -112,6 +112,8 @@ public class ToolRegistry {
     private boolean customSnapshotService;
     private ToolResultOffloader toolResultOffloader = ToolResultOffloader.fromConfiguration(Path.of(projectPath));
     private boolean sanitizeCommandEnvironment;
+    private final java.util.Set<String> additionalSensitiveEnvironmentNames =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
     private volatile CommandSandbox commandSandbox;
     /** 交互式沙箱模式；null 表示未经 {@link #configureCommandSandbox} 配置（例如基准评测入口）。 */
     private volatile CommandSandboxMode commandSandboxMode;
@@ -179,6 +181,13 @@ public class ToolRegistry {
      */
     public void setSanitizeCommandEnvironment(boolean sanitizeCommandEnvironment) {
         this.sanitizeCommandEnvironment = sanitizeCommandEnvironment;
+    }
+
+    /** 仅给特定入口（如 headless）追加精确的敏感变量名；交互式默认不调用。 */
+    public void addSensitiveCommandEnvironmentName(String name) {
+        if (name != null && !name.isBlank()) {
+            additionalSensitiveEnvironmentNames.add(name.trim().toUpperCase(Locale.ROOT));
+        }
     }
 
     /** Optional diagnostics only; observer exceptions never change command policy or results. */
@@ -1819,7 +1828,7 @@ public class ToolRegistry {
                     : sandboxInvocation.workingDirectory().toFile());
             pb.redirectErrorStream(true);
             // 环境准备顺序固定：先删 Langfuse secret，再按净化/沙箱条件删除敏感变量。
-            Map<String, String> preparedEnvironment = prepareCommandEnvironment(
+            Map<String, String> preparedEnvironment = prepareCommandEnvironmentForCommand(
                     pb.environment(), sanitizeCommandEnvironment, activeSandbox != null);
             pb.environment().clear();
             pb.environment().putAll(preparedEnvironment);
@@ -2019,6 +2028,13 @@ public class ToolRegistry {
     static Map<String, String> prepareCommandEnvironment(Map<String, String> parent,
                                                          boolean sanitize,
                                                          boolean sandboxActive) {
+        return prepareCommandEnvironment(parent, sanitize, sandboxActive, Set.of());
+    }
+
+    static Map<String, String> prepareCommandEnvironment(Map<String, String> parent,
+                                                         boolean sanitize,
+                                                         boolean sandboxActive,
+                                                         Set<String> additionalSensitiveNames) {
         Map<String, String> environment = new LinkedHashMap<>();
         if (parent != null) {
             environment.putAll(parent);
@@ -2026,23 +2042,43 @@ public class ToolRegistry {
         environment.keySet().removeIf(name -> name != null
                 && "LANGFUSE_SECRET_KEY".equalsIgnoreCase(name.trim()));
         if (sanitize || sandboxActive) {
-            removeSensitiveCommandEnvironment(environment);
+            removeSensitiveCommandEnvironment(environment, additionalSensitiveNames);
         }
         return environment;
     }
 
+    /** 实例入口：把该 registry 追加的名字（如 headless 的 GITHUB_TOKEN）带进净化。 */
+    Map<String, String> prepareCommandEnvironmentForCommand(Map<String, String> parent,
+                                                            boolean sanitize,
+                                                            boolean sandboxActive) {
+        return prepareCommandEnvironment(parent, sanitize, sandboxActive,
+                additionalSensitiveEnvironmentNames);
+    }
+
     static void removeSensitiveCommandEnvironment(Map<String, String> environment) {
+        removeSensitiveCommandEnvironment(environment, Set.of());
+    }
+
+    static void removeSensitiveCommandEnvironment(Map<String, String> environment,
+                                                  Set<String> additionalSensitiveNames) {
         if (environment == null || environment.isEmpty()) {
             return;
         }
-        environment.keySet().removeIf(ToolRegistry::isSensitiveEnvironmentName);
+        environment.keySet().removeIf(name -> isSensitiveEnvironmentName(name, additionalSensitiveNames));
     }
 
     static boolean isSensitiveEnvironmentName(String name) {
+        return isSensitiveEnvironmentName(name, Set.of());
+    }
+
+    static boolean isSensitiveEnvironmentName(String name, Set<String> additionalSensitiveNames) {
         if (name == null || name.isBlank()) {
             return false;
         }
         String normalized = name.trim().toUpperCase(Locale.ROOT);
+        if (additionalSensitiveNames != null && additionalSensitiveNames.contains(normalized)) {
+            return true;
+        }
         return normalized.endsWith("_API_KEY")
                 || normalized.equals("LANGFUSE_SECRET_KEY")
                 || normalized.equals("SERPAPI_KEY")

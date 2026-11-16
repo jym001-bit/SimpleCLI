@@ -125,6 +125,24 @@ class ToolRegistryEnvSanitizeTest {
     }
 
     @Test
+    void githubTokenRemovedOnlyWhenExtraNameEnabled() {
+        Map<String, String> parent = environment(
+                "GITHUB_TOKEN", "LANGFUSE_PUBLIC_KEY", "PATH");
+
+        ToolRegistry registry = new ToolRegistry();
+        registry.addSensitiveCommandEnvironmentName("GITHUB_TOKEN");
+        Map<String, String> headless = registry.prepareCommandEnvironmentForCommand(parent, true, false);
+        assertFalse(headless.containsKey("GITHUB_TOKEN"));
+        assertTrue(headless.containsKey("LANGFUSE_PUBLIC_KEY"));
+        assertTrue(headless.containsKey("PATH"));
+
+        Map<String, String> defaultBehavior =
+                ToolRegistry.prepareCommandEnvironment(parent, true, false);
+        assertTrue(defaultBehavior.containsKey("GITHUB_TOKEN"),
+                "未启用额外名字时，通用净化行为不应改变");
+    }
+
+    @Test
     void nullAndEmptyMapsAreSafe() {
         ToolRegistry.removeSensitiveCommandEnvironment(null);
         Map<String, String> empty = new LinkedHashMap<>();
