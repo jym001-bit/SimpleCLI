@@ -63,6 +63,24 @@
 | 已接受残余风险 | 变量拼接与多层编码无法封住；C7-3、C8-3、硬链接、HITL 超时、B2、A1 未修 |
 | 结论说明 | 保留依据：缺口组 22 红→6 红；回归组 16 过 3 跳过；良性命令 B1–B16 全放行；语料回放仅 8 条且新增拒绝 0；45 格仅作回归检查（h04 三格因网络握手错误无效，token/耗时变化在噪声内）。 |
 
+### W3：环境净化、MCP resource 转义、本地 JSONL 工具日志
+
+| 字段 | 内容 |
+|---|---|
+| 结论 | **保留（确定性部分）**；最终 45 格因大面积网络握手失败停止，最终状态**无法判定** |
+| 日期 | 2026-11-16 |
+| 关联任务 | 全部（15 题，hard.v5） |
+| 改动文件 | `src/main/java/com/paicli/tool/ToolRegistry.java`、`src/main/java/com/paicli/eval/headless/HeadlessMain.java`、`src/main/java/com/paicli/eval/headless/HeadlessOptions.java`、`src/main/java/com/paicli/eval/headless/CountingToolRegistry.java`、`src/main/java/com/paicli/eval/headless/EvalToolCallLog.java`、`src/main/java/com/paicli/eval/runner/EvalRunnerMain.java`、`src/main/java/com/paicli/mcp/mention/AtMentionExpander.java`；对应测试与 `evals/out/audit/w3-design.md`、`w3-report.md`、`final-regression.md` |
+| 改动摘要 | headless 环境净化；`SERPAPI_KEY`/`NOTION_TOKEN`/`AWS_SESSION_TOKEN`/`GITHUB_TOKEN` 精确名；`LANGFUSE_SECRET_KEY` 大小写不敏感；MCP `<resource>` 正文与错误文本转义；detail 模式下按 run 写本地 JSONL 工具调用日志 |
+| 改前提交 | `c56317f` |
+| 改后提交 | `1834b18` |
+| 改前红绿 | 环境回归 5 GREEN；环境缺口 3 RED；B2 缺口 2 RED；相关回归 95 过/3 跳过 |
+| 改后红绿 | 环境回归 9 GREEN；环境缺口 3 GREEN；B2 缺口 2 GREEN；JSONL 8 GREEN；相关回归 111 过/0 失败/3 跳过 |
+| 最终 45 格 | 仅 `h01#1` 完成（passed=true，requests=13，tokens=235153/21657，elapsed=252.54s）；12 个格 invalid（h01#2/#3、h02、h03、h04 各 3 格、h05#1；共 48 次尝试，全部 `Remote host terminated the handshake`）；剩余 32 格未跑，已停止 |
+| 本地工具日志 | 仅 `h01#1` 有 1 个 JSONL：24 次调用；execute_command 4 次/失败 0；策略拒绝 0；read_file 11 次，其中 3 个路径各重复 1 次；无环境变量缺失导致的失败 |
+| 残余风险 | `GITHUB_TOKEN` 仅 headless 删除、`LANGFUSE_PUBLIC_KEY` 保留；没有 `*_TOKEN`/`*_KEY` 通配；本地 JSONL 脱敏是模式匹配，不加密/不轮转；W2 的 P8/H5-a/A1/C7-3/C8-3 仍未修；阶段 0 因 `C:\Users\` 绝对路径命中未 push |
+| 结论说明 | 确定性测试全部达标；最终 45 格被网络基础设施错误打断，不能据此判定通过率。没有自行回退或修改验收。 |
+
 ## 待办
 
 - h04 任务口径：要求“只输出 JSON，不要任何其他文字”（任务口径问题，未修改）。
