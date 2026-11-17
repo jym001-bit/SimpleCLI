@@ -16,8 +16,8 @@
 | W2 回归组 | 16 过 3 跳过 | `evals/out/whitebox/change-log.md` | `b80c33d` | `mvn -B "-Dtest=SafetyEvalRegressionTest,W2CommandBenignTest" -DskipTests=false test` | 3 个跳过是平台/权限条件；不是全量 |
 | W2 良性命令 | B1–B16 全放行 | `evals/out/whitebox/change-log.md` | `b80c33d` | 同上 | 只覆盖 B1–B16，不代表所有命令 |
 | W2 语料回放 | 8 条，新增拒绝 0 | `evals/out/whitebox/change-log.md` | `b80c33d` | 见 `evals/out/audit/real-commands-corpus.txt` 与 W2 记录 | 只 8 条可核对命令，不是 47 条全量 |
-| W2 45 格原始 | 41/45（3 invalid、1 model_failed）；有效 41/42 | `evals/out/whitebox/change-log.md` | `b80c33d` | W2 45 格命令（hard.v5、react、3 次、`--telemetry-detail`） | h04 网络 invalid 和 h10 model_failed；仅回归检查 |
-| W2 PS/git/命令失败 | 无法确认 | `evals/out/whitebox/change-log.md` / `final-regression-v2.md` | `b80c33d` | — | W2 没有本地 tool-calls JSONL，不能用本次同口径重算 |
+| W2 45 格原始 | 41/45（3 invalid、1 model_failed）；有效 41/42 | `evals/out/whitebox/change-log.md` | `b80c33d` | W2 45 格命令（hard.v5、react、3 次、`--telemetry-detail`） | h04 网络 invalid 和 h10 model_failed；**45 格仅用于证明未引入严重回归，不作为效果证据** |
+| W2 PS/git/命令失败 | 无法确认 | `evals/out/whitebox/change-log.md` / `final-regression-v2.md` | `b80c33d` | — | W2 没有本地 tool-calls JSONL，不能用本次同口径重算；**45 格仅用于证明未引入严重回归，不作为效果证据** |
 | 最终状态 45 格 | 45/45 | `evals/out/whitebox/final-regression-v2.md`、`change-log.md` | `1834b18` | `evals/out/final-v2/full/full-v5.json` 对应 45 格命令 | 代码差异含 W1/W2/W3/hard.v5，不能全部归因 W1 |
 | 最终状态无效运行 | 0 | `evals/out/whitebox/final-regression-v2.md` | `1834b18` | 同上 | 0 invalid，0 自动重试 |
 | 最终状态请求中位 | 6 | `evals/out/whitebox/final-regression-v2.md` | `1834b18` | 同上 | 45 次逐次值中位数 |
@@ -49,4 +49,6 @@
 5. **最终 execute_command 5 次失败包含 1 次 HITL deny**：不是 5 次命令实际执行失败；4 次是 `Select-String` 参数绑定错误。
 6. **记忆/压缩只有 A 层确定性**：8 GREEN 不代表记忆/压缩效果优化；65 条不是上限证明；两个既有失败未修。
 7. **W2/W3 的 45 格不是同一代码/同一天**：W2 有 invalid 和 model_failed，最终状态是 W3 收尾后 45/45；只能各自按自己的口径报告。
-8. **完整旧 jar 的 Maven 回归日志无法确认**：仓库只有冻结探测和 comparison 记录，没有找到完整旧 jar 109 项原始日志；相关说法只能引用已有 evidence。
+8. **完整旧 jar 的 Maven 回归日志无法确认**：仓库只有冻结探测和 comparison 记录，没有找到完整 109 项原始日志，相关说法只能引用这些记录。
+9. **W1+v5 的 token 中位数 49,868 与最终状态的 48,450 是不同代码状态下的数字**，不得混用；前者是 W1+v5，后者包含 W1/W2/W3/hard.v5。
+10. **W2 之后命令失败的变化只有最终回归的本地 JSONL 数据，没有 W2 单独的数据**：不能写成 W2 降低了命令失败率。
